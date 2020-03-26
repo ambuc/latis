@@ -1,4 +1,4 @@
-# latis
+# 🏁 latis
 ## (pronounced "_lattice_")
 A command-line spreadsheet-style utility. Written in `C++`. Mostly a testing
 grounds for writing a parser in the parser-combinator style. (See
