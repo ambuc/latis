@@ -71,6 +71,13 @@ bool operator==(const Token &lhs, const Token &rhs) {
 
 using TSpan = absl::Span<const Token>;
 
+void PrintTSpan(TSpan *tspan) {
+  for (const auto token : *tspan) {
+    std::cout << token.value;
+  }
+  std::cout << std::endl;
+}
+
 template <typename T> //
 using Prsr = std::function<StatusOr<T>(TSpan *)>;
 

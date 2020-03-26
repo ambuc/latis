@@ -111,6 +111,7 @@ StatusOr<std::string> ConsumeString(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string_view resultant;
   ASSIGN_OR_RETURN_(resultant, ConsumeExact(Token::T::quote, &lcl));
+
   *tspan = lcl;
   return std::string(resultant);
 }
@@ -308,6 +309,8 @@ StatusOr<Amount> ConsumeAmount(TSpan *tspan) {
       },
       amount);
 
+  // std::cout << "Succeeded ConsumeAmount on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -338,6 +341,8 @@ StatusOr<int> LocationParser::ConsumeColIndicator(TSpan *tspan) {
         "Can't ConsumeColIndicator: LOCATION must begin with 1*UPPERCASE.");
   }
 
+  // std::cout << "Succeeded ConsumeColIndicator on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return maybe_int.ValueOrDie();
 }
@@ -356,6 +361,8 @@ StatusOr<PointLocation> LocationParser::ConsumePointLocation(TSpan *tspan) {
   resultant.set_col(std::get<0>(t));
   resultant.set_row(std::get<1>(t));
 
+  // std::cout << "Succeeded ConsumePointLocation on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -386,6 +393,8 @@ LocationParser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
                   "end in a point/row/col.");
   }
 
+  // std::cout << "Succeeded ConsumeRangeLocationPointThenAny on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -406,6 +415,8 @@ LocationParser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   resultant.set_from_row(std::get<0>(t));
   resultant.set_to_row(std::get<2>(t));
 
+  // std::cout << "Succeeded ConsumeRangeLocationRowThenRow on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -427,6 +438,8 @@ LocationParser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   resultant.set_from_col(std::get<0>(t));
   resultant.set_to_col(std::get<2>(t));
 
+  // std::cout << "Succeeded ConsumeRangeLocationColThenCol on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -472,6 +485,8 @@ StatusOr<std::string> OperationParser::ConsumeFnName(TSpan *tspan) {
         "Can't ConsumeFnName: Can't have a fn name which begins with a digit.");
   }
 
+  // std::cout << "Succeeded ConsumeFnName on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -497,6 +512,8 @@ OperationParser::ConsumeOpUnaryText(TSpan *tspan) {
   resultant.set_operation(std::get<0>(t));
   *resultant.mutable_term1() = std::get<2>(t);
 
+  // std::cout << "Succeeded ConsumeOpUnaryText on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -529,6 +546,8 @@ OperationParser::ConsumeOpBinaryText(TSpan *tspan) {
   *resultant.mutable_term1() = std::get<2>(t);
   *resultant.mutable_term2() = std::get<4>(t);
 
+  // std::cout << "Succeeded ConsumeOpBinaryText on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -558,6 +577,8 @@ StatusOr<std::string> OperationParser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");
   }
 
+  // std::cout << "Succeeded ConsumeOpBinaryInfixFn on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -585,6 +606,10 @@ OperationParser::ConsumeOpBinaryInfix(TSpan *tspan) {
   resultant.set_operation(std::get<1>(t));
   *resultant.mutable_term2() = std::get<2>(t);
 
+  // std::cout << "Succeeded ConsumeOpBinaryInfix on: ";
+  // PrintTSpan(tspan);
+  // std::cout << " and extracted: ";
+  // resultant.PrintDebugString();
   *tspan = lcl;
   return resultant;
 }
@@ -598,6 +623,11 @@ StatusOr<Expression> OperationParser::ConsumeParentheses(TSpan *tspan) {
           absl::bind_front(ConsumeExact, Token::T::lparen), &ConsumeExpression,
           absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
 
+  // std::cout << "Succeeded ConsumeParentheses on: ";
+  // PrintTSpan(tspan);
+  // std::cout << "and extracted: ";
+  // std::get<1>(t).PrintDebugString();
+  // std::cout << std::endl;
   *tspan = lcl;
   return std::get<1>(t);
 }
@@ -636,6 +666,8 @@ OperationParser::ConsumeOpTernary(TSpan *tspan) {
   *resultant.mutable_term2() = std::get<4>(t);
   *resultant.mutable_term3() = std::get<6>(t);
 
+  // std::cout << "Succeeded ConsumeOpTernary on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -660,6 +692,8 @@ StatusOr<Expression::OpRange> OperationParser::ConsumeOpRange(TSpan *tspan) {
   resultant.set_operation(std::get<0>(t));
   *resultant.mutable_range() = std::get<2>(t);
 
+  // std::cout << "Succeeded ConsumeOpRange on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }
@@ -669,22 +703,33 @@ StatusOr<Expression> ConsumeExpression(TSpan *tspan) {
   Expression resultant;
 
   absl::variant<
-      // Expression::OpRange,
-      Expression, Expression::OpTernary, Expression::OpBinary,
-      Expression::OpUnary, PointLocation, Amount>
+      // Expression::OpRange, //
+      Expression::OpUnary,   //
+      Expression::OpBinary,  //
+      Expression::OpTernary, //
+      Expression,            //
+      PointLocation,         //
+      Amount                 //
+      >
       expression;
 
-  ASSIGN_OR_RETURN_(
-      expression,
-      (AnyVariant<
-          // Expression::OpRange,
-          Expression, Expression::OpTernary, Expression::OpBinary,
-          Expression::OpUnary, PointLocation, Amount>(
-          // OperationParser::ConsumeOpRange,
-          OperationParser::ConsumeParentheses,
-          OperationParser::ConsumeOpTernary, OperationParser::ConsumeOpBinary,
-          OperationParser::ConsumeOpUnary, LocationParser::ConsumePointLocation,
-          ConsumeAmount)(&lcl)));
+  ASSIGN_OR_RETURN_(expression, (AnyVariant<
+                                    // Expression::OpRange, //
+                                    Expression::OpUnary,   //
+                                    Expression::OpBinary,  //
+                                    Expression::OpTernary, //
+                                    Expression,            //
+                                    PointLocation,         //
+                                    Amount                 //
+                                    >(
+                                    // OperationParser::ConsumeOpRange, //
+                                    OperationParser::ConsumeOpUnary,      //
+                                    OperationParser::ConsumeOpBinary,     //
+                                    OperationParser::ConsumeOpTernary,    //
+                                    OperationParser::ConsumeParentheses,  //
+                                    LocationParser::ConsumePointLocation, //
+                                    ConsumeAmount                         //
+                                    )(&lcl)));
 
   std::visit(
       overload{
@@ -706,6 +751,8 @@ StatusOr<Expression> ConsumeExpression(TSpan *tspan) {
       },
       expression);
 
+  // std::cout << "Succeeded ConsumeExpression on: ";
+  // PrintTSpan(tspan);
   *tspan = lcl;
   return resultant;
 }

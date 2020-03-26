@@ -75,11 +75,8 @@ Cache *GetCache() {
 }
 
 Status RepeatGuard(Step step, TSpan *tspan) {
-  std::cout << Print(step) << "\t<-" << tspan->data() << ":\t";
-  for (const auto token : *tspan) {
-    std::cout << token.value;
-  }
-  std::cout << std::endl;
+  // std::cout << Print(step) << "\t<-" << tspan->data() << ":\t";
+  // PrintTSpan(tspan);
 
   CacheItem item = {step, tspan->data(), tspan->size()};
 
