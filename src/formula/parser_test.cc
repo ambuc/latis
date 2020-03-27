@@ -27,14 +27,10 @@ namespace latis {
 namespace formula {
 namespace {
 
-using ::google::protobuf::TextFormat;
-using ::google::protobuf::util::StatusOr;
-using ::testing::ContainerEq;
-using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::IsEmpty;
-using ::testing::Matches;
 using ::testing::Not;
+using ::testing::ValuesIn;
 using ::testing::VariantWith;
 
 TEST(Parser, ConsumeInteger) {
@@ -188,33 +184,6 @@ TEST(Parser, ConsumeMoneyThree) {
   EXPECT_THAT(tspan, IsEmpty());
 }
 
-TEST(Parser, ConsumeStringOne) {
-  const std::string input = "\"FOO bar _b^a^z_\"";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeString(&tspan), IsOkAndHolds("FOO bar _b^a^z_"));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeStringTwo) {
-  const std::string input = "\"\"";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeString(&tspan), IsOkAndHolds(""));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeStringThree) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeString(&tspan), Not(IsOk()));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
 TEST(Parser, Consume2DigitOne) {
   const std::string input = "24";
   std::vector<Token> tokens;
@@ -238,31 +207,6 @@ TEST(Parser, Consume2DigitEmpty) {
   ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
   TSpan tspan{tokens};
   EXPECT_THAT(Consume2Digit(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, Consume4DigitOne) {
-  const std::string input = "2468";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume4Digit(&tspan), IsOkAndHolds(2468));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, Consume4DigitTwo) {
-  const std::string input = "9999AB";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume4Digit(&tspan), IsOkAndHolds(9999));
-}
-
-TEST(Parser, Consume4DigitEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume4Digit(&tspan), Not(IsOk()));
 }
 
 TEST(Parser, ConsumeTimeOffset) {
@@ -293,214 +237,19 @@ TEST(Parser, ConsumeTimeOffsetEmpty) {
   EXPECT_THAT(DateTimeParser::ConsumeTimeOffset(&tspan), Not(IsOk()));
 }
 
-TEST(Parser, ConsumeDateTime) {
-  const std::string input = "2016-01-02T03:04:05.678+08:00";
-
-  absl::Time expected_time;
-  std::string msg;
-  ASSERT_TRUE(absl::ParseTime(absl::RFC3339_full, input, &expected_time, &msg));
-
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(DateTimeParser::ConsumeDateTime(&tspan),
-              IsOkAndHolds(expected_time));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeDateTimeEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(DateTimeParser::ConsumeDateTime(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeAmountString) {
-  const std::string input = "\"foo\"";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      ConsumeAmount(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<Amount>("str_amount: \"foo\""))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeAmountInt) {
-  const std::string input = "240";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeAmount(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 240"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeAmountDouble) {
-  const std::string input = "240.248";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      ConsumeAmount(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<Amount>("double_amount: 240.248"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeAmountTimestamp) {
-  const std::string input = "2016-01-02T03:04:05.678+08:00";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeAmount(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Amount>(
-                  "timestamp_amount: { seconds:1451675045 }"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeAmountMoney) {
-  const std::string input = "$123.45";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeAmount(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Amount>(
-                  "money_amount: {dollars: 123 cents: 45 currency: USD}"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumePointLocationValidOne) {
-  const std::string input = "A1";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      LocationParser::ConsumePointLocation(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<PointLocation>("row: 0 col: 0"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumePointLocationValidTwo) {
-  const std::string input = "AA100";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      LocationParser::ConsumePointLocation(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<PointLocation>("row: 99 col: 26"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumePointLocationInvalidOne) {
-  const std::string input = "AA";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumePointLocation(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumePointLocationInvalidTwo) {
-  const std::string input = "a1";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumePointLocation(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumePointLocationInvalidThree) {
-  const std::string input = "1A";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumePointLocation(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeRangeLocationValidOne) {
-  const std::string input = "A1:B2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<RangeLocation>(
-                  "from_cell: {row: 0 col: 0} to_cell: {row: 1 col: 1}"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeRangeLocationValidTwo) {
-  const std::string input = "A1:B";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<RangeLocation>(
-                  "from_cell: {row: 0 col: 0} to_col: 1"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeRangeLocationValidThree) {
-  const std::string input = "A1:2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<RangeLocation>(
-                  "from_cell: {row: 0 col: 0} to_row: 1"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeRangeLocationValidFour) {
-  const std::string input = "A:B";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan),
-              IsOkAndHolds(EqualsProto(
-                  ToProto<RangeLocation>("from_col: 0 to_col: 1"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeRangeLocationValidFive) {
-  const std::string input = "1:2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan),
-              IsOkAndHolds(EqualsProto(
-                  ToProto<RangeLocation>("from_row: 0 to_row: 1"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeRangeLocationInvalidOne) {
-  const std::string input = "1:A";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeRangeLocationInvalidTwo) {
-  const std::string input = "1:";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeRangeLocationInvalidThree) {
-  const std::string input = "A:";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan), Not(IsOk()));
-}
-
 template <typename T> //
-class ConsumeTestSuiteBase : public testing::Test {
+class ConsumeTestSuiteBase
+    : public testing::TestWithParam<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   virtual void Compare(const T &a, const T &b) const = 0;
-  void RunBodyOfTest(Prsr<T> parser, std::string input,
-                     absl::optional<T> expectation_or_nullopt) {
+
+  // Ahh yes.... the garden of forking paths.
+  void RunBodyOfTest(Prsr<T> parser, std::function<T(std::string)> mangler) {
+    std::string input = std::get<0>(GetParam());
+    absl::optional<std::string> expectation_or_nullopt =
+        std::get<1>(GetParam());
+
     std::vector<Token> tokens;
     ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
     TSpan tspan{tokens};
@@ -508,7 +257,7 @@ public:
     const auto thing_or_status = parser(&tspan);
 
     if (expectation_or_nullopt.has_value()) {
-      T expectation = expectation_or_nullopt.value();
+      T expectation = mangler(expectation_or_nullopt.value());
 
       if (!thing_or_status.ok()) {
         std::cout << thing_or_status.status();
@@ -522,59 +271,206 @@ public:
       EXPECT_THAT(tspan, IsEmpty());
     } else {
       EXPECT_FALSE(thing_or_status.ok());
-      EXPECT_THAT(tspan, Not(IsEmpty()));
+
+      if (!input.empty()) {
+        EXPECT_THAT(tspan, Not(IsEmpty()));
+      }
+
       EXPECT_THAT(tspan.size(), Eq(tokens.size()));
     }
   }
 };
 
-// CONSUME FN NAME TEST SUITE
+class TwoDigitTestSuite : public ConsumeTestSuiteBase<int> {
+public:
+  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+};
+TEST_P(TwoDigitTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/Consume2Digit, /*mangler=*/[](std::string s) -> int {
+    int i;
+    (void)absl::SimpleAtoi(s, &i);
+    return i;
+  });
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllTwoDigitValues, TwoDigitTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"24", "24"},
+        {"99", "99"},
+        {"999", absl::nullopt},
+        {"", absl::nullopt},
+    }));
 
-class ConsumeFnNameTestSuite
-    : public ConsumeTestSuiteBase<std::string>,
-      public testing::WithParamInterface<
-          std::pair<std::string, absl::optional<std::string>>> {
+class FourDigitTestSuite : public ConsumeTestSuiteBase<int> {
+public:
+  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+};
+TEST_P(FourDigitTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/Consume4Digit, /*mangler=*/[](std::string s) -> int {
+    int i;
+    (void)absl::SimpleAtoi(s, &i);
+    return i;
+  });
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllFourDigitValues, FourDigitTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"2468", "2468"},
+        {"9999", "9999"},
+        {"99999", absl::nullopt},
+        {"", absl::nullopt},
+    }));
+
+class StringTestSuite : public ConsumeTestSuiteBase<std::string> {
 public:
   void Compare(const std::string &a, const std::string &b) const override {
     EXPECT_EQ(a, b);
   }
 };
-
-TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
-  RunBodyOfTest(OperationParser::ConsumeFnName, std::get<0>(GetParam()),
-                std::get<1>(GetParam()));
+TEST_P(StringTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/ConsumeString,
+                /*mangler=*/[](std::string i) { return i; });
 }
+INSTANTIATE_TEST_SUITE_P(
+    AllStringValues, StringTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"\"FOO bar _b&^a&^z_\"", "FOO bar _b&^a&^z_"},
+        {"\"\"", ""},
+        {"", absl::nullopt},
+    }));
 
+// CONSUME DATETIME TEST SUITE
+class DateTimeTestSuite : public ConsumeTestSuiteBase<absl::Time> {
+public:
+  void Compare(const absl::Time &a, const absl::Time &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(DateTimeTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/DateTimeParser::ConsumeDateTime,
+                /*mangler=*/[](std::string s) -> absl::Time {
+                  absl::Time resultant;
+                  std::string msg;
+                  absl::ParseTime(absl::RFC3339_full, s, &resultant, &msg);
+                  return resultant;
+                });
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllDateTimes, DateTimeTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"2016-01-02T03:04:05.678+08:00", "2016-01-02T03:04:05.678+08:00"},
+        {"", absl::nullopt},
+    }));
+
+// CONSUME AMOUNT TEST SUITE
+
+class AmountTestSuite : public ConsumeTestSuiteBase<Amount> {
+public:
+  void Compare(const Amount &a, const Amount &b) const override {
+    EXPECT_THAT(a, EqualsProto(b));
+  }
+};
+TEST_P(AmountTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/ConsumeAmount, /*mangler=*/ToProto<Amount>);
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllAmounts, AmountTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"\"foo\"", "str_amount: \"foo\""},
+        {"240", "int_amount: 240"},
+        {"240.248", "double_amount: 240.248"},
+        {"2016-01-02T03:04:05.678+08:00",
+         "timestamp_amount: { seconds:1451675045 }"},
+        {"$23", "money_amount: {dollars: 23 currency: USD}"},
+        {"$123.45", "money_amount: {dollars: 123 cents: 45 currency: USD}"},
+    }));
+
+// POINT LOCATION TEST SUITE
+
+class PointLocationTestSuite : public ConsumeTestSuiteBase<PointLocation> {
+public:
+  void Compare(const PointLocation &a, const PointLocation &b) const override {
+    EXPECT_THAT(a, EqualsProto(b));
+  }
+};
+TEST_P(PointLocationTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/LocationParser::ConsumePointLocation,
+                /*mangler=*/ToProto<PointLocation>);
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllPointLocations, PointLocationTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"A1", "row: 0 col: 0"},
+        {"AA100", "row: 99 col: 26"},
+        {"AA", absl::nullopt},
+        {"a1", absl::nullopt},
+        {"1A", absl::nullopt},
+    }));
+
+// RANGE LOCATION TEST SUITE
+
+class RangeLocationTestSuite : public ConsumeTestSuiteBase<RangeLocation> {
+public:
+  void Compare(const RangeLocation &a, const RangeLocation &b) const override {
+    EXPECT_THAT(a, EqualsProto(b));
+  }
+};
+TEST_P(RangeLocationTestSuite, LexAndParse) {
+  RunBodyOfTest(
+      /*parser=*/LocationParser::ConsumeRangeLocation,
+      /*mangler=*/ToProto<RangeLocation>);
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllRangeLocations, RangeLocationTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"A1:B2", "from_cell: { row: 0 col: 0 } to_cell: { "
+                  "row: 1 col: 1 }"},
+        {"A1:B", "from_cell: { row: 0 col: 0 } to_col: 1"},
+        {"A1:2", "from_cell: { row: 0 col: 0 } to_row: 1"},
+        {"A:B", "from_col: 0 to_col: 1"},
+        {"1:2", "from_row: 0 to_row: 1"},
+        {"1:A", absl::nullopt},
+        {"1:", absl::nullopt},
+        {"A:", absl::nullopt},
+    }));
+
+// CONSUME FN NAME TEST SUITE
+
+class ConsumeFnNameTestSuite : public ConsumeTestSuiteBase<std::string> {
+public:
+  void Compare(const std::string &a, const std::string &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/OperationParser::ConsumeFnName,
+                [](auto i) { return i; });
+}
 INSTANTIATE_TEST_SUITE_P(
     AllFnNames, ConsumeFnNameTestSuite,
-    testing::ValuesIn(
-        std::vector<std::pair<std::string, absl::optional<std::string>>>{
-            {"FOO", "FOO"},
-            {"FOO2", "FOO2"},
-            {"FOO_2", "FOO_2"},
-            {"2FOO", absl::nullopt},
-            {"?", absl::nullopt},
-        }));
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"FOO", "FOO"},
+        {"FOO2", "FOO2"},
+        {"FOO_2", "FOO_2"},
+        {"2FOO", absl::nullopt},
+        {"?", absl::nullopt},
+    }));
 
 // EXPRESSION TEST SUITE
 
-class ExpressionTestSuite
-    : public ConsumeTestSuiteBase<Expression>,
-      public testing::WithParamInterface<std::pair<std::string, std::string>> {
+class ExpressionTestSuite : public ConsumeTestSuiteBase<Expression> {
 public:
   void Compare(const Expression &a, const Expression &b) const override {
     EXPECT_THAT(a, EqualsProto(b));
   }
 };
-
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  RunBodyOfTest(ConsumeExpression, std::get<0>(GetParam()),
-                ToProto<Expression>(std::get<1>(GetParam())));
+  RunBodyOfTest(/*parser=*/ConsumeExpression,
+                /*mangler=*/ToProto<Expression>);
 }
-
 INSTANTIATE_TEST_SUITE_P(
     AllExpressions, ExpressionTestSuite,
-    testing::ValuesIn(std::vector<std::pair<std::string, std::string>>{
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"SUM(A1,A2)", R"pb(
 op_binary { 
   operation: "SUM" 
@@ -656,7 +552,8 @@ op_binary {
         //   )pb"},
     }));
 
-// TODO(ambuc): many more expression tests for unary, binary, ternary
+// TODO(ambuc): many more expression tests for unary, binary,
+// ternary
 // TODO(ambuc: infix notation!
 
 } // namespace
