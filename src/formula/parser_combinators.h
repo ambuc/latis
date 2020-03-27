@@ -58,8 +58,6 @@ AnyVariant(std::function<StatusOr<O>(TSpan *)>... ls) {
       if (const auto v = fn(&lcl); v.ok()) {
         *tspan = lcl;
         return v.ValueOrDie();
-        // } else {
-        //   std::cout << v.status() << std::endl;
       }
     }
     return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
@@ -85,8 +83,6 @@ static Prsr<T> Any(const std::vector<Prsr<T>> fns) {
       if (const auto v = fn(&lcl); v.ok()) {
         *tspan = lcl;
         return v.ValueOrDie();
-        // } else {
-        //   std::cout << v.status() << std::endl;
       }
     }
     return Status(::google::protobuf::util::error::INVALID_ARGUMENT,

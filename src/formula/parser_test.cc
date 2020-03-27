@@ -28,6 +28,7 @@ namespace formula {
 namespace {
 
 using ::google::protobuf::TextFormat;
+using ::google::protobuf::util::StatusOr;
 using ::testing::ContainerEq;
 using ::testing::ElementsAre;
 using ::testing::Eq;
@@ -494,98 +495,100 @@ TEST(Parser, ConsumeRangeLocationInvalidThree) {
   EXPECT_THAT(LocationParser::ConsumeRangeLocation(&tspan), Not(IsOk()));
 }
 
-TEST(Parser, ConsumeFnName) {
-  const std::string input = "FOO";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(OperationParser::ConsumeFnName(&tspan), IsOkAndHolds("FOO"));
-  EXPECT_THAT(tspan, IsEmpty());
+template <typename T> //
+class ConsumeTestSuiteBase : public testing::Test {
+public:
+  virtual void Compare(const T &a, const T &b) const = 0;
+  void RunBodyOfTest(Prsr<T> parser, std::string input,
+                     absl::optional<T> expectation_or_nullopt) {
+    std::vector<Token> tokens;
+    ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
+    TSpan tspan{tokens};
+
+    const auto thing_or_status = parser(&tspan);
+
+    if (expectation_or_nullopt.has_value()) {
+      T expectation = expectation_or_nullopt.value();
+
+      if (!thing_or_status.ok()) {
+        std::cout << thing_or_status.status();
+      }
+      EXPECT_TRUE(thing_or_status.ok());
+
+      const T actual = thing_or_status.ValueOrDie();
+
+      Compare(actual, expectation);
+
+      EXPECT_THAT(tspan, IsEmpty());
+    } else {
+      EXPECT_FALSE(thing_or_status.ok());
+      EXPECT_THAT(tspan, Not(IsEmpty()));
+      EXPECT_THAT(tspan.size(), Eq(tokens.size()));
+    }
+  }
+};
+
+// CONSUME FN NAME TEST SUITE
+
+class ConsumeFnNameTestSuite
+    : public ConsumeTestSuiteBase<std::string>,
+      public testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
+public:
+  void Compare(const std::string &a, const std::string &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+
+TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
+  RunBodyOfTest(OperationParser::ConsumeFnName, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
 }
 
-TEST(Parser, ConsumeFnNameTwo) {
-  const std::string input = "FOO2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(OperationParser::ConsumeFnName(&tspan), IsOkAndHolds("FOO2"));
-  EXPECT_THAT(tspan, IsEmpty());
-}
+INSTANTIATE_TEST_SUITE_P(
+    AllFnNames, ConsumeFnNameTestSuite,
+    testing::ValuesIn(
+        std::vector<std::pair<std::string, absl::optional<std::string>>>{
+            {"FOO", "FOO"},
+            {"FOO2", "FOO2"},
+            {"FOO_2", "FOO_2"},
+            {"2FOO", absl::nullopt},
+            {"?", absl::nullopt},
+        }));
 
-TEST(Parser, ConsumeFnNameThree) {
-  const std::string input = "FOO_2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(OperationParser::ConsumeFnName(&tspan), IsOkAndHolds("FOO_2"));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeFnNameInvalidOne) {
-  const std::string input = "2FOO";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(OperationParser::ConsumeFnName(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeFnNameInvalidEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(OperationParser::ConsumeFnName(&tspan), Not(IsOk()));
-}
+// EXPRESSION TEST SUITE
 
 class ExpressionTestSuite
-    : public testing::TestWithParam<std::pair<std::string, std::string>> {
+    : public ConsumeTestSuiteBase<Expression>,
+      public testing::WithParamInterface<std::pair<std::string, std::string>> {
 public:
-  void SetUp() {}
+  void Compare(const Expression &a, const Expression &b) const override {
+    EXPECT_THAT(a, EqualsProto(b));
+  }
 };
 
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  const std::string input = std::string(std::get<0>(GetParam()));
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      ConsumeExpression(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<Expression>(std::get<1>(GetParam())))));
-  EXPECT_THAT(tspan, IsEmpty());
+  RunBodyOfTest(ConsumeExpression, std::get<0>(GetParam()),
+                ToProto<Expression>(std::get<1>(GetParam())));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     AllExpressions, ExpressionTestSuite,
     testing::ValuesIn(std::vector<std::pair<std::string, std::string>>{
         {"SUM(A1,A2)", R"pb(
-                         op_binary {
-                           operation: "SUM"
-                           term1: { lookup: { row: 0 col: 0} }
-                           term2: { lookup: { row: 1 col: 0} }
-                         })pb"},
-    }));
-
-TEST(Parser, ConsumeOpUnary) {
-  const std::string input = "NEG(A1)";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeExpression(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
+op_binary { 
+  operation: "SUM" 
+  term1: { lookup: { row: 0 col: 0} } 
+  term2: { lookup: { row: 1 col: 0} } 
+}
+)pb"},
+        {"NEG(A1)", R"pb(
 op_unary { 
   operation: "NEG" 
-  term1: { lookup: { row: 0 col: 0 } } 
-})pb"))));
-  EXPECT_THAT(tspan, IsEmpty());
+  term1: { lookup : { row : 0 col : 0 } } 
 }
-
-TEST(Parser, ConsumeOpUnaryNested) {
-  const std::string input = "NEG(NEG(A1))";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeExpression(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
+)pb"},
+        {"NEG(NEG(A1))", R"pb(
 op_unary { 
   operation: "NEG" 
   term1: { 
@@ -594,17 +597,9 @@ op_unary {
       term1: { lookup: { row: 0 col: 0 } } 
     }
   }
-})pb"))));
-  EXPECT_THAT(tspan, IsEmpty());
 }
-
-TEST(Parser, ConsumeOpBinaryNested) {
-  const std::string input = "SUM(A1,SUM(A2,A3))";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeExpression(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
+         )pb"},
+        {"SUM(A1,SUM(A2,A3))", R"pb(
 op_binary { 
   operation: "SUM" 
   term1: { lookup: { row: 0 col: 0 } } 
@@ -615,85 +610,51 @@ op_binary {
       term2: { lookup: { row: 2 col: 0 } }
     }
   }
-})pb"))));
-  EXPECT_THAT(tspan, IsEmpty());
+})pb"},
+        {"3+2", R"pb(
+op_binary {
+  operation: "PLUS"
+  term1: { value: { int_amount: 3 } }
+  term2: { value: { int_amount: 2 } }
 }
+)pb"},
 
-TEST(Parser, ConsumeOpBinaryInfix) {
-  const std::string input = "3+2";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
+        //        {"(3+2)", R"pb(
+        //   op_binary {
+        //    operation: "PLUS"
+        //    term1: { value: { int_amount: 3 } }
+        //    term2: { value: { int_amount: 2 } }
+        //  }
+        //  )pb"},
 
-  EXPECT_THAT(ConsumeExpression(&tspan),
-              IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
-   op_binary {
-    operation: "PLUS"
-    term1: { value: { int_amount: 3 } }
-    term2: { value: { int_amount: 2 } }
-  })pb"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
+        // {"3+(2+1)", R"pb(
+        //     op_binary {
+        //      operation: "PLUS"
+        //      term1: { value: { int_amount: 3 } }
+        //      term2: {
+        //       op_binary {
+        //        operation: "PLUS"
+        //        term1: { value: { int_amount: 2 } }
+        //        term2: { value: { int_amount: 1 } }
+        //       }
+        //      }
+        //    }
+        //    )pb"},
 
-// TEST(Parser, ConsumeParentheses) {
-//   const std::string input = "(3+2)";
-//   std::vector<Token> tokens;
-//   ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-//   TSpan tspan{tokens};
-//
-//   EXPECT_THAT(ConsumeExpression(&tspan),
-//               IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
-//    op_binary {
-//     operation: "PLUS"
-//     term1: { value: { int_amount: 3 } }
-//     term2: { value: { int_amount: 2 } }
-//   })pb"))));
-//   EXPECT_THAT(tspan, IsEmpty());
-// }
-
-// TEST(Parser, ConsumeOpBinaryNestedInfix) {
-//   const std::string input = "3+(2+1)";
-//   std::vector<Token> tokens;
-//   ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-//   TSpan tspan{tokens};
-//
-//   EXPECT_THAT(ConsumeExpression(&tspan),
-//               IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
-//    op_binary {
-//     operation: "PLUS"
-//     term1: { value: { int_amount: 3 } }
-//     term2: {
-//      op_binary {
-//       operation: "PLUS"
-//       term1: { value: { int_amount: 2 } }
-//       term2: { value: { int_amount: 1 } }
-//      }
-//     }
-//   })pb"))));
-//   EXPECT_THAT(tspan, IsEmpty());
-// }
-//
-// TEST(Parser, ConsumeOpBinaryNestedInfixTwo) {
-//   const std::string input = "(3+2)+1";
-//   std::vector<Token> tokens;
-//   ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-//   TSpan tspan{tokens};
-//
-//   EXPECT_THAT(ConsumeExpression(&tspan),
-//               IsOkAndHolds(EqualsProto(ToProto<Expression>(R"pb(
-//    op_binary {
-//     operation: "PLUS"
-//     term1: {
-//      op_binary {
-//       operation: "PLUS"
-//       term1: { value: { int_amount: 3 } }
-//       term2: { value: { int_amount: 2 } }
-//      }
-//     }
-//     term2: { value: { int_amount: 1 } }
-//   })pb"))));
-//   EXPECT_THAT(tspan, IsEmpty());
-// }
+        // {"(3+2)+1", R"pb(
+        //    op_binary {
+        //     operation: "PLUS"
+        //     term1: {
+        //      op_binary {
+        //       operation: "PLUS"
+        //       term1: { value: { int_amount: 3 } }
+        //       term2: { value: { int_amount: 2 } }
+        //      }
+        //     }
+        //     term2: { value: { int_amount: 1 } }
+        //   }
+        //   )pb"},
+    }));
 
 // TODO(ambuc): many more expression tests for unary, binary, ternary
 // TODO(ambuc: infix notation!
