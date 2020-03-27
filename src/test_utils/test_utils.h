@@ -30,13 +30,23 @@ using ::testing::Matches;
 // Matchers for
 // https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/stubs/status.h.
 //
-MATCHER(IsOk, "") { return arg.ok(); }
+MATCHER(IsOk, "") {
+  *result_listener << arg.status();
+  return arg.ok();
+}
 
 MATCHER_P(IsOkAndHolds, m, "") {
+  *result_listener << arg.status();
   return arg.ok() && Matches(m)(arg.ValueOrDie());
 }
 
 MATCHER_P(EqualsProto, p, "") {
+  // TODO(ambuc): get this working.
+  // std::string msg;
+  // ::google::protobuf::util::MessageDifferencer::ReportDifferencesToString(&msg);
+
+  // *result_listener << msg;
+
   return ::google::protobuf::util::MessageDifferencer::Equals(arg, p);
 }
 

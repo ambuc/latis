@@ -46,29 +46,18 @@ public:
     ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
     TSpan tspan{tokens};
 
-    const auto thing_or_status = parser(&tspan);
+    const auto object_or_status = parser(&tspan);
 
     if (expectation_or_nullopt.has_value()) {
-      T expectation = expectation_or_nullopt.value();
-
-      if (!thing_or_status.ok()) {
-        std::cout << thing_or_status.status();
-      }
-      EXPECT_TRUE(thing_or_status.ok());
-
-      const T actual = thing_or_status.ValueOrDie();
-
-      Compare(actual, expectation);
-
-      EXPECT_THAT(tspan, IsEmpty());
+      ASSERT_THAT(object_or_status, IsOk());
+      Compare(object_or_status.ValueOrDie(), expectation_or_nullopt.value());
+      ASSERT_THAT(tspan, IsEmpty());
     } else {
-      EXPECT_FALSE(thing_or_status.ok());
-
+      ASSERT_FALSE(object_or_status.ok());
       if (!input.empty()) {
-        EXPECT_THAT(tspan, Not(IsEmpty()));
+        ASSERT_THAT(tspan, Not(IsEmpty()));
       }
-
-      EXPECT_THAT(tspan.size(), Eq(tokens.size()));
+      ASSERT_THAT(tspan.size(), Eq(tokens.size()));
     }
   }
 };
@@ -79,7 +68,7 @@ class IntegerTestSuite : public ConsumeTestSuiteBase<int>,
                          public ::testing::WithParamInterface<
                              std::pair<std::string, absl::optional<int>>> {
 public:
-  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+  void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(IntegerTestSuite, LexAndParse) {
   RunBodyOfTest(/*parser=*/ConsumeInt, std::get<0>(GetParam()),
@@ -100,7 +89,7 @@ class DoubleTestSuite : public ConsumeTestSuiteBase<double>,
                             std::pair<std::string, absl::optional<double>>> {
 public:
   void Compare(const double &a, const double &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(DoubleTestSuite, LexAndParse) {
@@ -125,7 +114,7 @@ class NumericTestSuite
 public:
   void Compare(const absl::variant<double, int> &a,
                const absl::variant<double, int> &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(NumericTestSuite, LexAndParse) {
@@ -151,7 +140,7 @@ class CurrencyTestSuite
 public:
   void Compare(const Money::Currency &a,
                const Money::Currency &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(CurrencyTestSuite, LexAndParse) {
@@ -201,7 +190,7 @@ class TimeZoneTestSuite
 public:
   void Compare(const absl::TimeZone &a,
                const absl::TimeZone &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(TimeZoneTestSuite, LexAndParse) {
@@ -222,7 +211,7 @@ class TwoDigitTestSuite : public ConsumeTestSuiteBase<int>,
                           public ::testing::WithParamInterface<
                               std::pair<std::string, absl::optional<int>>> {
 public:
-  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+  void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(TwoDigitTestSuite, LexAndParse) {
   RunBodyOfTest(/*parser=*/Consume2Digit, std::get<0>(GetParam()),
@@ -241,7 +230,7 @@ class FourDigitTestSuite : public ConsumeTestSuiteBase<int>,
                            public ::testing::WithParamInterface<
                                std::pair<std::string, absl::optional<int>>> {
 public:
-  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+  void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(FourDigitTestSuite, LexAndParse) {
   RunBodyOfTest(/*parser=*/Consume4Digit, std::get<0>(GetParam()),
@@ -262,7 +251,7 @@ class StringTestSuite
           std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const std::string &a, const std::string &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(StringTestSuite, LexAndParse) {
@@ -284,7 +273,7 @@ class DateTimeTestSuite
           std::pair<std::string, absl::optional<absl::Time>>> {
 public:
   void Compare(const absl::Time &a, const absl::Time &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(DateTimeTestSuite, LexAndParse) {
@@ -408,7 +397,7 @@ class ConsumeFnNameTestSuite
           std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const std::string &a, const std::string &b) const override {
-    EXPECT_EQ(a, b);
+    ASSERT_EQ(a, b);
   }
 };
 TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
@@ -435,7 +424,7 @@ class ExpressionTestSuite
           std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const Expression &a, const Expression &b) const override {
-    EXPECT_THAT(a, EqualsProto(b));
+    ASSERT_THAT(a, EqualsProto(b));
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
@@ -486,49 +475,62 @@ op_binary {
     }
   }
 })pb"},
-        {"3+2", R"pb(
+
+        {
+            "3+2",
+            R"pb(
 op_binary {
   operation: "PLUS"
   term1: { value: { int_amount: 3 } }
   term2: { value: { int_amount: 2 } }
 }
-)pb"},
+)pb",
+        },
 
-        //        {"(3+2)", R"pb(
-        //   op_binary {
-        //    operation: "PLUS"
-        //    term1: { value: { int_amount: 3 } }
-        //    term2: { value: { int_amount: 2 } }
-        //  }
-        //  )pb"},
+        {
+            "(3+2)",
+            R"pb(
+           op_binary {
+            operation: "PLUS"
+            term1: { value: { int_amount: 3 } }
+            term2: { value: { int_amount: 2 } }
+          }
+          )pb",
+        },
 
-        // {"3+(2+1)", R"pb(
-        //     op_binary {
-        //      operation: "PLUS"
-        //      term1: { value: { int_amount: 3 } }
-        //      term2: {
-        //       op_binary {
-        //        operation: "PLUS"
-        //        term1: { value: { int_amount: 2 } }
-        //        term2: { value: { int_amount: 1 } }
-        //       }
-        //      }
-        //    }
-        //    )pb"},
+        {
+            "3+(2+1)",
+            R"pb(
+            op_binary {
+             operation: "PLUS"
+             term1: { value: { int_amount: 3 } }
+             term2: {
+              op_binary {
+               operation: "PLUS"
+               term1: { value: { int_amount: 2 } }
+               term2: { value: { int_amount: 1 } }
+              }
+             }
+           }
+           )pb",
+        },
 
-        // {"(3+2)+1", R"pb(
-        //    op_binary {
-        //     operation: "PLUS"
-        //     term1: {
-        //      op_binary {
-        //       operation: "PLUS"
-        //       term1: { value: { int_amount: 3 } }
-        //       term2: { value: { int_amount: 2 } }
-        //      }
-        //     }
-        //     term2: { value: { int_amount: 1 } }
-        //   }
-        //   )pb"},
+        {
+            "(3+2)+1",
+            R"pb(
+           op_binary {
+            operation: "PLUS"
+            term1: {
+             op_binary {
+              operation: "PLUS"
+              term1: { value: { int_amount: 3 } }
+              term2: { value: { int_amount: 2 } }
+             }
+            }
+            term2: { value: { int_amount: 1 } }
+          }
+          )pb",
+        },
     }));
 
 // TODO(ambuc): many more expression tests for unary, binary,
