@@ -33,222 +33,14 @@ using ::testing::Not;
 using ::testing::ValuesIn;
 using ::testing::VariantWith;
 
-TEST(Parser, ConsumeInteger) {
-  const std::string input = "123";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeInt(&tspan), IsOkAndHolds(123));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeIntegerEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeInt(&tspan), Not(IsOk()));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeDoubleOne) {
-  const std::string input = "4.605";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeDouble(&tspan), IsOkAndHolds(4.605));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeDoubleTwo) {
-  const std::string input = ".605";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeDouble(&tspan), IsOkAndHolds(0.605));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeDoubleThree) {
-  const std::string input = "42.";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeDouble(&tspan), IsOkAndHolds(42.0));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeDoubleEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeDouble(&tspan), Not(IsOk()));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeNumericOne) {
-  const std::string input = "42";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeNumeric(&tspan), IsOkAndHolds(VariantWith<int>(42)));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeNumericTwo) {
-  const std::string input = "42.234";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeNumeric(&tspan),
-              IsOkAndHolds(VariantWith<double>(42.234)));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeNumericEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(ConsumeNumeric(&tspan), Not(IsOk()));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeCurrencyUSD) {
-  const std::string input = "USD";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeCurrency(&tspan), IsOkAndHolds(Money::USD));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeCurrencyCAD) {
-  const std::string input = "CAD";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeCurrency(&tspan), IsOkAndHolds(Money::CAD));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeCurrencyDollarSign) {
-  const std::string input = "$";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeCurrency(&tspan), IsOkAndHolds(Money::USD));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeCurrencyEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeCurrency(&tspan), Not(IsOk()));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeMoneyOne) {
-  const std::string input = "USD3";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(
-      MoneyParser::ConsumeMoney(&tspan),
-      IsOkAndHolds(EqualsProto(ToProto<Money>("dollars: 3 currency: USD"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeMoneyTwo) {
-  const std::string input = "CAD4.56";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeMoney(&tspan),
-              IsOkAndHolds(EqualsProto(
-                  ToProto<Money>("dollars: 4 cents: 56 currency: CAD"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeMoneyThree) {
-  const std::string input = "$123.456";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(MoneyParser::ConsumeMoney(&tspan),
-              IsOkAndHolds(EqualsProto(
-                  ToProto<Money>("dollars: 123 cents: 45 currency: USD"))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, Consume2DigitOne) {
-  const std::string input = "24";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume2Digit(&tspan), IsOkAndHolds(24));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, Consume2DigitTwo) {
-  const std::string input = "99AB";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume2Digit(&tspan), IsOkAndHolds(99));
-}
-
-TEST(Parser, Consume2DigitEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(Consume2Digit(&tspan), Not(IsOk()));
-}
-
-TEST(Parser, ConsumeTimeOffset) {
-  const std::string input = "+15:00";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(DateTimeParser::ConsumeTimeOffset(&tspan),
-              IsOkAndHolds(absl::FixedTimeZone(15 * 60 * 60)));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeTimeOffsetTwo) {
-  const std::string input = "-12:34";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(DateTimeParser::ConsumeTimeOffset(&tspan),
-              IsOkAndHolds(absl::FixedTimeZone(-1 * (12 * 60 * 60 + 34 * 60))));
-  EXPECT_THAT(tspan, IsEmpty());
-}
-
-TEST(Parser, ConsumeTimeOffsetEmpty) {
-  const std::string input = "";
-  std::vector<Token> tokens;
-  ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
-  TSpan tspan{tokens};
-  EXPECT_THAT(DateTimeParser::ConsumeTimeOffset(&tspan), Not(IsOk()));
-}
-
 template <typename T> //
-class ConsumeTestSuiteBase
-    : public testing::TestWithParam<
-          std::pair<std::string, absl::optional<std::string>>> {
+class ConsumeTestSuiteBase : public ::testing::Test {
 public:
   virtual void Compare(const T &a, const T &b) const = 0;
 
   // Ahh yes.... the garden of forking paths.
-  void RunBodyOfTest(Prsr<T> parser, std::function<T(std::string)> mangler) {
-    std::string input = std::get<0>(GetParam());
-    absl::optional<std::string> expectation_or_nullopt =
-        std::get<1>(GetParam());
+  void RunBodyOfTest(Prsr<T> parser, std::string input,
+                     absl::optional<T> expectation_or_nullopt) {
 
     std::vector<Token> tokens;
     ASSERT_OK_AND_ASSIGN(tokens, Lex(input));
@@ -257,7 +49,7 @@ public:
     const auto thing_or_status = parser(&tspan);
 
     if (expectation_or_nullopt.has_value()) {
-      T expectation = mangler(expectation_or_nullopt.value());
+      T expectation = expectation_or_nullopt.value();
 
       if (!thing_or_status.ok()) {
         std::cout << thing_or_status.status();
@@ -281,55 +73,201 @@ public:
   }
 };
 
-class TwoDigitTestSuite : public ConsumeTestSuiteBase<int> {
+// INTEGER TEST SUITE
+
+class IntegerTestSuite : public ConsumeTestSuiteBase<int>,
+                         public ::testing::WithParamInterface<
+                             std::pair<std::string, absl::optional<int>>> {
+public:
+  void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
+};
+TEST_P(IntegerTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/ConsumeInt, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllIntegers, IntegerTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<int>>>{
+        {"123", 123},
+        {"0", 0},
+        {"", absl::nullopt},
+    }));
+
+// DOUBLE TEST SUITE
+
+class DoubleTestSuite : public ConsumeTestSuiteBase<double>,
+                        public ::testing::WithParamInterface<
+                            std::pair<std::string, absl::optional<double>>> {
+public:
+  void Compare(const double &a, const double &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(DoubleTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/ConsumeDouble, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllDoubles, DoubleTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<double>>>{
+        {"4.605", 4.605},
+        {".605", 0.605},
+        {"42.", 42.0},
+        {"", absl::nullopt},
+    }));
+
+// NUMERIC TEST SUITE
+
+class NumericTestSuite
+    : public ConsumeTestSuiteBase<absl::variant<double, int>>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<absl::variant<double, int>>>> {
+public:
+  void Compare(const absl::variant<double, int> &a,
+               const absl::variant<double, int> &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(NumericTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/ConsumeNumeric, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllNumeric, NumericTestSuite,
+    ValuesIn(std::vector<std::pair<std::string,
+                                   absl::optional<absl::variant<double, int>>>>{
+        {"4.605", double(4.605)},
+        {".605", 0.605},
+        {"42", int(42)},
+        {"", absl::nullopt},
+    }));
+
+// CURRENCY TEST SUITE
+
+class CurrencyTestSuite
+    : public ConsumeTestSuiteBase<Money::Currency>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<Money::Currency>>> {
+public:
+  void Compare(const Money::Currency &a,
+               const Money::Currency &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(CurrencyTestSuite, LexAndParse) {
+  RunBodyOfTest(/*parser=*/MoneyParser::ConsumeCurrency,
+                std::get<0>(GetParam()), std::get<1>(GetParam()));
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllCurrencies, CurrencyTestSuite,
+    ValuesIn(
+        std::vector<std::pair<std::string, absl::optional<Money::Currency>>>{
+            {"$", Money::USD},
+            {"USD", Money::USD},
+            {"CAD", Money::CAD},
+            {"", absl::nullopt},
+        }));
+
+class MoneyTestSuite
+    : public ConsumeTestSuiteBase<Money>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
+public:
+  void Compare(const Money &a, const Money &b) const override {
+    EXPECT_THAT(a, EqualsProto(b));
+  }
+};
+TEST_P(MoneyTestSuite, LexAndParse) {
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
+  RunBodyOfTest(
+      /*parser=*/MoneyParser::ConsumeMoney, std::get<0>(GetParam()),
+      /*expectation_or_nullopt=*/maybe_expectation.has_value()
+          ? absl::optional<Money>(ToProto<Money>(maybe_expectation.value()))
+          : absl::nullopt);
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllMoney, MoneyTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"USD3", "dollars: 3 currency: USD"},
+        {"CAD4.56", "dollars: 4 cents: 56 currency: CAD"},
+        {"$123.456", "dollars: 123 cents: 45 currency: USD"},
+        {"", absl::nullopt},
+    }));
+
+class TimeZoneTestSuite
+    : public ConsumeTestSuiteBase<absl::TimeZone>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<absl::TimeZone>>> {
+public:
+  void Compare(const absl::TimeZone &a,
+               const absl::TimeZone &b) const override {
+    EXPECT_EQ(a, b);
+  }
+};
+TEST_P(TimeZoneTestSuite, LexAndParse) {
+  RunBodyOfTest(
+      /*parser=*/DateTimeParser::ConsumeTimeOffset, std::get<0>(GetParam()),
+      std::get<1>(GetParam()));
+}
+INSTANTIATE_TEST_SUITE_P(
+    AllTimeZones, TimeZoneTestSuite,
+    ValuesIn(
+        std::vector<std::pair<std::string, absl::optional<absl::TimeZone>>>{
+            {"+15:00", absl::FixedTimeZone(15 * 60 * 60)},
+            {"-12:34", absl::FixedTimeZone(-1 * (12 * 60 * 60 + 34 * 60))},
+            {"", absl::nullopt},
+        }));
+
+class TwoDigitTestSuite : public ConsumeTestSuiteBase<int>,
+                          public ::testing::WithParamInterface<
+                              std::pair<std::string, absl::optional<int>>> {
 public:
   void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
 };
 TEST_P(TwoDigitTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/Consume2Digit, /*mangler=*/[](std::string s) -> int {
-    int i;
-    (void)absl::SimpleAtoi(s, &i);
-    return i;
-  });
+  RunBodyOfTest(/*parser=*/Consume2Digit, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
     AllTwoDigitValues, TwoDigitTestSuite,
-    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"24", "24"},
-        {"99", "99"},
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<int>>>{
+        {"24", 24},
+        {"99", 99},
         {"999", absl::nullopt},
         {"", absl::nullopt},
     }));
 
-class FourDigitTestSuite : public ConsumeTestSuiteBase<int> {
+class FourDigitTestSuite : public ConsumeTestSuiteBase<int>,
+                           public ::testing::WithParamInterface<
+                               std::pair<std::string, absl::optional<int>>> {
 public:
   void Compare(const int &a, const int &b) const override { EXPECT_EQ(a, b); }
 };
 TEST_P(FourDigitTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/Consume4Digit, /*mangler=*/[](std::string s) -> int {
-    int i;
-    (void)absl::SimpleAtoi(s, &i);
-    return i;
-  });
+  RunBodyOfTest(/*parser=*/Consume4Digit, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
     AllFourDigitValues, FourDigitTestSuite,
-    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"2468", "2468"},
-        {"9999", "9999"},
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<int>>>{
+        {"2468", 2468},
+        {"9999", 9999},
         {"99999", absl::nullopt},
         {"", absl::nullopt},
     }));
 
-class StringTestSuite : public ConsumeTestSuiteBase<std::string> {
+class StringTestSuite
+    : public ConsumeTestSuiteBase<std::string>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const std::string &a, const std::string &b) const override {
     EXPECT_EQ(a, b);
   }
 };
 TEST_P(StringTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/ConsumeString,
-                /*mangler=*/[](std::string i) { return i; });
+  RunBodyOfTest(/*parser=*/ConsumeString, std::get<0>(GetParam()),
+                std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
     AllStringValues, StringTestSuite,
@@ -340,7 +278,10 @@ INSTANTIATE_TEST_SUITE_P(
     }));
 
 // CONSUME DATETIME TEST SUITE
-class DateTimeTestSuite : public ConsumeTestSuiteBase<absl::Time> {
+class DateTimeTestSuite
+    : public ConsumeTestSuiteBase<absl::Time>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<absl::Time>>> {
 public:
   void Compare(const absl::Time &a, const absl::Time &b) const override {
     EXPECT_EQ(a, b);
@@ -348,30 +289,40 @@ public:
 };
 TEST_P(DateTimeTestSuite, LexAndParse) {
   RunBodyOfTest(/*parser=*/DateTimeParser::ConsumeDateTime,
-                /*mangler=*/[](std::string s) -> absl::Time {
-                  absl::Time resultant;
-                  std::string msg;
-                  absl::ParseTime(absl::RFC3339_full, s, &resultant, &msg);
-                  return resultant;
-                });
+                std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
     AllDateTimes, DateTimeTestSuite,
-    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"2016-01-02T03:04:05.678+08:00", "2016-01-02T03:04:05.678+08:00"},
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<absl::Time>>>{
+        {"2016-01-02T03:04:05.678+08:00",
+         []() -> absl::Time {
+           std::string input = "2016-01-02T03:04:05.678+08:00";
+           absl::Time resultant;
+           std::string msg;
+           absl::ParseTime(absl::RFC3339_full, input, &resultant, &msg);
+           return resultant;
+         }()},
         {"", absl::nullopt},
     }));
 
 // CONSUME AMOUNT TEST SUITE
 
-class AmountTestSuite : public ConsumeTestSuiteBase<Amount> {
+class AmountTestSuite
+    : public ConsumeTestSuiteBase<Amount>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const Amount &a, const Amount &b) const override {
     EXPECT_THAT(a, EqualsProto(b));
   }
 };
 TEST_P(AmountTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/ConsumeAmount, /*mangler=*/ToProto<Amount>);
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
+  RunBodyOfTest(
+      /*parser=*/ConsumeAmount, std::get<0>(GetParam()),
+      /*expectation_or_nullopt=*/maybe_expectation.has_value()
+          ? absl::optional<Amount>(ToProto<Amount>(maybe_expectation.value()))
+          : absl::nullopt);
 }
 INSTANTIATE_TEST_SUITE_P(
     AllAmounts, AmountTestSuite,
@@ -387,15 +338,23 @@ INSTANTIATE_TEST_SUITE_P(
 
 // POINT LOCATION TEST SUITE
 
-class PointLocationTestSuite : public ConsumeTestSuiteBase<PointLocation> {
+class PointLocationTestSuite
+    : public ConsumeTestSuiteBase<PointLocation>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const PointLocation &a, const PointLocation &b) const override {
     EXPECT_THAT(a, EqualsProto(b));
   }
 };
 TEST_P(PointLocationTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/LocationParser::ConsumePointLocation,
-                /*mangler=*/ToProto<PointLocation>);
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
+  RunBodyOfTest(
+      /*parser=*/LocationParser::ConsumePointLocation, std::get<0>(GetParam()),
+      /*expectation_or_nullopt=*/maybe_expectation.has_value()
+          ? absl::optional<PointLocation>(
+                ToProto<PointLocation>(maybe_expectation.value()))
+          : absl::nullopt);
 }
 INSTANTIATE_TEST_SUITE_P(
     AllPointLocations, PointLocationTestSuite,
@@ -409,16 +368,23 @@ INSTANTIATE_TEST_SUITE_P(
 
 // RANGE LOCATION TEST SUITE
 
-class RangeLocationTestSuite : public ConsumeTestSuiteBase<RangeLocation> {
+class RangeLocationTestSuite
+    : public ConsumeTestSuiteBase<RangeLocation>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const RangeLocation &a, const RangeLocation &b) const override {
     EXPECT_THAT(a, EqualsProto(b));
   }
 };
 TEST_P(RangeLocationTestSuite, LexAndParse) {
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
   RunBodyOfTest(
-      /*parser=*/LocationParser::ConsumeRangeLocation,
-      /*mangler=*/ToProto<RangeLocation>);
+      /*parser=*/LocationParser::ConsumeRangeLocation, std::get<0>(GetParam()),
+      /*expectation_or_nullopt=*/maybe_expectation.has_value()
+          ? absl::optional<RangeLocation>(
+                ToProto<RangeLocation>(maybe_expectation.value()))
+          : absl::nullopt);
 }
 INSTANTIATE_TEST_SUITE_P(
     AllRangeLocations, RangeLocationTestSuite,
@@ -436,15 +402,20 @@ INSTANTIATE_TEST_SUITE_P(
 
 // CONSUME FN NAME TEST SUITE
 
-class ConsumeFnNameTestSuite : public ConsumeTestSuiteBase<std::string> {
+class ConsumeFnNameTestSuite
+    : public ConsumeTestSuiteBase<std::string>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const std::string &a, const std::string &b) const override {
     EXPECT_EQ(a, b);
   }
 };
 TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/OperationParser::ConsumeFnName,
-                [](auto i) { return i; });
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
+  RunBodyOfTest(
+      /*parser=*/OperationParser::ConsumeFnName, std::get<0>(GetParam()),
+      std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
     AllFnNames, ConsumeFnNameTestSuite,
@@ -458,51 +429,59 @@ INSTANTIATE_TEST_SUITE_P(
 
 // EXPRESSION TEST SUITE
 
-class ExpressionTestSuite : public ConsumeTestSuiteBase<Expression> {
+class ExpressionTestSuite
+    : public ConsumeTestSuiteBase<Expression>,
+      public ::testing::WithParamInterface<
+          std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const Expression &a, const Expression &b) const override {
     EXPECT_THAT(a, EqualsProto(b));
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  RunBodyOfTest(/*parser=*/ConsumeExpression,
-                /*mangler=*/ToProto<Expression>);
+  absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
+  RunBodyOfTest(
+      /*parser=*/ConsumeExpression, std::get<0>(GetParam()),
+      /*expectation_or_nullopt=*/maybe_expectation.has_value()
+          ? absl::optional<Expression>(
+                ToProto<Expression>(maybe_expectation.value()))
+          : absl::nullopt);
 }
 INSTANTIATE_TEST_SUITE_P(
     AllExpressions, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"SUM(A1,A2)", R"pb(
-op_binary { 
-  operation: "SUM" 
-  term1: { lookup: { row: 0 col: 0} } 
-  term2: { lookup: { row: 1 col: 0} } 
+op_binary {
+  operation: "SUM"
+  term1: { lookup: { row: 0 col: 0} }
+  term2: { lookup: { row: 1 col: 0} }
 }
 )pb"},
         {"NEG(A1)", R"pb(
-op_unary { 
-  operation: "NEG" 
-  term1: { lookup : { row : 0 col : 0 } } 
+op_unary {
+  operation: "NEG"
+  term1: { lookup : { row : 0 col : 0 } }
 }
 )pb"},
         {"NEG(NEG(A1))", R"pb(
-op_unary { 
-  operation: "NEG" 
-  term1: { 
-    op_unary { 
-      operation: "NEG" 
-      term1: { lookup: { row: 0 col: 0 } } 
+op_unary {
+  operation: "NEG"
+  term1: {
+    op_unary {
+      operation: "NEG"
+      term1: { lookup: { row: 0 col: 0 } }
     }
   }
 }
          )pb"},
         {"SUM(A1,SUM(A2,A3))", R"pb(
-op_binary { 
-  operation: "SUM" 
-  term1: { lookup: { row: 0 col: 0 } } 
-  term2: { 
-    op_binary { 
-      operation: "SUM" 
-      term1: { lookup: { row: 1 col: 0 } } 
+op_binary {
+  operation: "SUM"
+  term1: { lookup: { row: 0 col: 0 } }
+  term2: {
+    op_binary {
+      operation: "SUM"
+      term1: { lookup: { row: 1 col: 0 } }
       term2: { lookup: { row: 2 col: 0 } }
     }
   }
