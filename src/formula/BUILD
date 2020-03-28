@@ -96,6 +96,7 @@ cc_library(
         ":parser_combinators_lib",
         "//proto:latis_msg_cc_proto",
         "//src:xy_lib",
+        "//src/utils:cleanup",
         "//src/utils:status_macros",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/functional:bind_front",

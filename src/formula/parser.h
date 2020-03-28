@@ -21,6 +21,7 @@
 
 #include "src/formula/common.h"
 #include "src/formula/parser_combinators.h"
+#include "src/utils/cleanup.h"
 #include "src/utils/status_macros.h"
 
 #include "absl/container/flat_hash_set.h"
@@ -59,6 +60,9 @@ public:
   StatusOr<double> ConsumeDouble(TSpan *tspan);
 
   StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return AnyVariant<double, int>(
         absl::bind_front(&Parser::ConsumeDouble, this),
         absl::bind_front(&Parser::ConsumeInt, this))(tspan);
@@ -73,6 +77,9 @@ public:
   StatusOr<int> Consume4Digit(TSpan *tspan);
 
   StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return Any<Money::Currency>({
         absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
         absl::bind_front(&Parser::ConsumeCurrencyWord, this),
@@ -88,6 +95,9 @@ public:
   StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
 
   StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return Any<RangeLocation>({
         absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
         absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
@@ -109,9 +119,10 @@ private:
 
   // Logging w/ depth_
   void PrintStep(TSpan *tspan, const std::string &step) {
+    // std::cout << depth_ << std::endl;
     if (options_.should_log_verbosely) {
       std::cout << absl::StreamFormat("%sParsed %s as an %s",
-                                      std::string(' ', depth_),
+                                      std::string(depth_, ' '),
                                       PrintTSpan(tspan), step)
                 << std::endl;
     }
@@ -152,45 +163,69 @@ private:
   StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
 
   StatusOr<int> ConsumeDateFullYear(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return Consume4Digit(tspan);
   }
 
   StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     static auto r = [](int i) { return 1 <= i && i <= 12; };
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     static auto r = [](int i) { return 1 <= i && i <= 31; };
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     static auto r = [](int i) { return 0 <= i && i <= 23; };
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     static auto r = [](int i) { return 0 <= i && i <= 59; };
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     // Up to 60, counting leap seconds.
     static auto r = [](int i) { return 0 <= i && i <= 60; };
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return ConsumeDouble(tspan);
   }
 
   StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan);
 
   StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return Any<Expression::OpUnary>({
         absl::bind_front(&Parser::ConsumeOpUnaryText, this),
     })(tspan);
@@ -205,6 +240,9 @@ private:
   StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
 
   StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
+    depth_++;
+    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
     return Any<Expression::OpBinary>({
         absl::bind_front(&Parser::ConsumeOpBinaryText, this),
         absl::bind_front(&Parser::ConsumeOpBinaryInfix, this),

@@ -41,6 +41,9 @@ using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
 StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   if (tspan->empty()) {
     return Status(
         INVALID_ARGUMENT,
@@ -61,6 +64,8 @@ StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
 }
 
 StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
 
   TSpan lcl = *tspan;
 
@@ -77,6 +82,9 @@ StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
 }
 
 StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   std::tuple<absl::optional<int>, std::string_view, absl::optional<int>> t;
@@ -105,6 +113,9 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
 }
 
 StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::string_view resultant;
   ASSIGN_OR_RETURN_(resultant, ConsumeExact(Token::T::quote, &lcl));
@@ -115,6 +126,9 @@ StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
 }
 
 StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::string_view value;
   ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
@@ -132,6 +146,9 @@ StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
 }
 
 StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::string_view value;
   ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
@@ -150,6 +167,9 @@ StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
 
 // Expects "USD" or "CAD".
 StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   static std::unordered_map<std::string, Money::Currency> lookup_map{
       {"USD", Money::USD}, {"CAD", Money::CAD}};
 
@@ -158,6 +178,9 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
 }
 
 StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   if (TSpan lcl = *tspan; ConsumeExact(Token::T::dollar, &lcl).ok()) {
     PrintStep(tspan, "CURRENCY_SYMBOL");
     *tspan = lcl;
@@ -168,6 +191,9 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
 }
 
 StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   Money money;
 
@@ -197,6 +223,9 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
 }
 
 StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   std::tuple<std::string_view, int, std::string_view, int> t;
@@ -224,6 +253,9 @@ StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
 }
 
 StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   auto only_T = [](std::string_view s) -> bool { return s == "T"; };
 
   TSpan lcl = *tspan;
@@ -289,6 +321,9 @@ StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
 }
 
 StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   absl::variant<std::string, absl::Time, double, int, Money> amount;
@@ -324,6 +359,9 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
 }
 
 StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   auto tr = [](int i) -> int { return i - 1; };
   auto r = [](int i) -> bool { return i > 0; };
   return WithTransformation<int, int>(tr)(WithRestriction<int>(r)(
@@ -331,6 +369,9 @@ StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
 }
 
 StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   // TODO(ambuc): WithTransformationReturningOptional ?
   TSpan lcl = *tspan;
 
@@ -355,6 +396,9 @@ StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
 }
 
 StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   PointLocation resultant;
 
@@ -375,6 +419,9 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -405,6 +452,9 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -426,6 +476,9 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -450,6 +503,9 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
 // [A-Z0-9_]
 // TODO(ambuc): This could return a std::str_view into the underlying tspan.
 StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -494,6 +550,9 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
 }
 
 StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view> t;
@@ -520,6 +579,9 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
 }
 
 StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view,
@@ -553,6 +615,9 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
 }
 
 StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -583,6 +648,9 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
 }
 
 StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
   RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
@@ -610,6 +678,9 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
 }
 
 StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   std::tuple<std::string_view, Expression, std::string_view> t;
   ASSIGN_OR_RETURN_(
@@ -625,6 +696,9 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
 }
 
 StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view,
@@ -664,6 +738,9 @@ StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
 }
 
 StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
+  depth_++;
+  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+
   TSpan lcl = *tspan;
   Expression resultant;
 
