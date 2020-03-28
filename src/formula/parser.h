@@ -38,43 +38,8 @@
 namespace latis {
 namespace formula {
 
-enum class Step {
-  kExpression,
-  kOpTernary,
-  kOpBinary,
-  kOpBinaryText,
-  kOpBinaryInfix,
-  kOpUnary,
-  kAmount,
-};
-std::string Print(Step s) {
-  switch (s) {
-  case (Step::kExpression):
-    return "expression  ";
-  case (Step::kOpTernary):
-    return "ternary     ";
-  case (Step::kOpBinary):
-    return "binary      ";
-  case (Step::kOpBinaryText):
-    return "binary_text ";
-  case (Step::kOpBinaryInfix):
-    return "binary_infix";
-  case (Step::kOpUnary):
-    return "unary       ";
-  case (Step::kAmount):
-    return "amount      ";
-  }
-  return "";
-}
-
 class Parser {
 public:
-  // Consumes the token |type| off |tspan| and returns the token's held
-  // |.value|.
-  StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
-
-  // Consumes a |Token::T::numeric| token off |tspan| and parses it as an
-  // integer.
   StatusOr<int> ConsumeInt(TSpan *tspan);
 
   StatusOr<double> ConsumeDouble(TSpan *tspan);
@@ -93,12 +58,6 @@ public:
 
   StatusOr<int> Consume4Digit(TSpan *tspan);
 
-  // Expects "USD" or "CAD"
-  StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
-
-  // Expects "$"
-  StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan);
-
   StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
     return Any<Money::Currency>({
         absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
@@ -107,6 +66,97 @@ public:
   }
 
   StatusOr<Money> ConsumeMoney(TSpan *tspan);
+  StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
+  StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
+
+  StatusOr<Amount> ConsumeAmount(TSpan *tspan);
+
+  StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
+
+  StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
+    return Any<RangeLocation>({
+        absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
+        absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
+        absl::bind_front(&Parser::ConsumeRangeLocationColThenCol, this),
+    })(tspan);
+  }
+
+  StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
+
+  // [A-Z0-9_]
+  StatusOr<std::string> ConsumeFnName(TSpan *tspan);
+
+  StatusOr<Expression> ConsumeExpression(TSpan *tspan);
+
+private:
+  // Private enum for counting/caching steps
+  enum class Step {
+    kExpression,
+    kOpTernary,
+    kOpBinary,
+    kOpBinaryText,
+    kOpBinaryInfix,
+    kOpUnary,
+    kAmount
+  };
+
+  std::string Print(Step s) {
+    switch (s) {
+    case (Step::kExpression):
+      return "expression  ";
+    case (Step::kOpTernary):
+      return "ternary     ";
+    case (Step::kOpBinary):
+      return "binary      ";
+    case (Step::kOpBinaryText):
+      return "binary_text ";
+    case (Step::kOpBinaryInfix):
+      return "binary_infix";
+    case (Step::kOpUnary):
+      return "unary       ";
+    case (Step::kAmount):
+      return "amount      ";
+    }
+    return "";
+  }
+
+  using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
+  using Cache = absl::flat_hash_set<CacheItem>;
+
+  Cache *GetCache() {
+    static Cache cache{};
+    return &cache;
+  }
+
+  // NB: RepeatGuards are only necessary for right-recursive expressions... I
+  // think.
+  Status RepeatGuard(Step step, TSpan *tspan) {
+    CacheItem item = {step, tspan->data(), tspan->size()};
+
+    if (GetCache()->contains(item)) {
+      return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
+                    "RepeatGuard denied! Already been here");
+    }
+    GetCache()->insert(item);
+
+    return OkStatus();
+  }
+
+  // Private consumers.
+
+  // Consumes the token |type| off |tspan| and returns the token's held
+  // |.value|.
+  StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
+
+  StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
+  StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan);
+
+  StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
+  StatusOr<int> ConsumeColIndicator(TSpan *tspan);
+
+  StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan);
+  StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
+  StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
 
   StatusOr<int> ConsumeDateFullYear(TSpan *tspan) {
     return Consume4Digit(tspan);
@@ -144,32 +194,6 @@ public:
   StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
     return ConsumeDouble(tspan);
   }
-  StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
-  StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
-
-  StatusOr<Amount> ConsumeAmount(TSpan *tspan);
-
-  StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
-  StatusOr<int> ConsumeColIndicator(TSpan *tspan);
-
-  StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan);
-  StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
-  StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
-
-  StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
-
-  StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
-    return Any<RangeLocation>({
-        absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
-        absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
-        absl::bind_front(&Parser::ConsumeRangeLocationColThenCol, this),
-    })(tspan);
-  }
-
-  StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
-
-  // [A-Z0-9_]
-  StatusOr<std::string> ConsumeFnName(TSpan *tspan);
 
   StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan);
 
@@ -195,31 +219,6 @@ public:
   }
 
   StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
-
-  StatusOr<Expression> ConsumeExpression(TSpan *tspan);
-
-private:
-  using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
-  using Cache = absl::flat_hash_set<CacheItem>;
-
-  Cache *GetCache() {
-    static Cache cache{};
-    return &cache;
-  }
-
-  // NB: RepeatGuards are only necessary for right-recursive expressions... I
-  // think.
-  Status RepeatGuard(Step step, TSpan *tspan) {
-    CacheItem item = {step, tspan->data(), tspan->size()};
-
-    if (GetCache()->contains(item)) {
-      return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                    "RepeatGuard denied! Already been here");
-    }
-    GetCache()->insert(item);
-
-    return OkStatus();
-  }
 };
 
 } // namespace formula
