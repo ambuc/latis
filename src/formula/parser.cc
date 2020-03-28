@@ -579,17 +579,22 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
   PrintAttempt("OP_UNARY_TEXT");
   TSpan lcl = *tspan;
 
-  std::tuple<std::string, Expression> t;
+  std::tuple<std::string, std::vector<Expression>> t;
   ASSIGN_OR_RETURN_(
-      t, (InSequence<std::string, Expression>(
-             // FN
-             absl::bind_front(&Parser::ConsumeFnName, this),
-             // PARENTHESES
-             absl::bind_front(&Parser::ConsumeParentheses, this))(&lcl)));
+      t,
+      (InSequence<std::string, std::vector<Expression>>(
+          // FN
+          absl::bind_front(&Parser::ConsumeFnName, this),
+          // PARENTHESES
+          WithRestriction<std::vector<Expression>>(
+              [](const std::vector<Expression> &exprs) -> bool {
+                return exprs.size() == 1;
+              })(absl::bind_front(&Parser::ConsumeParentheses, this)))(&lcl)));
 
   Expression::OpUnary resultant;
   resultant.set_operation(std::get<0>(t));
-  *resultant.mutable_term1() = std::get<1>(t);
+  assert(std::get<1>(t).size() == 1);
+  *resultant.mutable_term1() = std::get<1>(t)[0];
 
   PrintStep(&lcl, tspan, "OP_UNARY_TEXT");
   *tspan = lcl;
@@ -695,7 +700,7 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
+StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
   PrintAttempt("PARENTHESES");
@@ -741,7 +746,7 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
 
   PrintStep(&lcl, tspan, "PARENTHESES");
   *tspan = lcl;
-  return std::get<1>(t);
+  return std::vector<Expression>{std::get<1>(t)};
 }
 
 StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
@@ -795,39 +800,46 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<Expression::OpUnary,   //
-                Expression::OpBinary,  //
-                Expression::OpTernary, //
-                Expression,            //
-                RangeLocation,         //
-                PointLocation,         //
-                Amount                 //
+  absl::variant<Expression::OpUnary,     //
+                Expression::OpBinary,    //
+                Expression::OpTernary,   //
+                std::vector<Expression>, //
+                RangeLocation,           //
+                PointLocation,           //
+                Amount                   //
                 >
       expression;
 
   ASSIGN_OR_RETURN_(
       expression,
-      (AnyVariant<Expression::OpUnary,                               //
-                  Expression::OpBinary,                              //
-                  Expression::OpTernary,                             //
-                  Expression,                                        //
-                  RangeLocation,                                     //
-                  PointLocation,                                     //
-                  Amount                                             //
-                  >(absl::bind_front(&Parser::ConsumeOpUnary, this), //
-                    absl::bind_front(&Parser::ConsumeOpBinary,
-                                     this), //
-                    absl::bind_front(&Parser::ConsumeOpTernary,
-                                     this),                                //
-                    absl::bind_front(&Parser::ConsumeParentheses, this),   //
-                    absl::bind_front(&Parser::ConsumeRangeLocation, this), //
-                    absl::bind_front(&Parser::ConsumePointLocation, this), //
-                    absl::bind_front(&Parser::ConsumeAmount, this)         //
-                    )(&lcl)));
+      (AnyVariant<Expression::OpUnary,     //
+                  Expression::OpBinary,    //
+                  Expression::OpTernary,   //
+                  std::vector<Expression>, //
+                  RangeLocation,           //
+                  PointLocation,           //
+                  Amount                   //
+                  >(
+          absl::bind_front(&Parser::ConsumeOpUnary, this), //
+          absl::bind_front(&Parser::ConsumeOpBinary,
+                           this), //
+          absl::bind_front(&Parser::ConsumeOpTernary,
+                           this), //
+          WithRestriction<std::vector<Expression>>(
+              [](const std::vector<Expression> exprs) -> bool {
+                return exprs.size() == 1;
+              })(absl::bind_front(&Parser::ConsumeParentheses, this)), //
+          absl::bind_front(&Parser::ConsumeRangeLocation, this),       //
+          absl::bind_front(&Parser::ConsumePointLocation, this),       //
+          absl::bind_front(&Parser::ConsumeAmount, this)               //
+          )(&lcl)));
 
   std::visit(
       overload{
-          [&resultant](Expression e) { resultant = e; },
+          [&resultant](std::vector<Expression> exprs) {
+            assert(exprs.size() == 1);
+            resultant = exprs[0];
+          },
           [&resultant](Expression::OpTernary o) {
             *resultant.mutable_op_ternary() = o;
           },

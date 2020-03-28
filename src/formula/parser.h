@@ -109,7 +109,7 @@ public:
   }
 
   // ( .* )
-  StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
+  StatusOr<std::vector<Expression>> ConsumeParentheses(TSpan *tspan);
 
   // [A-Z0-9_]
   StatusOr<std::string> ConsumeFnName(TSpan *tspan);
