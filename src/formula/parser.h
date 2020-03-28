@@ -237,35 +237,26 @@ private:
     return ConsumeDouble(tspan);
   }
 
-  StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan);
+  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan);
 
-  StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    PrintAttempt("OP_UNARY");
-    return Any<Expression::OpUnary>({
-        absl::bind_front(&Parser::ConsumeOpUnaryText, this),
-    })(tspan);
-  }
-
-  StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan);
-
-  // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
-  // prefix notation.
-  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
-
-  StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
-
-  StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    return Any<Expression::OpBinary>({
-        absl::bind_front(&Parser::ConsumeOpBinaryText, this),
-        absl::bind_front(&Parser::ConsumeOpBinaryInfix, this),
-    })(tspan);
-  }
+  //  StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan);
+  //
+  //  // Consumes "+", "-", "/", "*", "%", etc. and returns the string version
+  //  for
+  //  // prefix notation.
+  //  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
+  //
+  //  StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
+  //
+  //  StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
+  //    depth_++;
+  //    auto d = MakeCleanup([&] { depth_--; });
+  //
+  //    return Any<Expression::OpBinary>({
+  //        absl::bind_front(&Parser::ConsumeOpBinaryText, this),
+  //        absl::bind_front(&Parser::ConsumeOpBinaryInfix, this),
+  //    })(tspan);
+  //  }
 
   // StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
 };
