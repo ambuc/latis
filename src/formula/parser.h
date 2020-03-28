@@ -89,104 +89,114 @@ Status RepeatGuard(Step step, TSpan *tspan) {
   return OkStatus();
 }
 
-// Consumes the token |type| off |tspan| and returns the token's held
-// |.value|.
-StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
+class Parser {
+public:
+  static Parser *Get() {
+    static Parser parser{};
+    return &parser;
+  }
 
-// Consumes a |Token::T::numeric| token off |tspan| and parses it as an
-// integer.
-StatusOr<int> ConsumeInt(TSpan *tspan);
+  // Consumes the token |type| off |tspan| and returns the token's held
+  // |.value|.
+  static StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
 
-StatusOr<double> ConsumeDouble(TSpan *tspan);
+  // Consumes a |Token::T::numeric| token off |tspan| and parses it as an
+  // integer.
+  static StatusOr<int> ConsumeInt(TSpan *tspan);
 
-StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
-  return AnyVariant<double, int>(ConsumeDouble, ConsumeInt)(tspan);
-}
+  static StatusOr<double> ConsumeDouble(TSpan *tspan);
 
-// TODO(ambuc): This could return a string view into the underlying
-// string.
-StatusOr<std::string> ConsumeString(TSpan *tspan);
+  static StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
+    return AnyVariant<double, int>(ConsumeDouble, ConsumeInt)(tspan);
+  }
 
-StatusOr<int> Consume2Digit(TSpan *tspan);
+  // TODO(ambuc): This could return a string view into the underlying
+  // string.
+  static StatusOr<std::string> ConsumeString(TSpan *tspan);
 
-StatusOr<int> Consume4Digit(TSpan *tspan);
+  static StatusOr<int> Consume2Digit(TSpan *tspan);
 
-// Expects "USD" or "CAD"
-StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
-// Expects "$"
-StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan);
-StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
-  return Any<Money::Currency>({ConsumeCurrencySymbol, ConsumeCurrencyWord})(
-      tspan);
-}
+  static StatusOr<int> Consume4Digit(TSpan *tspan);
 
-StatusOr<Money> ConsumeMoney(TSpan *tspan);
+  // Expects "USD" or "CAD"
+  static StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
+  // Expects "$"
+  static StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan);
+  static StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
+    return Any<Money::Currency>({ConsumeCurrencySymbol, ConsumeCurrencyWord})(
+        tspan);
+  }
 
-StatusOr<int> ConsumeDateFullYear(TSpan *tspan) { return Consume4Digit(tspan); }
+  static StatusOr<Money> ConsumeMoney(TSpan *tspan);
 
-StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
-  static auto r = [](int i) { return 1 <= i && i <= 12; };
-  return WithRestriction<int>(r)(Consume2Digit)(tspan);
-}
+  static StatusOr<int> ConsumeDateFullYear(TSpan *tspan) {
+    return Consume4Digit(tspan);
+  }
 
-StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
-  static auto r = [](int i) { return 1 <= i && i <= 31; };
-  return WithRestriction<int>(r)(Consume2Digit)(tspan);
-}
+  static StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
+    static auto r = [](int i) { return 1 <= i && i <= 12; };
+    return WithRestriction<int>(r)(Consume2Digit)(tspan);
+  }
 
-StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
-  static auto r = [](int i) { return 0 <= i && i <= 23; };
-  return WithRestriction<int>(r)(Consume2Digit)(tspan);
-}
+  static StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
+    static auto r = [](int i) { return 1 <= i && i <= 31; };
+    return WithRestriction<int>(r)(Consume2Digit)(tspan);
+  }
 
-StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
-  static auto r = [](int i) { return 0 <= i && i <= 59; };
-  return WithRestriction<int>(r)(Consume2Digit)(tspan);
-}
+  static StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
+    static auto r = [](int i) { return 0 <= i && i <= 23; };
+    return WithRestriction<int>(r)(Consume2Digit)(tspan);
+  }
 
-StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
-  // Up to 60, counting leap seconds.
-  static auto r = [](int i) { return 0 <= i && i <= 60; };
-  return WithRestriction<int>(r)(Consume2Digit)(tspan);
-}
+  static StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
+    static auto r = [](int i) { return 0 <= i && i <= 59; };
+    return WithRestriction<int>(r)(Consume2Digit)(tspan);
+  }
 
-StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
-  return ConsumeDouble(tspan);
-}
-StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
-StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
+  static StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
+    // Up to 60, counting leap seconds.
+    static auto r = [](int i) { return 0 <= i && i <= 60; };
+    return WithRestriction<int>(r)(Consume2Digit)(tspan);
+  }
 
-StatusOr<Amount> ConsumeAmount(TSpan *tspan);
-StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
-StatusOr<int> ConsumeColIndicator(TSpan *tspan);
-StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan);
-StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
-StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
-StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
-StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
-  return Any<RangeLocation>({ConsumeRangeLocationPointThenAny,
-                             ConsumeRangeLocationRowThenRow,
-                             ConsumeRangeLocationColThenCol})(tspan);
-}
-StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
-// [A-Z0-9_]
-StatusOr<std::string> ConsumeFnName(TSpan *tspan);
-StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan);
-StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
-  return Any<Expression::OpUnary>({ConsumeOpUnaryText})(tspan);
-}
-StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan);
-// Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
-// prefix notation.
-StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
-StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
-StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
-  return Any<Expression::OpBinary>({ConsumeOpBinaryText, ConsumeOpBinaryInfix})(
-      tspan);
-}
-StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
+  static StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
+    return ConsumeDouble(tspan);
+  }
+  static StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
+  static StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
 
-StatusOr<Expression> ConsumeExpression(TSpan *tspan);
+  static StatusOr<Amount> ConsumeAmount(TSpan *tspan);
+  static StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
+  static StatusOr<int> ConsumeColIndicator(TSpan *tspan);
+  static StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan);
+  static StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
+  static StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
+  static StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
+  static StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
+    return Any<RangeLocation>({ConsumeRangeLocationPointThenAny,
+                               ConsumeRangeLocationRowThenRow,
+                               ConsumeRangeLocationColThenCol})(tspan);
+  }
+  static StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
+  // [A-Z0-9_]
+  static StatusOr<std::string> ConsumeFnName(TSpan *tspan);
+  static StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan);
+  static StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
+    return Any<Expression::OpUnary>({ConsumeOpUnaryText})(tspan);
+  }
+  static StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan);
+  // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
+  // prefix notation.
+  static StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
+  static StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
+  static StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
+    return Any<Expression::OpBinary>(
+        {ConsumeOpBinaryText, ConsumeOpBinaryInfix})(tspan);
+  }
+  static StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
+
+  StatusOr<Expression> ConsumeExpression(TSpan *tspan);
+};
 
 } // namespace formula
 } // namespace latis
