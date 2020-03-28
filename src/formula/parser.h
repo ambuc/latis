@@ -26,6 +26,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/functional/bind_front.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_format.h"
 #include "absl/time/civil_time.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
@@ -40,6 +41,19 @@ namespace formula {
 
 class Parser {
 public:
+  struct Options {
+    bool should_log_verbosely{false};
+  };
+
+  // ctors
+  Parser() : Parser(/*options=*/Options{}) {}
+  explicit Parser(Options options) : options_(options) {}
+
+  void EnableVerboseLogging() { options_.should_log_verbosely = true; }
+  void DisableVerboseLogging() { options_.should_log_verbosely = false; }
+
+  // Consumers.
+
   StatusOr<int> ConsumeInt(TSpan *tspan);
 
   StatusOr<double> ConsumeDouble(TSpan *tspan);
@@ -89,15 +103,27 @@ public:
   StatusOr<Expression> ConsumeExpression(TSpan *tspan);
 
 private:
-  // Private enum for counting/caching steps
-  enum class Step { kOpBinaryInfix };
+  Options options_;
 
-  using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
+  int depth_{0};
+
+  // Logging w/ depth_
+  void PrintStep(TSpan *tspan, const std::string &step) {
+    if (options_.should_log_verbosely) {
+      std::cout << absl::StreamFormat("%sParsed %s as an %s",
+                                      std::string(' ', depth_),
+                                      PrintTSpan(tspan), step)
+                << std::endl;
+    }
+  }
+
+  // RepeatGuard apparatus
+  using CacheItem = std::tuple<std::string, TSpan::pointer, TSpan::size_type>;
   absl::flat_hash_set<CacheItem> cache_;
 
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
-  Status RepeatGuard(Step step, TSpan *tspan) {
+  Status RepeatGuard(std::string step, TSpan *tspan) {
     CacheItem item = {step, tspan->data(), tspan->size()};
 
     if (cache_.contains(item)) {

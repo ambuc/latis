@@ -434,6 +434,7 @@ public:
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
+  p_.EnableVerboseLogging(); // TODO remove this.
   RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));

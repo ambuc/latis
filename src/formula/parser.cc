@@ -70,6 +70,7 @@ StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
   if (int resultant; !absl::SimpleAtoi(value, &resultant)) {
     return Status(INVALID_ARGUMENT, "Can't ConsumeInt: not a number");
   } else {
+    PrintStep(tspan, "INT");
     *tspan = lcl;
     return resultant;
   }
@@ -98,6 +99,7 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
                                      pow(10.0, ceil(log10(after.value()))));
   }
 
+  PrintStep(tspan, "DOUBLE");
   *tspan = lcl;
   return resultant;
 }
@@ -107,6 +109,7 @@ StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
   std::string_view resultant;
   ASSIGN_OR_RETURN_(resultant, ConsumeExact(Token::T::quote, &lcl));
 
+  PrintStep(tspan, "STRING");
   *tspan = lcl;
   return std::string(resultant);
 }
@@ -121,6 +124,7 @@ StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
   }
 
   if (int resultant; absl::SimpleAtoi(value, &resultant)) {
+    PrintStep(tspan, "2DIGIT");
     *tspan = lcl;
     return resultant;
   }
@@ -137,6 +141,7 @@ StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
   }
 
   if (int resultant; absl::SimpleAtoi(value, &resultant)) {
+    PrintStep(tspan, "4DIGIT");
     *tspan = lcl;
     return resultant;
   }
@@ -154,6 +159,7 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
 
 StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
   if (TSpan lcl = *tspan; ConsumeExact(Token::T::dollar, &lcl).ok()) {
+    PrintStep(tspan, "CURRENCY_SYMBOL");
     *tspan = lcl;
     return Money::USD;
   }
@@ -185,6 +191,7 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
              },
              numeric);
 
+  PrintStep(tspan, "MONEY");
   *tspan = lcl;
   return money;
 }
@@ -211,6 +218,7 @@ StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   int hour = std::get<1>(t) * 60 * 60;
   int min = std::get<3>(t) * 60;
 
+  PrintStep(tspan, "TIME_OFFSET");
   *tspan = lcl;
   return absl::FixedTimeZone(posneg * (hour + min));
 }
@@ -275,6 +283,7 @@ StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
     resultant += absl::Milliseconds(round(secfrac.value() * 1000));
   }
 
+  PrintStep(tspan, "DATETIME");
   *tspan = lcl;
   return resultant;
 }
@@ -309,6 +318,7 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
       },
       amount);
 
+  PrintStep(tspan, "AMOUNT");
   *tspan = lcl;
   return resultant;
 }
@@ -339,6 +349,7 @@ StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
         "Can't ConsumeColIndicator: LOCATION must begin with 1*UPPERCASE.");
   }
 
+  PrintStep(tspan, "COL_INDICATOR");
   *tspan = lcl;
   return maybe_int.ValueOrDie();
 }
@@ -358,6 +369,7 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   resultant.set_col(std::get<0>(t));
   resultant.set_row(std::get<1>(t));
 
+  PrintStep(tspan, "POINT_LOCATION");
   *tspan = lcl;
   return resultant;
 }
@@ -387,6 +399,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
                   "end in a point/row/col.");
   }
 
+  PrintStep(tspan, "RANGE_LOCATION_POINT_THEN_ANY");
   *tspan = lcl;
   return resultant;
 }
@@ -407,6 +420,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   resultant.set_from_row(std::get<0>(t));
   resultant.set_to_row(std::get<2>(t));
 
+  PrintStep(tspan, "RANGE_LOCATION_ROW_THEN_ROW");
   *tspan = lcl;
   return resultant;
 }
@@ -428,6 +442,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   resultant.set_from_col(std::get<0>(t));
   resultant.set_to_col(std::get<2>(t));
 
+  PrintStep(tspan, "RANGE_LOCATION_COL_THEN_COL");
   *tspan = lcl;
   return resultant;
 }
@@ -473,6 +488,7 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
         "Can't ConsumeFnName: Can't have a fn name which begins with a digit.");
   }
 
+  PrintStep(tspan, "FN_NAME");
   *tspan = lcl;
   return resultant;
 }
@@ -498,6 +514,7 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
   resultant.set_operation(std::get<0>(t));
   *resultant.mutable_term1() = std::get<2>(t);
 
+  PrintStep(tspan, "OP_UNARY_TEXT");
   *tspan = lcl;
   return resultant;
 }
@@ -530,6 +547,7 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
   *resultant.mutable_term1() = std::get<2>(t);
   *resultant.mutable_term2() = std::get<4>(t);
 
+  PrintStep(tspan, "OP_BINARY_TEXT");
   *tspan = lcl;
   return resultant;
 }
@@ -559,6 +577,7 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");
   }
 
+  PrintStep(tspan, "OP_BINARY_INFIX_FN");
   *tspan = lcl;
   return resultant;
 }
@@ -566,7 +585,7 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
 StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
-  RETURN_IF_ERROR_(RepeatGuard(Step::kOpBinaryInfix, tspan));
+  RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
 
   TSpan lcl = *tspan;
 
@@ -585,6 +604,7 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
   resultant.set_operation(std::get<1>(t));
   *resultant.mutable_term2() = std::get<2>(t);
 
+  PrintStep(tspan, "OP_BINARY_INFIX");
   *tspan = lcl;
   return resultant;
 }
@@ -599,6 +619,7 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
              absl::bind_front(&Parser::ConsumeExact, this, Token::T::rparen))(
              &lcl)));
 
+  PrintStep(tspan, "PARENTHESES");
   *tspan = lcl;
   return std::get<1>(t);
 }
@@ -637,6 +658,7 @@ StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
   *resultant.mutable_term2() = std::get<4>(t);
   *resultant.mutable_term3() = std::get<6>(t);
 
+  PrintStep(tspan, "OP_TERNARY");
   *tspan = lcl;
   return resultant;
 }
@@ -693,6 +715,7 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
       },
       expression);
 
+  PrintStep(tspan, "EXPRESSION");
   *tspan = lcl;
   return resultant;
 }
