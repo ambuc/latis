@@ -433,18 +433,31 @@ public:
         << "Actual: " << a.DebugString() << ", Expected: " << b.DebugString();
   }
 };
+
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  // p_.EnableVerboseLogging(); // TODO remove this.
+  // TODO(ambuc): start here.
+  p_.EnableVerboseLogging(); // TODO remove this.
   RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
 }
+
 INSTANTIATE_TEST_SUITE_P(
     Amounts, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"2", R"pb(value { int_amount: 2 })pb"},
         {"3.0", R"pb(value { double_amount: 3.0 })pb"},
     }));
+
+INSTANTIATE_TEST_SUITE_P(
+    Parentheses, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        // Parentheses around a bunch of single values.
+        {"(2)", R"pb(value { int_amount: 2 })pb"},
+        {"(3.0)", R"pb(value { double_amount: 3.0 })pb"},
+        {R"pb(("s"))pb", R"pb(value { str_amount: "s" })pb"},
+    }));
+
 INSTANTIATE_TEST_SUITE_P(
     UnaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
@@ -481,37 +494,76 @@ INSTANTIATE_TEST_SUITE_P(
         {R"pb(FOO1(""))pb",
          R"pb(op_unary { operation: "FOO1" term1: { value: { str_amount: "" } } })pb"},
     }));
+
+const std::string PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION = std::string(
+    R"pb(op_unary { operation: "FOO1" term1: { value: { int_amount: 2 } } })pb");
+INSTANTIATE_TEST_SUITE_P(
+    ParenthesesAroundUnaryPrefix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {R"pb(FOO1(2))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
+        {R"pb((FOO1(2)))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
+        {R"pb(FOO1((2)))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
+        {R"pb((FOO1((2))))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
+        {R"pb((FOO1(((2)))))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
+    }));
+
 INSTANTIATE_TEST_SUITE_P(
     BinaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"FOO(1,2)",
-         R"pb( op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { int_amount: 2 } } })pb"},
-        {"FOO(3.0,4.0)",
-         R"pb( op_binary { operation: "FOO" term1: { value: { double_amount: 3.0 } } term2: { value: { double_amount: 4.0 } } })pb"},
-        {"BAR(A1,BAZ(A2,A3))",
-         R"pb( op_binary { operation: "BAR" term1: { lookup: { row: 0 col: 0 } } term2: { op_binary { operation: "BAZ" term1: { lookup: { row: 1 col: 0 } } term2: { lookup: { row: 2 col: 0 } } } } })pb"},
+        {"FOO(1,2.0)",
+         R"pb(op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { double_amount: 2.0 } } })pb"},
+        {R"pb(FOO("BAR", $3.45))pb",
+         R"pb(op_binary { operation: "FOO" term1: { value: { str_amount: "BAR" } } term2: { value: { money_amount: { dollars: 3 cents: 45 currency: USD } } } })pb"},
+        // Ignoring the inner parentheses of a string.
+        {R"pb(FOO("B(AR", "BA)Z"))pb",
+         R"pb(op_binary { operation: "FOO" term1: { value: { str_amount: "B(AR" } } term2: { value: { str_amount: "BA)Z" } } })pb"},
+
+        // Nested in the former.
+        {"BAR(BAZ(1,2),3)",
+         R"pb(op_binary { operation: "BAR" term1: { op_binary { operation: "BAZ" term1: { value : { int_amount: 1 } } term2: { value : { int_amount: 2 } } } } term2: { value : { int_amount: 3 } } })pb"},
+
+        // Nested in the latter.
+        {"BAR(1,BAZ(2,3))",
+         R"pb(op_binary { operation: "BAR" term1: { value: { int_amount: 1 } } term2: { op_binary { operation: "BAZ" term1: { value: { int_amount: 2 } } term2: { value: { int_amount: 3 } } } } })pb"},
+
+        // Nested in both.
+        {"BAR(FOO(1,2),BAZ(3,4))",
+         R"pb(op_binary { operation: "BAR" term1: { op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { int_amount: 2 } } } } term2: { op_binary { operation: "BAZ" term1: { value: { int_amount: 3 } } term2: { value: { int_amount: 4 } } } } })pb"},
     }));
 
-// {
-//     "3+2",
-//     R"pb(
-//       op_binary {
-//         operation: "PLUS"
-//         term1: { value: { int_amount: 3 } }
-//         term2: { value: { int_amount: 2 } }
-//       })pb",
-// },
+const std::string PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION = std::string(
+    R"pb(op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { double_amount: 2.0 } } })pb");
+INSTANTIATE_TEST_SUITE_P(
+    ParenthesesAroundBinaryPrefix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"FOO(1,2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO((1),2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO(1,(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO((1),(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"(FOO((1),(2.0)))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+    }));
 
-// {
-//     "(3+2)",
-//     R"pb(
-//    op_binary {
-//     operation: "PLUS"
-//     term1: { value: { int_amount: 3 } }
-//     term2: { value: { int_amount: 2 } }
-//   }
-//   )pb",
-// },
+INSTANTIATE_TEST_SUITE_P(
+    BinaryInfix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        // Infix.
+        {"3+2.0",
+         R"pb( op_binary { operation: "PLUS" term1: { value: { int_amount: 3 } } term2: { value: { double_amount: 2.0 } } })pb"},
+
+        // Infix with strings? And a different operator?
+        {R"pb("3" / "2")pb",
+         R"pb( op_binary { operation: "DIVIDED_BY" term1: { value: { str_amount: "3" } } term2: { value: { str_amount: "2" } } })pb"},
+
+        // Infix with parens?
+        {R"pb((0.0)-(2.0))pb",
+         R"pb( op_binary { operation: "MINUS" term1: { value: { double_amount: 0.0 } } term2: { value: { double_amount: 2.0 } } })pb"},
+
+        // Parentheses around an infix?
+        // TODO(ambuc): FIXME
+        {"(3+2)",
+         R"pb( op_binary { operation: "PLUS" term1: { value: { int_amount: 3 } } term2: { value: { int_amount: 2 } } })pb"},
+
+    }));
 
 // {
 //     "3+(2+1)",
