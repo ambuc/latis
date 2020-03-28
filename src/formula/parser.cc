@@ -749,48 +749,50 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
   return std::vector<Expression>{std::get<1>(t)};
 }
 
-StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
-  depth_++;
-  auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("OP_TERNARY");
-
-  TSpan lcl = *tspan;
-
-  std::tuple<std::string, std::string_view, Expression, std::string_view,
-             Expression, std::string_view, Expression, std::string_view>
-      t;
-  ASSIGN_OR_RETURN_(
-      t,
-      (InSequence<std::string, std::string_view, Expression, std::string_view,
-                  Expression, std::string_view, Expression, std::string_view>(
-          // FN
-          absl::bind_front(&Parser::ConsumeFnName, this),
-          // (
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::lparen),
-          // EXPR
-          absl::bind_front(&Parser::ConsumeExpression, this),
-          // ,
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::comma),
-          // EXPR
-          absl::bind_front(&Parser::ConsumeExpression, this),
-          // ,
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::comma),
-          // EXPR
-          absl::bind_front(&Parser::ConsumeExpression, this),
-          // )
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::rparen))(
-          &lcl)));
-
-  Expression::OpTernary resultant;
-  resultant.set_operation(std::get<0>(t));
-  *resultant.mutable_term1() = std::get<2>(t);
-  *resultant.mutable_term2() = std::get<4>(t);
-  *resultant.mutable_term3() = std::get<6>(t);
-
-  PrintStep(&lcl, tspan, "OP_TERNARY");
-  *tspan = lcl;
-  return resultant;
-}
+// StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
+//   depth_++;
+//   auto d = MakeCleanup([&] { depth_--; });
+//   PrintAttempt("OP_TERNARY");
+//
+//   TSpan lcl = *tspan;
+//
+//   std::tuple<std::string, std::string_view, Expression, std::string_view,
+//              Expression, std::string_view, Expression, std::string_view>
+//       t;
+//   ASSIGN_OR_RETURN_(
+//       t,
+//       (InSequence<std::string, std::string_view, Expression,
+//       std::string_view,
+//                   Expression, std::string_view, Expression,
+//                   std::string_view>(
+//           // FN
+//           absl::bind_front(&Parser::ConsumeFnName, this),
+//           // (
+//           absl::bind_front(&Parser::ConsumeExact, this, Token::T::lparen),
+//           // EXPR
+//           absl::bind_front(&Parser::ConsumeExpression, this),
+//           // ,
+//           absl::bind_front(&Parser::ConsumeExact, this, Token::T::comma),
+//           // EXPR
+//           absl::bind_front(&Parser::ConsumeExpression, this),
+//           // ,
+//           absl::bind_front(&Parser::ConsumeExact, this, Token::T::comma),
+//           // EXPR
+//           absl::bind_front(&Parser::ConsumeExpression, this),
+//           // )
+//           absl::bind_front(&Parser::ConsumeExact, this, Token::T::rparen))(
+//           &lcl)));
+//
+//   Expression::OpTernary resultant;
+//   resultant.set_operation(std::get<0>(t));
+//   *resultant.mutable_term1() = std::get<2>(t);
+//   *resultant.mutable_term2() = std::get<4>(t);
+//   *resultant.mutable_term3() = std::get<6>(t);
+//
+//   PrintStep(&lcl, tspan, "OP_TERNARY");
+//   *tspan = lcl;
+//   return resultant;
+// }
 
 StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   depth_++;
@@ -800,9 +802,9 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<Expression::OpUnary,     //
-                Expression::OpBinary,    //
-                Expression::OpTernary,   //
+  absl::variant<Expression::OpUnary,  //
+                Expression::OpBinary, //
+                // Expression::OpTernary,   //
                 std::vector<Expression>, //
                 RangeLocation,           //
                 PointLocation,           //
@@ -812,9 +814,9 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
 
   ASSIGN_OR_RETURN_(
       expression,
-      (AnyVariant<Expression::OpUnary,     //
-                  Expression::OpBinary,    //
-                  Expression::OpTernary,   //
+      (AnyVariant<Expression::OpUnary,  //
+                  Expression::OpBinary, //
+                  // Expression::OpTernary,   //
                   std::vector<Expression>, //
                   RangeLocation,           //
                   PointLocation,           //
@@ -823,8 +825,7 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
           absl::bind_front(&Parser::ConsumeOpUnary, this), //
           absl::bind_front(&Parser::ConsumeOpBinary,
                            this), //
-          absl::bind_front(&Parser::ConsumeOpTernary,
-                           this), //
+          // absl::bind_front(&Parser::ConsumeOpTernary, this), //
           WithRestriction<std::vector<Expression>>(
               [](const std::vector<Expression> exprs) -> bool {
                 return exprs.size() == 1;
@@ -840,9 +841,9 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
             assert(exprs.size() == 1);
             resultant = exprs[0];
           },
-          [&resultant](Expression::OpTernary o) {
-            *resultant.mutable_op_ternary() = o;
-          },
+          // [&resultant](Expression::OpTernary o) {
+          //   *resultant.mutable_op_ternary() = o;
+          // },
           [&resultant](Expression::OpBinary o) {
             *resultant.mutable_op_binary() = o;
           },

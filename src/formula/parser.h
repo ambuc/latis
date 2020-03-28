@@ -267,7 +267,7 @@ private:
     })(tspan);
   }
 
-  StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
+  // StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
 };
 
 } // namespace formula
