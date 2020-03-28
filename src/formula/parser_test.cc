@@ -420,13 +420,20 @@ class ExpressionTestSuite
           std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const Expression &a, const Expression &b) const override {
-    ASSERT_THAT(a, EqualsProto(b));
+    ASSERT_THAT(a, EqualsProto(b))
+        << "Actual: " << a.DebugString() << ", Expected: " << b.DebugString();
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
   RunBodyOfTest(ConsumeExpression, std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
 }
+INSTANTIATE_TEST_SUITE_P(
+    Amounts, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"2", R"pb(value { int_amount: 2 })pb"},
+        {"3.0", R"pb(value { double_amount: 3.0 })pb"},
+    }));
 INSTANTIATE_TEST_SUITE_P(
     UnaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
@@ -466,100 +473,70 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     BinaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {
-            "SUM(A1,A2)",
-            R"pb(
-              op_binary {
-                operation: "SUM"
-                term1: { lookup: { row: 0 col: 0} }
-                term2: { lookup: { row: 1 col: 0} }
-              })pb",
-        },
-        {
-            "NEG(NEG(A1))",
-            R"pb(
-              op_unary {
-                operation: "NEG"
-                term1: {
-                  op_unary {
-                    operation: "NEG"
-                    term1: { lookup: { row: 0 col: 0 } }
-                  }
-                }
-              })pb",
-        },
-
-        {
-            "SUM(A1,SUM(A2,A3))",
-            R"pb(
-              op_binary {
-                operation: "SUM"
-                term1: { lookup: { row: 0 col: 0 } }
-                term2: {
-                  op_binary {
-                    operation: "SUM"
-                    term1: { lookup: { row: 1 col: 0 } }
-                    term2: { lookup: { row: 2 col: 0 } }
-                  }
-                }
-              })pb",
-        },
-
-        {
-            "3+2",
-            R"pb(
-              op_binary {
-                operation: "PLUS"
-                term1: { value: { int_amount: 3 } }
-                term2: { value: { int_amount: 2 } }
-              })pb",
-        },
-
-        // {
-        //     "(3+2)",
-        //     R"pb(
-        //    op_binary {
-        //     operation: "PLUS"
-        //     term1: { value: { int_amount: 3 } }
-        //     term2: { value: { int_amount: 2 } }
-        //   }
-        //   )pb",
-        // },
-
-        // {
-        //     "3+(2+1)",
-        //     R"pb(
-        //     op_binary {
-        //      operation: "PLUS"
-        //      term1: { value: { int_amount: 3 } }
-        //      term2: {
-        //       op_binary {
-        //        operation: "PLUS"
-        //        term1: { value: { int_amount: 2 } }
-        //        term2: { value: { int_amount: 1 } }
-        //       }
-        //      }
-        //    }
-        //    )pb",
-        // },
-
-        // {
-        //     "(3+2)+1",
-        //     R"pb(
-        //    op_binary {
-        //     operation: "PLUS"
-        //     term1: {
-        //      op_binary {
-        //       operation: "PLUS"
-        //       term1: { value: { int_amount: 3 } }
-        //       term2: { value: { int_amount: 2 } }
-        //      }
-        //     }
-        //     term2: { value: { int_amount: 1 } }
-        //   }
-        //   )pb",
-        // },
+        {"FOO(1,2)",
+         R"pb( op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { int_amount: 2 } } })pb"},
+        //{"FOO(3.0,4.0)",
+        // R"pb( op_binary { operation: "FOO" term1: { value: {
+        // double_amount: 3.0 } } term2: { value: { double_amount: 4.0 } }
+        // })pb"},
+        {"BAR(A1,BAZ(A2,A3))",
+         R"pb( op_binary { operation: "BAR" term1: { lookup: { row: 0 col: 0 } } term2: { op_binary { operation: "BAZ" term1: { lookup: { row: 1 col: 0 } } term2: { lookup: { row: 2 col: 0 } } } } })pb"},
     }));
+
+// {
+//     "3+2",
+//     R"pb(
+//       op_binary {
+//         operation: "PLUS"
+//         term1: { value: { int_amount: 3 } }
+//         term2: { value: { int_amount: 2 } }
+//       })pb",
+// },
+
+// {
+//     "(3+2)",
+//     R"pb(
+//    op_binary {
+//     operation: "PLUS"
+//     term1: { value: { int_amount: 3 } }
+//     term2: { value: { int_amount: 2 } }
+//   }
+//   )pb",
+// },
+
+// {
+//     "3+(2+1)",
+//     R"pb(
+//     op_binary {
+//      operation: "PLUS"
+//      term1: { value: { int_amount: 3 } }
+//      term2: {
+//       op_binary {
+//        operation: "PLUS"
+//        term1: { value: { int_amount: 2 } }
+//        term2: { value: { int_amount: 1 } }
+//       }
+//      }
+//    }
+//    )pb",
+// },
+
+// {
+//     "(3+2)+1",
+//     R"pb(
+//    op_binary {
+//     operation: "PLUS"
+//     term1: {
+//      op_binary {
+//       operation: "PLUS"
+//       term1: { value: { int_amount: 3 } }
+//       term2: { value: { int_amount: 2 } }
+//      }
+//     }
+//     term2: { value: { int_amount: 1 } }
+//   }
+//   )pb",
+// },
 
 // TODO(ambuc): many more expression tests for unary, binary,
 // ternary
