@@ -506,43 +506,32 @@ INSTANTIATE_TEST_SUITE_P(
         {R"pb((FOO1(((2)))))pb", PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION},
     }));
 
-// INSTANTIATE_TEST_SUITE_P(
-//     BinaryPrefix, ExpressionTestSuite,
-//     ValuesIn(std::vector<std::pair<std::string,
-//     absl::optional<std::string>>>{
-//         {"FOO(1,2.0)",
-//          R"pb(op_binary { operation: "FOO" term1: { value: { int_amount: 1 }
-//          } term2: { value: { double_amount: 2.0 } } })pb"},
-//         {R"pb(FOO("BAR", $3.45))pb",
-//          R"pb(op_binary { operation: "FOO" term1: { value: { str_amount:
-//          "BAR" } } term2: { value: { money_amount: { dollars: 3 cents: 45
-//          currency: USD } } } })pb"},
-//         // Ignoring the inner parentheses of a string.
-//         {R"pb(FOO("B(AR", "BA)Z"))pb",
-//          R"pb(op_binary { operation: "FOO" term1: { value: { str_amount:
-//          "B(AR" } } term2: { value: { str_amount: "BA)Z" } } })pb"},
-//
-//         // Nested in the former.
-//         {"BAR(BAZ(1,2),3)",
-//          R"pb(op_binary { operation: "BAR" term1: { op_binary { operation:
-//          "BAZ" term1: { value : { int_amount: 1 } } term2: { value : {
-//          int_amount: 2 } } } } term2: { value : { int_amount: 3 } } })pb"},
-//
-//         // Nested in the latter.
-//         {"BAR(1,BAZ(2,3))",
-//          R"pb(op_binary { operation: "BAR" term1: { value: { int_amount: 1 }
-//          } term2: { op_binary { operation: "BAZ" term1: { value: {
-//          int_amount: 2 } } term2: { value: { int_amount: 3 } } } } })pb"},
-//
-//         // Nested in both.
-//         {"BAR(FOO(1,2),BAZ(3,4))",
-//          R"pb(op_binary { operation: "BAR" term1: { op_binary { operation:
-//          "FOO" term1: { value: { int_amount: 1 } } term2: { value: {
-//          int_amount: 2 } } } } term2: { op_binary { operation: "BAZ" term1: {
-//          value: { int_amount: 3 } } term2: { value: { int_amount: 4 } } } }
-//          })pb"},
-//     }));
-//
+INSTANTIATE_TEST_SUITE_P(
+    BinaryPrefix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"FOO(1,2.0)",
+         R"pb(operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { double_amount: 2.0 } } })pb"},
+
+        {R"pb(FOO("BAR", $3.45))pb",
+         R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "BAR" } } terms: { value: { money_amount: { dollars: 3 cents: 45 currency: USD } } } })pb"},
+
+        // Ignoring the inner parentheses of a string.
+        {R"pb(FOO("B(AR", "BA)Z"))pb",
+         R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "B(AR" } } terms: { value: { str_amount: "BA)Z" } } })pb"},
+
+        // Nested in the former.
+        {"BAR(BAZ(1,2),3)",
+         R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "BAZ" terms: { value : { int_amount: 1 } } terms: { value : { int_amount: 2 } } } } terms: { value : { int_amount: 3 } } })pb"},
+
+        // Nested in the latter.
+        {"BAR(1,BAZ(2,3))",
+         R"pb(operation { fn_name: "BAR" terms: { value: { int_amount: 1 } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 3 } } } } })pb"},
+
+        // Nested in both.
+        {"BAR(FOO(1,2),BAZ(3,4))",
+         R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 4 } } } } })pb"},
+    }));
+
 // const std::string PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION = std::string(
 //     R"pb(op_binary { operation: "FOO" term1: { value: { int_amount: 1 } }
 //     term2: { value: { double_amount: 2.0 } } })pb");

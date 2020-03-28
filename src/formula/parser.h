@@ -247,18 +247,6 @@ private:
   //  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
   //
   //  StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
-  //
-  //  StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
-  //    depth_++;
-  //    auto d = MakeCleanup([&] { depth_--; });
-  //
-  //    return Any<Expression::OpBinary>({
-  //        absl::bind_front(&Parser::ConsumeOpBinaryText, this),
-  //        absl::bind_front(&Parser::ConsumeOpBinaryInfix, this),
-  //    })(tspan);
-  //  }
-
-  // StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
 };
 
 } // namespace formula
