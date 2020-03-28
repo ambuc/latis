@@ -756,7 +756,7 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   std::visit(
       overload{
           [&resultant](std::vector<Expression> exprs) {
-            // singleton
+            // For (AMOUNT).
             assert(exprs.size() == 1);
             resultant = exprs[0];
           },
