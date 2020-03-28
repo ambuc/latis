@@ -38,7 +38,7 @@ namespace {
 template <class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template <class... Ts> overload(Ts...)->overload<Ts...>;
 
-// If given a tspan where the 0th token is lparen, will return the index of the
+// If given a tspan where the -1st token is lparen, will return the index of the
 // matching parenthesis. Will return
 //
 //                    0123456789
@@ -597,7 +597,7 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression::Operation> Parser::ConsumeOperation(TSpan *tspan) {
+StatusOr<Expression::Operation> Parser::ConsumeOperationPrefix(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
   PrintAttempt("OPERATION");
@@ -622,68 +622,68 @@ StatusOr<Expression::Operation> Parser::ConsumeOperation(TSpan *tspan) {
   return resultant;
 }
 
-// StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
-//   depth_++;
-//   auto d = MakeCleanup([&] { depth_--; });
-//   PrintAttempt("OP_BINARY_INFIX_FN");
-//   TSpan lcl = *tspan;
-//   std::string resultant;
-//
-//   if (ConsumeExact(Token::T::plus, &lcl).ok()) {
-//     resultant = "PLUS";
-//   } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
-//     resultant = "MINUS";
-//   } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
-//     resultant = "TIMES";
-//   } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
-//     resultant = "DIVIDED_BY";
-//   } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
-//     resultant = "POW";
-//   } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
-//     resultant = "MOD";
-//   } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
-//     resultant = "LTHAN";
-//   } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
-//     resultant = "GTHAN";
-//   } else {
-//     return Status(INVALID_ARGUMENT,
-//                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");
-//   }
-//
-//   PrintStep(&lcl, tspan, "OP_BINARY_INFIX_FN");
-//   *tspan = lcl;
-//   return resultant;
-// }
+StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_BINARY_INFIX_FN");
+  TSpan lcl = *tspan;
+  std::string resultant;
 
-// StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
-//   // NB: RepeatGuards are only necessary for right-recursive expressions... I
-//   // think.
-//   RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
-//
-//   depth_++;
-//   auto d = MakeCleanup([&] { depth_--; });
-//   PrintAttempt("OP_BINARY_INFIX");
-//   TSpan lcl = *tspan;
-//
-//   std::tuple<Expression, std::string, Expression> t;
-//   ASSIGN_OR_RETURN_(
-//       t, (InSequence<Expression, std::string, Expression>(
-//              // EXPR
-//              absl::bind_front(&Parser::ConsumeExpression, this),
-//              // + - etc
-//              absl::bind_front(&Parser::ConsumeOpBinaryInfixFn, this),
-//              // EXPR
-//              absl::bind_front(&Parser::ConsumeExpression, this))(&lcl)));
-//
-//   Expression::OpBinary resultant;
-//   *resultant.mutable_term1() = std::get<0>(t);
-//   resultant.set_operation(std::get<1>(t));
-//   *resultant.mutable_term2() = std::get<2>(t);
-//
-//   PrintStep(&lcl, tspan, "OP_BINARY_INFIX");
-//   *tspan = lcl;
-//   return resultant;
-// }
+  if (ConsumeExact(Token::T::plus, &lcl).ok()) {
+    resultant = "PLUS";
+  } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
+    resultant = "MINUS";
+  } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
+    resultant = "TIMES";
+  } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
+    resultant = "DIVIDED_BY";
+  } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
+    resultant = "POW";
+  } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
+    resultant = "MOD";
+  } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
+    resultant = "LTHAN";
+  } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
+    resultant = "GTHAN";
+  } else {
+    return Status(INVALID_ARGUMENT,
+                  "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");
+  }
+
+  PrintStep(&lcl, tspan, "OP_BINARY_INFIX_FN");
+  *tspan = lcl;
+  return resultant;
+}
+
+StatusOr<Expression::Operation> Parser::ConsumeOperationInfix(TSpan *tspan) {
+  // NB: RepeatGuards are only necessary for right-recursive expressions... I
+  // think.
+  RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
+
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_BINARY_INFIX");
+  TSpan lcl = *tspan;
+
+  std::tuple<Expression, std::string, Expression> t;
+  ASSIGN_OR_RETURN_(
+      t, (InSequence<Expression, std::string, Expression>(
+             // EXPR
+             absl::bind_front(&Parser::ConsumeExpression, this),
+             // + - etc
+             absl::bind_front(&Parser::ConsumeOpBinaryInfixFn, this),
+             // EXPR
+             absl::bind_front(&Parser::ConsumeExpression, this))(&lcl)));
+
+  Expression::Operation resultant;
+  *resultant.add_terms() = std::get<0>(t);
+  resultant.set_fn_name(std::get<1>(t));
+  *resultant.add_terms() = std::get<2>(t);
+
+  PrintStep(&lcl, tspan, "OP_BINARY_INFIX");
+  *tspan = lcl;
+  return resultant;
+}
 
 StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
   depth_++;
@@ -727,8 +727,8 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<Expression::Operation,   //
-                std::vector<Expression>, //
+  absl::variant<std::vector<Expression>, //
+                Expression::Operation,   //
                 RangeLocation,           //
                 PointLocation,           //
                 Amount                   //
@@ -737,17 +737,17 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
 
   ASSIGN_OR_RETURN_(
       expression,
-      (AnyVariant<Expression::Operation,   //
-                  std::vector<Expression>, //
+      (AnyVariant<std::vector<Expression>, //
+                  Expression::Operation,   //
                   RangeLocation,           //
                   PointLocation,           //
                   Amount                   //
                   >(
-          absl::bind_front(&Parser::ConsumeOperation, this), //
           WithRestriction<std::vector<Expression>>(
               [](const std::vector<Expression> exprs) -> bool {
                 return exprs.size() == 1;
               })(absl::bind_front(&Parser::ConsumeParentheses, this)), //
+          absl::bind_front(&Parser::ConsumeOperation, this),           //
           absl::bind_front(&Parser::ConsumeRangeLocation, this),       //
           absl::bind_front(&Parser::ConsumePointLocation, this),       //
           absl::bind_front(&Parser::ConsumeAmount, this)               //

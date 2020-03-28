@@ -237,16 +237,18 @@ private:
     return ConsumeDouble(tspan);
   }
 
-  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan);
+  // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
+  // prefix notation.
+  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
+  StatusOr<Expression::Operation> ConsumeOperationInfix(TSpan *tspan);
+  StatusOr<Expression::Operation> ConsumeOperationPrefix(TSpan *tspan);
 
-  //  StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan);
-  //
-  //  // Consumes "+", "-", "/", "*", "%", etc. and returns the string version
-  //  for
-  //  // prefix notation.
-  //  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
-  //
-  //  StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan);
+  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan) {
+    return Any<Expression::Operation>({
+        absl::bind_front(&Parser::ConsumeOperationInfix, this),
+        absl::bind_front(&Parser::ConsumeOperationPrefix, this),
+    })(tspan);
+  }
 };
 
 } // namespace formula
