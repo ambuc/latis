@@ -78,6 +78,9 @@ public:
       ASSERT_THAT(tspan.size(), Eq(tokens.size()));
     }
   }
+
+protected:
+  Parser p_;
 };
 
 // INTEGER TEST SUITE
@@ -89,7 +92,7 @@ public:
   void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(IntegerTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeInt, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeInt, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -111,7 +114,7 @@ public:
   }
 };
 TEST_P(DoubleTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeDouble, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeDouble, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -136,7 +139,7 @@ public:
   }
 };
 TEST_P(NumericTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeNumeric, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeNumeric, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -162,7 +165,7 @@ public:
   }
 };
 TEST_P(CurrencyTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeCurrency, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeCurrency, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -185,7 +188,7 @@ public:
   }
 };
 TEST_P(MoneyTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeMoney, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeMoney, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Money>(std::get<1>(GetParam())));
 }
@@ -209,7 +212,7 @@ public:
   }
 };
 TEST_P(TimeZoneTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeTimeOffset, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeTimeOffset, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -228,7 +231,7 @@ public:
   void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(TwoDigitTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::Consume2Digit, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::Consume2Digit, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -247,7 +250,7 @@ public:
   void Compare(const int &a, const int &b) const override { ASSERT_EQ(a, b); }
 };
 TEST_P(FourDigitTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::Consume4Digit, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::Consume4Digit, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -269,7 +272,7 @@ public:
   }
 };
 TEST_P(StringTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeString, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeString, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -291,7 +294,7 @@ public:
   }
 };
 TEST_P(DateTimeTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeDateTime, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeDateTime, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -320,7 +323,7 @@ public:
   }
 };
 TEST_P(AmountTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeAmount, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeAmount, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Amount>(std::get<1>(GetParam())));
 }
@@ -348,7 +351,7 @@ public:
   }
 };
 TEST_P(PointLocationTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumePointLocation, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumePointLocation, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<PointLocation>(std::get<1>(GetParam())));
 }
@@ -374,7 +377,7 @@ public:
   }
 };
 TEST_P(RangeLocationTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeRangeLocation, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeRangeLocation, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<RangeLocation>(std::get<1>(GetParam())));
 }
@@ -405,7 +408,7 @@ public:
 };
 TEST_P(ConsumeFnNameTestSuite, LexAndParse) {
   absl::optional<std::string> maybe_expectation = std::get<1>(GetParam());
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeFnName, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeFnName, &p_),
                 std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 INSTANTIATE_TEST_SUITE_P(
@@ -431,7 +434,7 @@ public:
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
+  RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
 }

@@ -69,11 +69,6 @@ std::string Print(Step s) {
 
 class Parser {
 public:
-  static Parser *Get() {
-    static Parser parser{};
-    return &parser;
-  }
-
   // Consumes the token |type| off |tspan| and returns the token's held
   // |.value|.
   StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
@@ -86,8 +81,8 @@ public:
 
   StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
     return AnyVariant<double, int>(
-        absl::bind_front(&Parser::ConsumeDouble, Parser::Get()),
-        absl::bind_front(&Parser::ConsumeInt, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::ConsumeDouble, this),
+        absl::bind_front(&Parser::ConsumeInt, this))(tspan);
   }
 
   // TODO(ambuc): This could return a string view into the underlying
@@ -106,8 +101,8 @@ public:
 
   StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
     return Any<Money::Currency>({
-        absl::bind_front(&Parser::ConsumeCurrencySymbol, Parser::Get()),
-        absl::bind_front(&Parser::ConsumeCurrencyWord, Parser::Get()),
+        absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
+        absl::bind_front(&Parser::ConsumeCurrencyWord, this),
     })(tspan);
   }
 
@@ -120,31 +115,31 @@ public:
   StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
     static auto r = [](int i) { return 1 <= i && i <= 12; };
     return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
     static auto r = [](int i) { return 1 <= i && i <= 31; };
     return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
     static auto r = [](int i) { return 0 <= i && i <= 23; };
     return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
     static auto r = [](int i) { return 0 <= i && i <= 59; };
     return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
     // Up to 60, counting leap seconds.
     static auto r = [](int i) { return 0 <= i && i <= 60; };
     return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, Parser::Get()))(tspan);
+        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
     return ConsumeDouble(tspan);
@@ -165,12 +160,9 @@ public:
 
   StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
     return Any<RangeLocation>({
-        absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny,
-                         Parser::Get()),
-        absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow,
-                         Parser::Get()),
-        absl::bind_front(&Parser::ConsumeRangeLocationColThenCol,
-                         Parser::Get()),
+        absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
+        absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
+        absl::bind_front(&Parser::ConsumeRangeLocationColThenCol, this),
     })(tspan);
   }
 
@@ -183,7 +175,7 @@ public:
 
   StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
     return Any<Expression::OpUnary>({
-        absl::bind_front(&Parser::ConsumeOpUnaryText, Parser::Get()),
+        absl::bind_front(&Parser::ConsumeOpUnaryText, this),
     })(tspan);
   }
 
@@ -197,8 +189,8 @@ public:
 
   StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
     return Any<Expression::OpBinary>({
-        absl::bind_front(&Parser::ConsumeOpBinaryText, Parser::Get()),
-        absl::bind_front(&Parser::ConsumeOpBinaryInfix, Parser::Get()),
+        absl::bind_front(&Parser::ConsumeOpBinaryText, this),
+        absl::bind_front(&Parser::ConsumeOpBinaryInfix, this),
     })(tspan);
   }
 
