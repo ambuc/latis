@@ -579,23 +579,17 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
   PrintAttempt("OP_UNARY_TEXT");
   TSpan lcl = *tspan;
 
-  std::tuple<std::string, std::string_view, Expression, std::string_view> t;
+  std::tuple<std::string, Expression> t;
   ASSIGN_OR_RETURN_(
-      t,
-      (InSequence<std::string, std::string_view, Expression, std::string_view>(
-          // FN
-          absl::bind_front(&Parser::ConsumeFnName, this),
-          // (
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::lparen),
-          // EXPR
-          absl::bind_front(&Parser::ConsumeExpression, this),
-          // )
-          absl::bind_front(&Parser::ConsumeExact, this, Token::T::rparen))(
-          &lcl)));
+      t, (InSequence<std::string, Expression>(
+             // FN
+             absl::bind_front(&Parser::ConsumeFnName, this),
+             // PARENTHESES
+             absl::bind_front(&Parser::ConsumeParentheses, this))(&lcl)));
 
   Expression::OpUnary resultant;
   resultant.set_operation(std::get<0>(t));
-  *resultant.mutable_term1() = std::get<2>(t);
+  *resultant.mutable_term1() = std::get<1>(t);
 
   PrintStep(&lcl, tspan, "OP_UNARY_TEXT");
   *tspan = lcl;
@@ -707,6 +701,36 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
   PrintAttempt("PARENTHESES");
 
   TSpan lcl = *tspan;
+
+  // if (!ConsumeExact(Token::T::lparen, &lcl).ok()) {
+  //  return Status(INVALID_ARGUMENT, "Not a PARENTHESES, 1st char is not
+  //  '('.");
+  //}
+
+  // auto pos = std::find_if(lcl.crbegin(), lcl.crend(), [](const Token &t) {
+  //  return t.type == Token::T::rparen;
+  //});
+  // if (pos == lcl.rend()) {
+  //  return Status(INVALID_ARGUMENT,
+  //                "No closing parenthesis, not a PARENTHESES expression.");
+  //}
+
+  // auto size_of_inner = lcl.size() - std::distance(lcl.crbegin(), pos) - 1;
+  // TSpan lcl_inner(lcl.data(), size_of_inner);
+
+  // Expression inner_expr;
+  // std::cout << "PRINTING LCL INNER '" << PrintTSpan(&lcl_inner) << "'"
+  //          << std::endl;
+
+  // ASSIGN_OR_RETURN_(inner_expr, ConsumeExpression(&lcl_inner));
+  // std::cout << "PARSED INNER EXPR AS" << inner_expr.DebugString() <<
+  // std::endl; lcl.remove_prefix(size_of_inner + 1); std::cout << "LEAVING " <<
+  // PrintTSpan(&lcl) << std::endl;
+
+  // PrintStep(&lcl, tspan, "PARENTHESES");
+  //*tspan = lcl;
+  // return inner_expr;
+
   std::tuple<std::string_view, Expression, std::string_view> t;
   ASSIGN_OR_RETURN_(
       t, (InSequence<std::string_view, Expression, std::string_view>(

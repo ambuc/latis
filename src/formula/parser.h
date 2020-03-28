@@ -108,6 +108,7 @@ public:
     })(tspan);
   }
 
+  // ( .* )
   StatusOr<Expression> ConsumeParentheses(TSpan *tspan);
 
   // [A-Z0-9_]
@@ -128,9 +129,11 @@ private:
   }
   void PrintStep(TSpan *lcl, TSpan *tspan, const std::string &step) {
     if (options_.should_log_verbosely) {
-      std::cout << absl::StreamFormat("%sParsed %s // %s  as an %s",
-                                      std::string(depth_, ' '),
-                                      PrintTSpan(tspan), PrintTSpan(lcl), step)
+      auto whole = PrintTSpan(tspan);
+      auto remaining = PrintTSpan(lcl);
+      std::cout << absl::StreamFormat(
+                       "%sParsed `%s` as an %s", std::string(depth_, ' '),
+                       whole.substr(0, whole.size() - remaining.size()), step)
                 << std::endl;
     }
   }
