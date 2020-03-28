@@ -65,7 +65,8 @@ StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::string_view value;
-  ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
+  ASSIGN_OR_RETURN_(value,
+                    Parser::Get()->ConsumeExact(Token::T::numeric, &lcl));
 
   if (int resultant; !absl::SimpleAtoi(value, &resultant)) {
     return Status(INVALID_ARGUMENT, "Can't ConsumeInt: not a number");
@@ -82,9 +83,14 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
   ASSIGN_OR_RETURN_(
       t,
       (InSequence<absl::optional<int>, std::string_view, absl::optional<int>>(
-          Maybe<int>(ConsumeInt),
-          absl::bind_front(ConsumeExact, Token::T::period),
-          Maybe<int>(ConsumeInt))(&lcl)));
+          // int
+          Maybe<int>(absl::bind_front(&Parser::ConsumeInt, Parser::Get())),
+          // period
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::period),
+          // int
+          Maybe<int>(absl::bind_front(&Parser::ConsumeInt, Parser::Get())))(
+          &lcl)));
 
   double resultant{0};
   if (const auto before = std::get<0>(t); before.has_value()) {
@@ -102,7 +108,8 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
 StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string_view resultant;
-  ASSIGN_OR_RETURN_(resultant, ConsumeExact(Token::T::quote, &lcl));
+  ASSIGN_OR_RETURN_(resultant,
+                    Parser::Get()->ConsumeExact(Token::T::quote, &lcl));
 
   *tspan = lcl;
   return std::string(resultant);
@@ -111,7 +118,8 @@ StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
 StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string_view value;
-  ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
+  ASSIGN_OR_RETURN_(value,
+                    Parser::Get()->ConsumeExact(Token::T::numeric, &lcl));
 
   if (value.size() != 2) {
     return Status(INVALID_ARGUMENT, "Can't Consume2Digit: not 2 digits");
@@ -127,7 +135,8 @@ StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
 StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string_view value;
-  ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
+  ASSIGN_OR_RETURN_(value,
+                    Parser::Get()->ConsumeExact(Token::T::numeric, &lcl));
 
   if (value.size() != 4) {
     return Status(INVALID_ARGUMENT, "Can't Consume4Digit: not 4 digits");
@@ -145,12 +154,13 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
   static std::unordered_map<std::string, Money::Currency> lookup_map{
       {"USD", Money::USD}, {"CAD", Money::CAD}};
 
-  return WithLookup(lookup_map)(
-      absl::bind_front(ConsumeExact, Token::T::alpha))(tspan);
+  return WithLookup(lookup_map)(absl::bind_front(
+      &Parser::ConsumeExact, Parser::Get(), Token::T::alpha))(tspan);
 }
 
 StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
-  if (TSpan lcl = *tspan; ConsumeExact(Token::T::dollar, &lcl).ok()) {
+  if (TSpan lcl = *tspan;
+      Parser::Get()->ConsumeExact(Token::T::dollar, &lcl).ok()) {
     *tspan = lcl;
     return Money::USD;
   }
@@ -164,12 +174,12 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
 
   // Set currency
   Money::Currency currency{Money::UNKNOWN};
-  ASSIGN_OR_RETURN_(currency, ConsumeCurrency(&lcl));
+  ASSIGN_OR_RETURN_(currency, Parser::Get()->ConsumeCurrency(&lcl));
   money.set_currency(currency);
 
   // Set dollars and cents.
   absl::variant<double, int> numeric;
-  ASSIGN_OR_RETURN_(numeric, ConsumeNumeric(&lcl));
+  ASSIGN_OR_RETURN_(numeric, Parser::Get()->ConsumeNumeric(&lcl));
 
   std::visit(overload{
                  [&money](int i) { money.set_dollars(i); },
@@ -190,18 +200,22 @@ StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::tuple<std::string_view, int, std::string_view, int> t;
-  ASSIGN_OR_RETURN_(t,
-                    (InSequence<std::string_view, int, std::string_view, int>(
-                        // + / -
-                        Any<std::string_view>(
-                            {absl::bind_front(ConsumeExact, Token::T::plus),
-                             absl::bind_front(ConsumeExact, Token::T::minus)}),
-                        // TIME_HOUR
-                        &ConsumeTimeHour,
-                        // :
-                        absl::bind_front(ConsumeExact, Token::T::colon),
-                        // TIME_MINUTE
-                        &ConsumeTimeMinute)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      t,
+      (InSequence<std::string_view, int, std::string_view, int>(
+          // + / -
+          Any<std::string_view>(
+              {absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                                Token::T::plus),
+               absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                                Token::T::minus)}),
+          // TIME_HOUR
+          absl::bind_front(&Parser::ConsumeTimeHour, Parser::Get()),
+          // :
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::colon),
+          // TIME_MINUTE
+          absl::bind_front(&Parser::ConsumeTimeMinute, Parser::Get()))(&lcl)));
 
   int posneg = std::get<0>(t) == "+" ? 1 : -1;
   int hour = std::get<1>(t) * 60 * 60;
@@ -222,37 +236,44 @@ StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
              std::string_view, int, std::string_view, int, std::string_view,
              int, absl::optional<double>, absl::TimeZone>
       t;
-  ASSIGN_OR_RETURN_(t, (InSequence<int, std::string_view, int, std::string_view,
-                                   int, std::string_view, int, std::string_view,
-                                   int, std::string_view, int,
-                                   absl::optional<double>, absl::TimeZone>(
-                           // DATE_FULLYEAR
-                           &ConsumeDateFullYear,
-                           // -
-                           absl::bind_front(ConsumeExact, Token::T::minus),
-                           // DATE_MONTH
-                           &ConsumeDateMonth,
-                           // -
-                           absl::bind_front(ConsumeExact, Token::T::minus),
-                           // DATE_MDAY
-                           &ConsumeDateMDay,
-                           // T
-                           WithRestriction<std::string_view>(only_T)(
-                               absl::bind_front(ConsumeExact, Token::T::alpha)),
-                           // TIME_HOUR
-                           &ConsumeTimeHour,
-                           // :
-                           absl::bind_front(ConsumeExact, Token::T::colon),
-                           // TIME_MINUTE
-                           &ConsumeTimeMinute,
-                           // :
-                           absl::bind_front(ConsumeExact, Token::T::colon),
-                           // TIME_SECOND
-                           &ConsumeTimeSecond,
-                           // [TIME_SECFRAC]
-                           Maybe<double>(ConsumeTimeSecFrac),
-                           // TIME_OFFSET
-                           &ConsumeTimeOffset)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      t,
+      (InSequence<int, std::string_view, int, std::string_view, int,
+                  std::string_view, int, std::string_view, int,
+                  std::string_view, int, absl::optional<double>,
+                  absl::TimeZone>(
+          // DATE_FULLYEAR
+          absl::bind_front(&Parser::ConsumeDateFullYear, Parser::Get()),
+          // -
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::minus),
+          // DATE_MONTH
+          absl::bind_front(&Parser::ConsumeDateMonth, Parser::Get()),
+          // -
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::minus),
+          // DATE_MDAY
+          absl::bind_front(&Parser::ConsumeDateMDay, Parser::Get()),
+          // T
+          WithRestriction<std::string_view>(only_T)(absl::bind_front(
+              &Parser::ConsumeExact, Parser::Get(), Token::T::alpha)),
+          // TIME_HOUR
+          absl::bind_front(&Parser::ConsumeTimeHour, Parser::Get()),
+          // :
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::colon),
+          // TIME_MINUTE
+          absl::bind_front(&Parser::ConsumeTimeMinute, Parser::Get()),
+          // :
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::colon),
+          // TIME_SECOND
+          absl::bind_front(&Parser::ConsumeTimeSecond, Parser::Get()),
+          // [TIME_SECFRAC]
+          Maybe<double>(
+              absl::bind_front(&Parser::ConsumeTimeSecFrac, Parser::Get())),
+          // TIME_OFFSET
+          absl::bind_front(&Parser::ConsumeTimeOffset, Parser::Get()))(&lcl)));
 
   // Tz-aligned.
   absl::Time resultant = absl::FromCivil(
@@ -279,10 +300,14 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
 
   absl::variant<std::string, absl::Time, double, int, Money> amount;
 
-  ASSIGN_OR_RETURN_(amount,
-                    (AnyVariant<std::string, absl::Time, double, int, Money>(
-                        ConsumeString, ConsumeDateTime, ConsumeDouble,
-                        ConsumeInt, ConsumeMoney)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      amount,
+      (AnyVariant<std::string, absl::Time, double, int, Money>(
+          absl::bind_front(&Parser::ConsumeString, Parser::Get()),
+          absl::bind_front(&Parser::ConsumeDateTime, Parser::Get()),
+          absl::bind_front(&Parser::ConsumeDouble, Parser::Get()),
+          absl::bind_front(&Parser::ConsumeInt, Parser::Get()),
+          absl::bind_front(&Parser::ConsumeMoney, Parser::Get()))(&lcl)));
 
   Amount resultant;
   std::visit(
@@ -308,15 +333,16 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
 StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
   auto tr = [](int i) -> int { return i - 1; };
   auto r = [](int i) -> bool { return i > 0; };
-  return WithTransformation<int, int>(tr)(WithRestriction<int>(r)(ConsumeInt))(
-      tspan);
+  return WithTransformation<int, int>(tr)(WithRestriction<int>(r)(
+      absl::bind_front(&Parser::ConsumeInt, Parser::Get())))(tspan);
 }
 
 StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
   // TODO(ambuc): WithTransformationReturningOptional ?
   TSpan lcl = *tspan;
 
-  const auto maybe_str_view = ConsumeExact(Token::T::alpha, &lcl);
+  const auto maybe_str_view =
+      Parser::Get()->ConsumeExact(Token::T::alpha, &lcl);
 
   if (!maybe_str_view.ok()) {
     return Status(
@@ -340,11 +366,13 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   PointLocation resultant;
 
   std::tuple<int, int> t;
-  ASSIGN_OR_RETURN_(t, (InSequence<int, int>(
-                           // COL
-                           &ConsumeColIndicator,
-                           // ROW
-                           &ConsumeRowIndicator)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      t, (InSequence<int, int>(
+             // COL
+             absl::bind_front(&Parser::ConsumeColIndicator, Parser::Get()),
+             // ROW
+             absl::bind_front(&Parser::ConsumeRowIndicator, Parser::Get()))(
+             &lcl)));
 
   resultant.set_col(std::get<0>(t));
   resultant.set_row(std::get<1>(t));
@@ -358,19 +386,20 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   RangeLocation resultant;
 
   PointLocation pl;
-  ASSIGN_OR_RETURN_(pl, ConsumePointLocation(&lcl));
+  ASSIGN_OR_RETURN_(pl, Parser::Get()->ConsumePointLocation(&lcl));
   *resultant.mutable_from_cell() = pl;
 
-  if (!ConsumeExact(Token::T::colon, &lcl).ok()) {
+  if (!Parser::Get()->ConsumeExact(Token::T::colon, &lcl).ok()) {
     return Status(INVALID_ARGUMENT, "Can't ConsumeRangeLocationPointThenAny: "
                                     "RANGE_LOCATION must have a ';'.");
   }
 
-  if (const auto to_pl = ConsumePointLocation(&lcl); to_pl.ok()) {
+  if (const auto to_pl = Parser::Get()->ConsumePointLocation(&lcl);
+      to_pl.ok()) {
     *resultant.mutable_to_cell() = to_pl.ValueOrDie();
-  } else if (const auto v = ConsumeRowIndicator(&lcl); v.ok()) {
+  } else if (const auto v = Parser::Get()->ConsumeRowIndicator(&lcl); v.ok()) {
     resultant.set_to_row(v.ValueOrDie());
-  } else if (const auto c = ConsumeColIndicator(&lcl); c.ok()) {
+  } else if (const auto c = Parser::Get()->ConsumeColIndicator(&lcl); c.ok()) {
     resultant.set_to_col(c.ValueOrDie());
   } else {
     return Status(INVALID_ARGUMENT,
@@ -387,13 +416,16 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   RangeLocation resultant;
 
   std::tuple<int, std::string_view, int> t;
-  ASSIGN_OR_RETURN_(t, (InSequence<int, std::string_view, int>(
-                           // ROW
-                           &ConsumeRowIndicator,
-                           // :
-                           absl::bind_front(ConsumeExact, Token::T::colon),
-                           // ROW
-                           &ConsumeRowIndicator)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      t, (InSequence<int, std::string_view, int>(
+             // ROW
+             absl::bind_front(&Parser::ConsumeRowIndicator, Parser::Get()),
+             // :
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::colon),
+             // ROW
+             absl::bind_front(&Parser::ConsumeRowIndicator, Parser::Get()))(
+             &lcl)));
   resultant.set_from_row(std::get<0>(t));
   resultant.set_to_row(std::get<2>(t));
 
@@ -406,13 +438,16 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   RangeLocation resultant;
 
   std::tuple<int, std::string_view, int> t;
-  ASSIGN_OR_RETURN_(t, (InSequence<int, std::string_view, int>(
-                           // COL,
-                           &ConsumeColIndicator,
-                           // :
-                           absl::bind_front(ConsumeExact, Token::T::colon),
-                           // COL
-                           &ConsumeColIndicator)(&lcl)));
+  ASSIGN_OR_RETURN_(
+      t, (InSequence<int, std::string_view, int>(
+             // COL,
+             absl::bind_front(&Parser::ConsumeColIndicator, Parser::Get()),
+             // :
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::colon),
+             // COL
+             absl::bind_front(&Parser::ConsumeColIndicator, Parser::Get()))(
+             &lcl)));
 
   resultant.set_from_col(std::get<0>(t));
   resultant.set_to_col(std::get<2>(t));
@@ -428,12 +463,14 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
   std::string resultant;
 
   while (true) {
-    if (const auto maybe_alpha = ConsumeExact(Token::T::alpha, &lcl);
+    if (const auto maybe_alpha =
+            Parser::Get()->ConsumeExact(Token::T::alpha, &lcl);
         maybe_alpha.ok()) {
       resultant += maybe_alpha.ValueOrDie();
-    } else if (const auto maybe_int = ConsumeInt(&lcl); maybe_int.ok()) {
+    } else if (const auto maybe_int = Parser::Get()->ConsumeInt(&lcl);
+               maybe_int.ok()) {
       resultant += std::to_string(maybe_int.ValueOrDie());
-    } else if (ConsumeExact(Token::T::underscore, &lcl).ok()) {
+    } else if (Parser::Get()->ConsumeExact(Token::T::underscore, &lcl).ok()) {
       resultant += "_";
     } else {
       break;
@@ -474,13 +511,15 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
       t,
       (InSequence<std::string, std::string_view, Expression, std::string_view>(
           // FN
-          &ConsumeFnName,
+          absl::bind_front(&Parser::ConsumeFnName, Parser::Get()),
           // (
-          absl::bind_front(ConsumeExact, Token::T::lparen),
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::lparen),
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
           // )
-          absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::rparen))(&lcl)));
 
   Expression::OpUnary resultant;
   resultant.set_operation(std::get<0>(t));
@@ -500,17 +539,20 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
       t, (InSequence<std::string, std::string_view, Expression,
                      std::string_view, Expression, std::string_view>(
              // FN
-             &ConsumeFnName,
+             absl::bind_front(&Parser::ConsumeFnName, Parser::Get()),
              // (
-             absl::bind_front(ConsumeExact, Token::T::lparen),
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::lparen),
              // EXPR
              absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
              // ,
-             absl::bind_front(ConsumeExact, Token::T::comma),
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::comma),
              // EXPR
              absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
              // )
-             absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::rparen))(&lcl)));
 
   Expression::OpBinary resultant;
   resultant.set_operation(std::get<0>(t));
@@ -525,21 +567,21 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string resultant;
 
-  if (ConsumeExact(Token::T::plus, &lcl).ok()) {
+  if (Parser::Get()->ConsumeExact(Token::T::plus, &lcl).ok()) {
     resultant = "PLUS";
-  } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::minus, &lcl).ok()) {
     resultant = "MINUS";
-  } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::asterisk, &lcl).ok()) {
     resultant = "TIMES";
-  } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::slash, &lcl).ok()) {
     resultant = "DIVIDED_BY";
-  } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::carat, &lcl).ok()) {
     resultant = "POW";
-  } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::percent, &lcl).ok()) {
     resultant = "MOD";
-  } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::lthan, &lcl).ok()) {
     resultant = "LTHAN";
-  } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
+  } else if (Parser::Get()->ConsumeExact(Token::T::gthan, &lcl).ok()) {
     resultant = "GTHAN";
   } else {
     return Status(INVALID_ARGUMENT,
@@ -564,7 +606,7 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
           // + - etc
-          &ConsumeOpBinaryInfixFn,
+          absl::bind_front(&Parser::ConsumeOpBinaryInfixFn, Parser::Get()),
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()))(&lcl)));
 
@@ -582,9 +624,11 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
   std::tuple<std::string_view, Expression, std::string_view> t;
   ASSIGN_OR_RETURN_(
       t, (InSequence<std::string_view, Expression, std::string_view>(
-             absl::bind_front(ConsumeExact, Token::T::lparen),
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::lparen),
              absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
-             absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
+             absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                              Token::T::rparen))(&lcl)));
 
   *tspan = lcl;
   return std::get<1>(t);
@@ -601,21 +645,25 @@ StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
       (InSequence<std::string, std::string_view, Expression, std::string_view,
                   Expression, std::string_view, Expression, std::string_view>(
           // FN
-          &ConsumeFnName,
+          absl::bind_front(&Parser::ConsumeFnName, Parser::Get()),
           // (
-          absl::bind_front(ConsumeExact, Token::T::lparen),
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::lparen),
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
           // ,
-          absl::bind_front(ConsumeExact, Token::T::comma),
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::comma),
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
           // ,
-          absl::bind_front(ConsumeExact, Token::T::comma),
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::comma),
           // EXPR
           absl::bind_front(&Parser::ConsumeExpression, Parser::Get()),
           // )
-          absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
+          absl::bind_front(&Parser::ConsumeExact, Parser::Get(),
+                           Token::T::rparen))(&lcl)));
 
   Expression::OpTernary resultant;
   resultant.set_operation(std::get<0>(t));
@@ -641,22 +689,26 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
                 >
       expression;
 
-  ASSIGN_OR_RETURN_(expression,
-                    (AnyVariant<Expression::OpUnary,    //
-                                Expression::OpBinary,   //
-                                Expression::OpTernary,  //
-                                Expression,             //
-                                RangeLocation,          //
-                                PointLocation,          //
-                                Amount                  //
-                                >(ConsumeOpUnary,       //
-                                  ConsumeOpBinary,      //
-                                  ConsumeOpTernary,     //
-                                  ConsumeParentheses,   //
-                                  ConsumeRangeLocation, //
-                                  ConsumePointLocation, //
-                                  ConsumeAmount         //
-                                  )(&lcl)));
+  ASSIGN_OR_RETURN_(
+      expression,
+      (AnyVariant<Expression::OpUnary,   //
+                  Expression::OpBinary,  //
+                  Expression::OpTernary, //
+                  Expression,            //
+                  RangeLocation,         //
+                  PointLocation,         //
+                  Amount                 //
+                  >(
+          absl::bind_front(&Parser::ConsumeOpUnary, Parser::Get()), //
+          absl::bind_front(&Parser::ConsumeOpBinary,
+                           Parser::Get()), //
+          absl::bind_front(&Parser::ConsumeOpTernary,
+                           Parser::Get()),                                //
+          absl::bind_front(&Parser::ConsumeParentheses, Parser::Get()),   //
+          absl::bind_front(&Parser::ConsumeRangeLocation, Parser::Get()), //
+          absl::bind_front(&Parser::ConsumePointLocation, Parser::Get()), //
+          absl::bind_front(&Parser::ConsumeAmount, Parser::Get())         //
+          )(&lcl)));
 
   std::visit(
       overload{
