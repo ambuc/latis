@@ -26,17 +26,6 @@
 namespace latis {
 namespace formula {
 
-// Helpful usings which make writing code in a header feel more natural.
-using Status = ::google::protobuf::util::Status;
-
-template <typename T> //
-using StatusOr = ::google::protobuf::util::StatusOr<T>;
-
-using TSpan = absl::Span<const Token>;
-
-template <typename T> //
-using Prsr = std::function<StatusOr<T>(TSpan *)>;
-
 // Parser combinator |AnyVariant|.
 //
 // Useful for combining n parsers, all of whom have different return types.
@@ -262,39 +251,6 @@ WithLookup(const M &map) {
     };
   };
 }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 } // namespace formula
 } // namespace latis

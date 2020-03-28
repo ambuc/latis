@@ -26,13 +26,8 @@ namespace latis {
 namespace formula {
 namespace {
 
-using ::google::protobuf::TextFormat;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
-using ::testing::ContainerEq;
-using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::IsEmpty;
-using ::testing::Matches;
 using ::testing::MockFunction;
 using ::testing::Not;
 using ::testing::Return;
