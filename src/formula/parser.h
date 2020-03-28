@@ -61,7 +61,8 @@ public:
 
   StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
+    PrintAttempt("NUMERIC");
 
     return AnyVariant<double, int>(
         absl::bind_front(&Parser::ConsumeDouble, this),
@@ -78,8 +79,9 @@ public:
 
   StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
+    PrintAttempt("CURRENCY");
     return Any<Money::Currency>({
         absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
         absl::bind_front(&Parser::ConsumeCurrencyWord, this),
@@ -96,8 +98,9 @@ public:
 
   StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
+    PrintAttempt("RANGE_LOCATION");
     return Any<RangeLocation>({
         absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
         absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
@@ -118,12 +121,16 @@ private:
   int depth_{0};
 
   // Logging w/ depth_
-  void PrintStep(TSpan *tspan, const std::string &step) {
-    // std::cout << depth_ << std::endl;
+  void PrintAttempt(const std::string &step) {
     if (options_.should_log_verbosely) {
-      std::cout << absl::StreamFormat("%sParsed %s as an %s",
+      std::cout << std::string(depth_, ' ') << step << std::endl;
+    }
+  }
+  void PrintStep(TSpan *lcl, TSpan *tspan, const std::string &step) {
+    if (options_.should_log_verbosely) {
+      std::cout << absl::StreamFormat("%sParsed %s // %s  as an %s",
                                       std::string(depth_, ' '),
-                                      PrintTSpan(tspan), step)
+                                      PrintTSpan(tspan), PrintTSpan(lcl), step)
                 << std::endl;
     }
   }
@@ -164,59 +171,66 @@ private:
 
   StatusOr<int> ConsumeDateFullYear(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
+    PrintAttempt("FULL_YEAR");
     return Consume4Digit(tspan);
   }
 
   StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 1 <= i && i <= 12; };
+    PrintAttempt("DATE_MONTH");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 1 <= i && i <= 31; };
+    PrintAttempt("DATE_MDAY");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 0 <= i && i <= 23; };
+    PrintAttempt("TIME_HOUR");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
 
   StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 0 <= i && i <= 59; };
+    PrintAttempt("TIME_MINUTE");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     // Up to 60, counting leap seconds.
     static auto r = [](int i) { return 0 <= i && i <= 60; };
+    PrintAttempt("TIME_SECOND");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
   StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
+    PrintAttempt("TIME_SEC_FRAC");
     return ConsumeDouble(tspan);
   }
 
@@ -224,8 +238,9 @@ private:
 
   StatusOr<Expression::OpUnary> ConsumeOpUnary(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
+    PrintAttempt("OP_UNARY");
     return Any<Expression::OpUnary>({
         absl::bind_front(&Parser::ConsumeOpUnaryText, this),
     })(tspan);
@@ -241,7 +256,7 @@ private:
 
   StatusOr<Expression::OpBinary> ConsumeOpBinary(TSpan *tspan) {
     depth_++;
-    auto depth_decrementor = MakeCleanup([&] { depth_--; });
+    auto d = MakeCleanup([&] { depth_--; });
 
     return Any<Expression::OpBinary>({
         absl::bind_front(&Parser::ConsumeOpBinaryText, this),

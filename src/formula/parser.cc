@@ -42,7 +42,8 @@ using ::google::protobuf::util::error::OK;
 
 StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("EXACT");
 
   if (tspan->empty()) {
     return Status(
@@ -65,25 +66,28 @@ StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
 
 StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("INT");
 
   TSpan lcl = *tspan;
 
   std::string_view value;
   ASSIGN_OR_RETURN_(value, ConsumeExact(Token::T::numeric, &lcl));
 
-  if (int resultant; !absl::SimpleAtoi(value, &resultant)) {
+  int resultant;
+  if (!absl::SimpleAtoi(value, &resultant)) {
     return Status(INVALID_ARGUMENT, "Can't ConsumeInt: not a number");
-  } else {
-    PrintStep(tspan, "INT");
-    *tspan = lcl;
-    return resultant;
   }
+
+  PrintStep(&lcl, tspan, "INT");
+  *tspan = lcl;
+  return resultant;
 }
 
 StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("DOUBLE");
 
   TSpan lcl = *tspan;
 
@@ -103,31 +107,35 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
     resultant += static_cast<double>(before.value());
   }
   if (const auto after = std::get<2>(t); after.has_value()) {
-    resultant += static_cast<double>(after.value() /
-                                     pow(10.0, ceil(log10(after.value()))));
+    if (after != 0) {
+      resultant += static_cast<double>(after.value() /
+                                       pow(10.0, ceil(log10(after.value()))));
+    }
   }
 
-  PrintStep(tspan, "DOUBLE");
+  PrintStep(&lcl, tspan, "DOUBLE");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("STRING");
 
   TSpan lcl = *tspan;
   std::string_view resultant;
   ASSIGN_OR_RETURN_(resultant, ConsumeExact(Token::T::quote, &lcl));
 
-  PrintStep(tspan, "STRING");
+  PrintStep(&lcl, tspan, "STRING");
   *tspan = lcl;
   return std::string(resultant);
 }
 
 StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("2DIGIT");
 
   TSpan lcl = *tspan;
   std::string_view value;
@@ -137,17 +145,20 @@ StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
     return Status(INVALID_ARGUMENT, "Can't Consume2Digit: not 2 digits");
   }
 
-  if (int resultant; absl::SimpleAtoi(value, &resultant)) {
-    PrintStep(tspan, "2DIGIT");
-    *tspan = lcl;
-    return resultant;
+  int resultant;
+  if (!absl::SimpleAtoi(value, &resultant)) {
+    return Status(INVALID_ARGUMENT, "Can't Consume2Digit: not a number");
   }
-  return Status(INVALID_ARGUMENT, "Can't Consume2Digit: not a number");
+
+  PrintStep(&lcl, tspan, "2DIGIT");
+  *tspan = lcl;
+  return resultant;
 }
 
 StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("4DIGIT");
 
   TSpan lcl = *tspan;
   std::string_view value;
@@ -157,18 +168,21 @@ StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
     return Status(INVALID_ARGUMENT, "Can't Consume4Digit: not 4 digits");
   }
 
-  if (int resultant; absl::SimpleAtoi(value, &resultant)) {
-    PrintStep(tspan, "4DIGIT");
-    *tspan = lcl;
-    return resultant;
+  int resultant;
+  if (!absl::SimpleAtoi(value, &resultant)) {
+    return Status(INVALID_ARGUMENT, "Can't Consume4Digit: not a number");
   }
-  return Status(INVALID_ARGUMENT, "Can't Consume4Digit: not a number");
+
+  PrintStep(&lcl, tspan, "4DIGIT");
+  *tspan = lcl;
+  return resultant;
 }
 
 // Expects "USD" or "CAD".
 StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("CURRENCY_WORD");
 
   static std::unordered_map<std::string, Money::Currency> lookup_map{
       {"USD", Money::USD}, {"CAD", Money::CAD}};
@@ -179,20 +193,25 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
 
 StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("CURRENCY_SYMBOL");
 
-  if (TSpan lcl = *tspan; ConsumeExact(Token::T::dollar, &lcl).ok()) {
-    PrintStep(tspan, "CURRENCY_SYMBOL");
-    *tspan = lcl;
-    return Money::USD;
+  TSpan lcl = *tspan;
+
+  if (!ConsumeExact(Token::T::dollar, &lcl).ok()) {
+    return Status(INVALID_ARGUMENT,
+                  "Can't ConsumeCurrencySymbol: no currency symbol");
   }
-  return Status(INVALID_ARGUMENT,
-                "Can't ConsumeCurrencySymbol: no currency symbol");
+
+  PrintStep(&lcl, tspan, "CURRENCY_SYMBOL");
+  *tspan = lcl;
+  return Money::USD;
 }
 
 StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("MONEY");
 
   TSpan lcl = *tspan;
   Money money;
@@ -217,14 +236,15 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
              },
              numeric);
 
-  PrintStep(tspan, "MONEY");
+  PrintStep(&lcl, tspan, "MONEY");
   *tspan = lcl;
   return money;
 }
 
 StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("TIME_OFFSET");
 
   TSpan lcl = *tspan;
 
@@ -247,14 +267,15 @@ StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   int hour = std::get<1>(t) * 60 * 60;
   int min = std::get<3>(t) * 60;
 
-  PrintStep(tspan, "TIME_OFFSET");
+  PrintStep(&lcl, tspan, "TIME_OFFSET");
   *tspan = lcl;
   return absl::FixedTimeZone(posneg * (hour + min));
 }
 
 StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("DATE_TIME");
 
   auto only_T = [](std::string_view s) -> bool { return s == "T"; };
 
@@ -315,14 +336,15 @@ StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
     resultant += absl::Milliseconds(round(secfrac.value() * 1000));
   }
 
-  PrintStep(tspan, "DATETIME");
+  PrintStep(&lcl, tspan, "DATETIME");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("AMOUNT");
 
   TSpan lcl = *tspan;
 
@@ -347,20 +369,21 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
             // See
             // https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/timestamp.proto#L133-L137.
           },
-          [&resultant](Money m) { *resultant.mutable_money_amount() = m; },
           [&resultant](double d) { resultant.set_double_amount(d); },
-          [&resultant](int i) { resultant.set_int_amount(i); },
+          [&resultant](int d) { resultant.set_int_amount(d); },
+          [&resultant](Money m) { *resultant.mutable_money_amount() = m; },
       },
       amount);
 
-  PrintStep(tspan, "AMOUNT");
+  PrintStep(&lcl, tspan, "AMOUNT");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("ROW_INDICATOR");
 
   auto tr = [](int i) -> int { return i - 1; };
   auto r = [](int i) -> bool { return i > 0; };
@@ -370,7 +393,8 @@ StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
 
 StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("COL_INDICATOR");
 
   // TODO(ambuc): WithTransformationReturningOptional ?
   TSpan lcl = *tspan;
@@ -390,15 +414,15 @@ StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
         "Can't ConsumeColIndicator: LOCATION must begin with 1*UPPERCASE.");
   }
 
-  PrintStep(tspan, "COL_INDICATOR");
+  PrintStep(&lcl, tspan, "COL_INDICATOR");
   *tspan = lcl;
   return maybe_int.ValueOrDie();
 }
 
 StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("POINT_LOCATION");
   TSpan lcl = *tspan;
   PointLocation resultant;
 
@@ -413,15 +437,15 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   resultant.set_col(std::get<0>(t));
   resultant.set_row(std::get<1>(t));
 
-  PrintStep(tspan, "POINT_LOCATION");
+  PrintStep(&lcl, tspan, "POINT_LOCATION");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("RANGE_LOCATION_POINT_THEN_ANY");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -446,15 +470,15 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
                   "end in a point/row/col.");
   }
 
-  PrintStep(tspan, "RANGE_LOCATION_POINT_THEN_ANY");
+  PrintStep(&lcl, tspan, "RANGE_LOCATION_POINT_THEN_ANY");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("RANGE_LOCATION_ROW_THEN_ROW");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -470,15 +494,15 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   resultant.set_from_row(std::get<0>(t));
   resultant.set_to_row(std::get<2>(t));
 
-  PrintStep(tspan, "RANGE_LOCATION_ROW_THEN_ROW");
+  PrintStep(&lcl, tspan, "RANGE_LOCATION_ROW_THEN_ROW");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("RANGE_LOCATION_COL_THEN_COL");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -495,7 +519,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   resultant.set_from_col(std::get<0>(t));
   resultant.set_to_col(std::get<2>(t));
 
-  PrintStep(tspan, "RANGE_LOCATION_COL_THEN_COL");
+  PrintStep(&lcl, tspan, "RANGE_LOCATION_COL_THEN_COL");
   *tspan = lcl;
   return resultant;
 }
@@ -504,8 +528,8 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
 // TODO(ambuc): This could return a std::str_view into the underlying tspan.
 StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("FN_NAME");
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -544,15 +568,15 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
         "Can't ConsumeFnName: Can't have a fn name which begins with a digit.");
   }
 
-  PrintStep(tspan, "FN_NAME");
+  PrintStep(&lcl, tspan, "FN_NAME");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_UNARY_TEXT");
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view> t;
@@ -573,15 +597,15 @@ StatusOr<Expression::OpUnary> Parser::ConsumeOpUnaryText(TSpan *tspan) {
   resultant.set_operation(std::get<0>(t));
   *resultant.mutable_term1() = std::get<2>(t);
 
-  PrintStep(tspan, "OP_UNARY_TEXT");
+  PrintStep(&lcl, tspan, "OP_UNARY_TEXT");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_BINARY_TEXT");
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view,
@@ -609,15 +633,15 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryText(TSpan *tspan) {
   *resultant.mutable_term1() = std::get<2>(t);
   *resultant.mutable_term2() = std::get<4>(t);
 
-  PrintStep(tspan, "OP_BINARY_TEXT");
+  PrintStep(&lcl, tspan, "OP_BINARY_TEXT");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_BINARY_INFIX_FN");
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -642,19 +666,19 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");
   }
 
-  PrintStep(tspan, "OP_BINARY_INFIX_FN");
+  PrintStep(&lcl, tspan, "OP_BINARY_INFIX_FN");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
-  depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
-
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
   RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
 
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_BINARY_INFIX");
   TSpan lcl = *tspan;
 
   std::tuple<Expression, std::string, Expression> t;
@@ -672,14 +696,15 @@ StatusOr<Expression::OpBinary> Parser::ConsumeOpBinaryInfix(TSpan *tspan) {
   resultant.set_operation(std::get<1>(t));
   *resultant.mutable_term2() = std::get<2>(t);
 
-  PrintStep(tspan, "OP_BINARY_INFIX");
+  PrintStep(&lcl, tspan, "OP_BINARY_INFIX");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("PARENTHESES");
 
   TSpan lcl = *tspan;
   std::tuple<std::string_view, Expression, std::string_view> t;
@@ -690,14 +715,15 @@ StatusOr<Expression> Parser::ConsumeParentheses(TSpan *tspan) {
              absl::bind_front(&Parser::ConsumeExact, this, Token::T::rparen))(
              &lcl)));
 
-  PrintStep(tspan, "PARENTHESES");
+  PrintStep(&lcl, tspan, "PARENTHESES");
   *tspan = lcl;
   return std::get<1>(t);
 }
 
 StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("OP_TERNARY");
 
   TSpan lcl = *tspan;
 
@@ -732,14 +758,15 @@ StatusOr<Expression::OpTernary> Parser::ConsumeOpTernary(TSpan *tspan) {
   *resultant.mutable_term2() = std::get<4>(t);
   *resultant.mutable_term3() = std::get<6>(t);
 
-  PrintStep(tspan, "OP_TERNARY");
+  PrintStep(&lcl, tspan, "OP_TERNARY");
   *tspan = lcl;
   return resultant;
 }
 
 StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   depth_++;
-  auto depth_decrementor = MakeCleanup([&] { depth_--; });
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt("EXPRESSION");
 
   TSpan lcl = *tspan;
   Expression resultant;
@@ -792,7 +819,7 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
       },
       expression);
 
-  PrintStep(tspan, "EXPRESSION");
+  PrintStep(&lcl, tspan, "EXPRESSION");
   *tspan = lcl;
   return resultant;
 }

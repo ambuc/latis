@@ -434,7 +434,7 @@ public:
   }
 };
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  p_.EnableVerboseLogging(); // TODO remove this.
+  // p_.EnableVerboseLogging(); // TODO remove this.
   RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
@@ -486,10 +486,8 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"FOO(1,2)",
          R"pb( op_binary { operation: "FOO" term1: { value: { int_amount: 1 } } term2: { value: { int_amount: 2 } } })pb"},
-        //{"FOO(3.0,4.0)",
-        // R"pb( op_binary { operation: "FOO" term1: { value: {
-        // double_amount: 3.0 } } term2: { value: { double_amount: 4.0 } }
-        // })pb"},
+        {"FOO(3.0,4.0)",
+         R"pb( op_binary { operation: "FOO" term1: { value: { double_amount: 3.0 } } term2: { value: { double_amount: 4.0 } } })pb"},
         {"BAR(A1,BAZ(A2,A3))",
          R"pb( op_binary { operation: "BAR" term1: { lookup: { row: 0 col: 0 } } term2: { op_binary { operation: "BAZ" term1: { lookup: { row: 1 col: 0 } } term2: { lookup: { row: 2 col: 0 } } } } })pb"},
     }));
