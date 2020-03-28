@@ -63,6 +63,9 @@ public:
     const auto object_or_status = parser(&tspan);
 
     if (expectation_or_nullopt.has_value()) {
+      if (!object_or_status.ok()) {
+        std::cout << object_or_status.status() << std::endl;
+      }
       ASSERT_THAT(object_or_status, IsOk());
       Compare(object_or_status.ValueOrDie(), expectation_or_nullopt.value());
       ASSERT_THAT(tspan, IsEmpty());
@@ -425,7 +428,43 @@ TEST_P(ExpressionTestSuite, LexAndParse) {
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
 }
 INSTANTIATE_TEST_SUITE_P(
-    AllExpressions, ExpressionTestSuite,
+    UnaryPrefix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        // Point and Range locations.
+        {R"pb(WALDO(A1))pb",
+         R"pb(op_unary { operation: "WALDO" term1: { lookup: { row : 0 col : 0 } } })pb"},
+        {R"pb(GARPLY(A1:B2))pb",
+         R"pb(op_unary { operation: "GARPLY" term1: { range: { from_cell: { row: 0 col: 0 } to_cell: { row: 1  col: 1} } } })pb"},
+
+        // Basic amounts.
+        {R"(FOO("foo"))",
+         R"pb(op_unary { operation: "FOO" term1: { value: { str_amount: "foo" } } })pb"},
+        {R"(BAR(240))",
+         R"pb(op_unary { operation: "BAR" term1: { value: { int_amount: 240 } } })pb"},
+        {R"(BAZ(240.248))",
+         R"pb(op_unary { operation: "BAZ" term1: { value: { double_amount: 240.248 } } })pb"},
+        {R"(QUX(2016-01-02T03:04:05.678+08:00))",
+         R"pb(op_unary { operation: "QUX" term1: { value: { timestamp_amount: { seconds: 1451675045 } } } })pb"},
+        {R"(CORGE($23))",
+         R"pb(op_unary { operation: "CORGE" term1: { value: { money_amount: { dollars: 23 currency: USD } } } })pb"},
+        {R"(GRAULT($123.45))",
+         R"pb(op_unary { operation: "GRAULT" term1: { value: { money_amount: { dollars: 123 cents: 45 currency: USD } } } })pb"},
+
+        // Nested unary prefix operations.
+        {R"(FOO1(FOO2(3)))",
+         R"pb(op_unary { operation: "FOO1" term1: { op_unary: { operation: "FOO2" term1: { value: { int_amount: 3 } } } } })pb"},
+        {R"(FOO1(FOO2("3")))",
+         R"pb(op_unary { operation: "FOO1" term1: { op_unary: { operation: "FOO2" term1: { value: { str_amount: "3" } } } } })pb"},
+
+        // Ignoring the inner parentheses of a string.
+        {R"pb(FOO1("FOO2(3)"))pb",
+         R"pb(op_unary { operation: "FOO1" term1: { value: { str_amount: "FOO2(3)" } } })pb"},
+        // Ignoring the inner parentheses of a string, even if empty.
+        {R"pb(FOO1(""))pb",
+         R"pb(op_unary { operation: "FOO1" term1: { value: { str_amount: "" } } })pb"},
+    }));
+INSTANTIATE_TEST_SUITE_P(
+    BinaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {
             "SUM(A1,A2)",
@@ -434,14 +473,6 @@ INSTANTIATE_TEST_SUITE_P(
                 operation: "SUM"
                 term1: { lookup: { row: 0 col: 0} }
                 term2: { lookup: { row: 1 col: 0} }
-              })pb",
-        },
-        {
-            "NEG(A1)",
-            R"pb(
-              op_unary {
-                operation: "NEG"
-                term1: { lookup : { row : 0 col : 0 } }
               })pb",
         },
         {

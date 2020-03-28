@@ -203,8 +203,6 @@ public:
 
   static StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
 
-  static StatusOr<Expression::OpRange> ConsumeOpRange(TSpan *tspan);
-
   // [A-Z0-9_]
   static StatusOr<std::string> ConsumeFnName(TSpan *tspan);
 

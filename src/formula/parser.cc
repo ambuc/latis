@@ -672,70 +672,39 @@ OperationParser::ConsumeOpTernary(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression::OpRange> OperationParser::ConsumeOpRange(TSpan *tspan) {
-  TSpan lcl = *tspan;
-
-  std::tuple<std::string, std::string_view, RangeLocation, std::string_view> t;
-  ASSIGN_OR_RETURN_(
-      t, (InSequence<std::string, std::string_view, RangeLocation,
-                     std::string_view>(
-             // FN
-             &ConsumeFnName,
-             // (
-             absl::bind_front(ConsumeExact, Token::T::lparen),
-             // RANGE_LOCATION
-             &LocationParser::ConsumeRangeLocation,
-             // )
-             absl::bind_front(ConsumeExact, Token::T::rparen))(&lcl)));
-
-  Expression::OpRange resultant;
-  resultant.set_operation(std::get<0>(t));
-  *resultant.mutable_range() = std::get<2>(t);
-
-  // std::cout << "Succeeded ConsumeOpRange on: ";
-  // PrintTSpan(tspan);
-  *tspan = lcl;
-  return resultant;
-}
-
 StatusOr<Expression> ConsumeExpression(TSpan *tspan) {
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<
-      // Expression::OpRange, //
-      Expression::OpUnary,   //
-      Expression::OpBinary,  //
-      Expression::OpTernary, //
-      Expression,            //
-      PointLocation,         //
-      Amount                 //
-      >
+  absl::variant<Expression::OpUnary,   //
+                Expression::OpBinary,  //
+                Expression::OpTernary, //
+                Expression,            //
+                RangeLocation,         //
+                PointLocation,         //
+                Amount                 //
+                >
       expression;
 
-  ASSIGN_OR_RETURN_(expression, (AnyVariant<
-                                    // Expression::OpRange, //
-                                    Expression::OpUnary,   //
-                                    Expression::OpBinary,  //
-                                    Expression::OpTernary, //
-                                    Expression,            //
-                                    PointLocation,         //
-                                    Amount                 //
-                                    >(
-                                    // OperationParser::ConsumeOpRange, //
-                                    OperationParser::ConsumeOpUnary,      //
-                                    OperationParser::ConsumeOpBinary,     //
-                                    OperationParser::ConsumeOpTernary,    //
-                                    OperationParser::ConsumeParentheses,  //
-                                    LocationParser::ConsumePointLocation, //
-                                    ConsumeAmount                         //
-                                    )(&lcl)));
+  ASSIGN_OR_RETURN_(expression,
+                    (AnyVariant<Expression::OpUnary,                    //
+                                Expression::OpBinary,                   //
+                                Expression::OpTernary,                  //
+                                Expression,                             //
+                                RangeLocation,                          //
+                                PointLocation,                          //
+                                Amount                                  //
+                                >(OperationParser::ConsumeOpUnary,      //
+                                  OperationParser::ConsumeOpBinary,     //
+                                  OperationParser::ConsumeOpTernary,    //
+                                  OperationParser::ConsumeParentheses,  //
+                                  LocationParser::ConsumeRangeLocation, //
+                                  LocationParser::ConsumePointLocation, //
+                                  ConsumeAmount                         //
+                                  )(&lcl)));
 
   std::visit(
       overload{
-          //[&resultant](Expression::OpRange o) {
-          //  *resultant.mutable_op_range() = o;
-          //},
           [&resultant](Expression e) { resultant = e; },
           [&resultant](Expression::OpTernary o) {
             *resultant.mutable_op_ternary() = o;
@@ -746,6 +715,7 @@ StatusOr<Expression> ConsumeExpression(TSpan *tspan) {
           [&resultant](Expression::OpUnary o) {
             *resultant.mutable_op_unary() = o;
           },
+          [&resultant](RangeLocation rl) { *resultant.mutable_range() = rl; },
           [&resultant](PointLocation pl) { *resultant.mutable_lookup() = pl; },
           [&resultant](Amount value) { *resultant.mutable_value() = value; },
       },

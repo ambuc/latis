@@ -79,18 +79,14 @@ message Expression {
     optional Expression term2 = 3;
     optional Expression term3 = 4;
   }
-  message OpRange {
-    optional string operation = 1;
-    optional RangeLocation range = 2;
-  }
 
   oneof expression_demux {
     PointLocation lookup = 1;
-    Amount value = 2;
-    OpUnary op_unary = 3;
-    OpBinary op_binary = 4;
-    OpTernary op_ternary = 5;
-    OpRange op_range = 6;
+    RangeLocation range = 2;
+    Amount value = 3;
+    OpUnary op_unary = 4;
+    OpBinary op_binary = 5;
+    OpTernary op_ternary = 6;
   }
 }
 

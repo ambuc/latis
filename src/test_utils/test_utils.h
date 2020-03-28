@@ -31,7 +31,7 @@ using ::testing::Matches;
 // https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/stubs/status.h.
 //
 MATCHER(IsOk, "") {
-  *result_listener << arg.status();
+  // *result_listener << arg.status();
   return arg.ok();
 }
 
