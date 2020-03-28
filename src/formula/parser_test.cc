@@ -532,85 +532,54 @@ INSTANTIATE_TEST_SUITE_P(
          R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 4 } } } } })pb"},
     }));
 
-// const std::string PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION = std::string(
-//     R"pb(op_binary { operation: "FOO" term1: { value: { int_amount: 1 } }
-//     term2: { value: { double_amount: 2.0 } } })pb");
-// INSTANTIATE_TEST_SUITE_P(
-//     ParenthesesAroundBinaryPrefix, ExpressionTestSuite,
-//     ValuesIn(std::vector<std::pair<std::string,
-//     absl::optional<std::string>>>{
-//         {"FOO(1,2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
-//         {"FOO((1),2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
-//         {"FOO(1,(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
-//         {"FOO((1),(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
-//         {"(FOO((1),(2.0)))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
-//     }));
-//
+const std::string PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION = std::string(
+    R"pb(operation { fn_name: "FOO" terms: { value: { int_amount: 1 } }
+     terms: { value: { double_amount: 2.0 } } })pb");
+INSTANTIATE_TEST_SUITE_P(
+    ParenthesesAroundBinaryPrefix, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
+        {"FOO(1,2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO((1),2.0)", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO(1,(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"FOO((1),(2.0))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+        {"(FOO((1),(2.0)))", PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION},
+    }));
+
 // INSTANTIATE_TEST_SUITE_P(
 //     BinaryInfix, ExpressionTestSuite,
 //     ValuesIn(std::vector<std::pair<std::string,
 //     absl::optional<std::string>>>{
 //         // Infix.
 //         {"3+2",
-//          R"pb( op_binary { operation: "PLUS" term1: { value: { int_amount: 3
-//          } } term2: { value: { int_amount: 2 } } })pb"},
+//          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 }
+//          } terms: { value: { int_amount: 2 } } })pb"},
+//
 //         {"3+2.0",
-//          R"pb( op_binary { operation: "PLUS" term1: { value: { int_amount: 3
-//          } } term2: { value: { double_amount: 2.0 } } })pb"},
+//          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 }
+//          } terms: { value: { double_amount: 2.0 } } })pb"},
 //
 //         // Infix with strings? And a different operator?
 //         {R"pb("3" / "2")pb",
-//          R"pb( op_binary { operation: "DIVIDED_BY" term1: { value: {
-//          str_amount: "3" } } term2: { value: { str_amount: "2" } } })pb"},
+//          R"pb( operation { fn_name: "DIVIDED_BY" terms: { value: {
+//          str_amount: "3" } } terms: { value: { str_amount: "2" } } })pb"},
 //
 //         // Infix with parens?
 //         {R"pb((0.0)-(2.0))pb",
-//          R"pb( op_binary { operation: "MINUS" term1: { value: {
-//          double_amount: 0.0 } } term2: { value: { double_amount: 2.0 } }
-//          })pb"},
+//          R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount:
+//          0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
 //
-//         // // Parentheses around an infix?
-//         // // TODO(ambuc): FIXME
-//         // {"(3+2)",
-//         //  R"pb( op_binary { operation: "PLUS" term1: { value: { int_amount:
-//         3
-//         //  } } term2: { value: { int_amount: 2 } } })pb"},
-//
+//         // Parentheses around an infix?
+//         // TODO(ambuc): FIXME
+//         {"(3+2)",
+//          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 }
+//          } terms: { value: { int_amount: 2 } } })pb"},
+//         {
+//             "3+(2+1)",
+//             R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3
+//             } } terms: { operation { fn_name: "PLUS" terms: { value: {
+//             int_amount: 2 } } terms: { value: { int_amount: 1 } } } } })pb",
+//         },
 //     }));
-
-// {
-//     "3+(2+1)",
-//     R"pb(
-//     op_binary {
-//      operation: "PLUS"
-//      term1: { value: { int_amount: 3 } }
-//      term2: {
-//       op_binary {
-//        operation: "PLUS"
-//        term1: { value: { int_amount: 2 } }
-//        term2: { value: { int_amount: 1 } }
-//       }
-//      }
-//    }
-//    )pb",
-// },
-
-// {
-//     "(3+2)+1",
-//     R"pb(
-//    op_binary {
-//     operation: "PLUS"
-//     term1: {
-//      op_binary {
-//       operation: "PLUS"
-//       term1: { value: { int_amount: 3 } }
-//       term2: { value: { int_amount: 2 } }
-//      }
-//     }
-//     term2: { value: { int_amount: 1 } }
-//   }
-//   )pb",
-// },
 
 // TODO(ambuc): many more expression tests for unary, binary,
 // ternary

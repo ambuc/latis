@@ -27,18 +27,42 @@
 namespace latis {
 namespace formula {
 
+using ::google::protobuf::util::Status;
+using ::google::protobuf::util::StatusOr;
+using ::google::protobuf::util::error::INVALID_ARGUMENT;
+using ::google::protobuf::util::error::OK;
+
 namespace {
 
 // https://www.bfilipek.com/2018/09/visit-variants.html
 template <class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template <class... Ts> overload(Ts...)->overload<Ts...>;
 
-} // namespace
+// If given a tspan where the 0th token is lparen, will return the index of the
+// matching parenthesis. Will return
+//
+//                    0123456789
+// MatchParentheses("(2),Baz(3)") == 2
+// MatchParentheses("(Foo(1)),Baz(3)") == 7
+StatusOr<TSpan::iterator> MatchParentheses(TSpan *tspan) {
+  if (tspan->empty()) {
+    return Status(INVALID_ARGUMENT, "MatchParentheses failed, empty");
+  }
+  int depth = 1;
+  for (TSpan::iterator it = tspan->begin(); it != tspan->end(); ++it) {
+    if (it->type == Token::T::lparen) {
+      depth++;
+    } else if (it->type == Token::T::rparen) {
+      depth--;
+    }
+    if (depth == 0) {
+      return it;
+    }
+  }
+  return Status(INVALID_ARGUMENT, "MatchParentheses failed, no ')'.");
+}
 
-using ::google::protobuf::util::Status;
-using ::google::protobuf::util::StatusOr;
-using ::google::protobuf::util::error::INVALID_ARGUMENT;
-using ::google::protobuf::util::error::OK;
+} // namespace
 
 StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
   depth_++;
@@ -673,19 +697,9 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
     return Status(INVALID_ARGUMENT, "Not a PARENTHESES, 1st char is not '('.");
   }
 
-  // find last ')'
-  auto pos_last_rparen =
-      std::find_if(lcl.crbegin(), lcl.crend(),
-                   [](const Token &t) { return t.type == Token::T::rparen; });
-  if (pos_last_rparen == lcl.rend()) {
-    return Status(INVALID_ARGUMENT,
-                  "No closing parenthesis, not a PARENTHESES expression.");
-  }
-
-  // (abcde)
-  //  =====   <- size_of_inner = 5
-  auto size_of_inner =
-      lcl.size() - std::distance(lcl.crbegin(), pos_last_rparen) - 1;
+  TSpan::iterator rparen;
+  ASSIGN_OR_RETURN_(rparen, MatchParentheses(&lcl));
+  auto size_of_inner = std::distance(lcl.begin(), rparen);
   TSpan lcl_inner(lcl.data(), size_of_inner);
 
   std::vector<Expression> resultant{};
@@ -693,12 +707,10 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
   while (true) {
     Expression expr;
     ASSIGN_OR_RETURN_(expr, ConsumeExpression(&lcl_inner));
-    std::cout << "POPPED: " << expr.DebugString() << std::endl;
     resultant.push_back(expr);
     if (!ConsumeExact(Token::T::comma, &lcl_inner).ok()) {
       break;
     }
-    std::cout << "REMAINING: " << PrintTSpan(&lcl_inner) << std::endl;
   }
   lcl.remove_prefix(size_of_inner + 1);
 
