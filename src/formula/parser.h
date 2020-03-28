@@ -66,29 +66,6 @@ std::string Print(Step s) {
   return "";
 }
 
-using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
-using Cache = absl::flat_hash_set<CacheItem>;
-
-Cache *GetCache() {
-  static Cache cache{};
-  return &cache;
-}
-
-Status RepeatGuard(Step step, TSpan *tspan) {
-  // std::cout << Print(step) << "\t<-" << tspan->data() << ":\t";
-  // PrintTSpan(tspan);
-
-  CacheItem item = {step, tspan->data(), tspan->size()};
-
-  if (GetCache()->contains(item)) {
-    return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                  "RepeatGuard denied! Already been here");
-  }
-  GetCache()->insert(item);
-
-  return OkStatus();
-}
-
 class Parser {
 public:
   static Parser *Get() {
@@ -196,6 +173,29 @@ public:
   static StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan);
 
   StatusOr<Expression> ConsumeExpression(TSpan *tspan);
+
+private:
+  using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
+  using Cache = absl::flat_hash_set<CacheItem>;
+
+  Cache *GetCache() {
+    static Cache cache{};
+    return &cache;
+  }
+
+  // NB: RepeatGuards are only necessary for right-recursive expressions... I
+  // think.
+  Status RepeatGuard(Step step, TSpan *tspan) {
+    CacheItem item = {step, tspan->data(), tspan->size()};
+
+    if (GetCache()->contains(item)) {
+      return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
+                    "RepeatGuard denied! Already been here");
+    }
+    GetCache()->insert(item);
+
+    return OkStatus();
+  }
 };
 
 } // namespace formula
