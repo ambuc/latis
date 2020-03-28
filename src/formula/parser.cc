@@ -149,7 +149,7 @@ StatusOr<int> Consume4Digit(TSpan *tspan) {
 }
 
 // Expects "USD" or "CAD".
-StatusOr<Money::Currency> MoneyParser::ConsumeCurrencyWord(TSpan *tspan) {
+StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan) {
   static std::unordered_map<std::string, Money::Currency> lookup_map{
       {"USD", Money::USD}, {"CAD", Money::CAD}};
 
@@ -157,7 +157,7 @@ StatusOr<Money::Currency> MoneyParser::ConsumeCurrencyWord(TSpan *tspan) {
       absl::bind_front(ConsumeExact, Token::T::alpha))(tspan);
 }
 
-StatusOr<Money::Currency> MoneyParser::ConsumeCurrencySymbol(TSpan *tspan) {
+StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan) {
   if (TSpan lcl = *tspan; ConsumeExact(Token::T::dollar, &lcl).ok()) {
     *tspan = lcl;
     return Money::USD;
@@ -166,13 +166,13 @@ StatusOr<Money::Currency> MoneyParser::ConsumeCurrencySymbol(TSpan *tspan) {
                 "Can't ConsumeCurrencySymbol: no currency symbol");
 }
 
-StatusOr<Money> MoneyParser::ConsumeMoney(TSpan *tspan) {
+StatusOr<Money> ConsumeMoney(TSpan *tspan) {
   TSpan lcl = *tspan;
   Money money;
 
   // Set currency
   Money::Currency currency{Money::UNKNOWN};
-  ASSIGN_OR_RETURN_(currency, MoneyParser::ConsumeCurrency(&lcl));
+  ASSIGN_OR_RETURN_(currency, ConsumeCurrency(&lcl));
   money.set_currency(currency);
 
   // Set dollars and cents.
@@ -194,7 +194,7 @@ StatusOr<Money> MoneyParser::ConsumeMoney(TSpan *tspan) {
   return money;
 }
 
-StatusOr<absl::TimeZone> DateTimeParser::ConsumeTimeOffset(TSpan *tspan) {
+StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::tuple<std::string_view, int, std::string_view, int> t;
@@ -219,7 +219,7 @@ StatusOr<absl::TimeZone> DateTimeParser::ConsumeTimeOffset(TSpan *tspan) {
   return absl::FixedTimeZone(posneg * (hour + min));
 }
 
-StatusOr<absl::Time> DateTimeParser::ConsumeDateTime(TSpan *tspan) {
+StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan) {
   auto only_T = [](std::string_view s) -> bool { return s == "T"; };
 
   TSpan lcl = *tspan;
@@ -287,10 +287,10 @@ StatusOr<Amount> ConsumeAmount(TSpan *tspan) {
 
   absl::variant<std::string, absl::Time, double, int, Money> amount;
 
-  ASSIGN_OR_RETURN_(
-      amount, (AnyVariant<std::string, absl::Time, double, int, Money>(
-                  ConsumeString, DateTimeParser::ConsumeDateTime, ConsumeDouble,
-                  ConsumeInt, MoneyParser::ConsumeMoney)(&lcl)));
+  ASSIGN_OR_RETURN_(amount,
+                    (AnyVariant<std::string, absl::Time, double, int, Money>(
+                        ConsumeString, ConsumeDateTime, ConsumeDouble,
+                        ConsumeInt, ConsumeMoney)(&lcl)));
 
   Amount resultant;
   std::visit(
@@ -315,14 +315,14 @@ StatusOr<Amount> ConsumeAmount(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<int> LocationParser::ConsumeRowIndicator(TSpan *tspan) {
+StatusOr<int> ConsumeRowIndicator(TSpan *tspan) {
   auto tr = [](int i) -> int { return i - 1; };
   auto r = [](int i) -> bool { return i > 0; };
   return WithTransformation<int, int>(tr)(WithRestriction<int>(r)(ConsumeInt))(
       tspan);
 }
 
-StatusOr<int> LocationParser::ConsumeColIndicator(TSpan *tspan) {
+StatusOr<int> ConsumeColIndicator(TSpan *tspan) {
   // TODO(ambuc): WithTransformationReturningOptional ?
   TSpan lcl = *tspan;
 
@@ -347,16 +347,16 @@ StatusOr<int> LocationParser::ConsumeColIndicator(TSpan *tspan) {
   return maybe_int.ValueOrDie();
 }
 
-StatusOr<PointLocation> LocationParser::ConsumePointLocation(TSpan *tspan) {
+StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan) {
   TSpan lcl = *tspan;
   PointLocation resultant;
 
   std::tuple<int, int> t;
   ASSIGN_OR_RETURN_(t, (InSequence<int, int>(
                            // COL
-                           &LocationParser::ConsumeColIndicator,
+                           &ConsumeColIndicator,
                            // ROW
-                           &LocationParser::ConsumeRowIndicator)(&lcl)));
+                           &ConsumeRowIndicator)(&lcl)));
 
   resultant.set_col(std::get<0>(t));
   resultant.set_row(std::get<1>(t));
@@ -367,8 +367,7 @@ StatusOr<PointLocation> LocationParser::ConsumePointLocation(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<RangeLocation>
-LocationParser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
+StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -399,8 +398,7 @@ LocationParser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<RangeLocation>
-LocationParser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
+StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -421,8 +419,7 @@ LocationParser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<RangeLocation>
-LocationParser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
+StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan) {
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -446,7 +443,7 @@ LocationParser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
 
 // [A-Z0-9_]
 // TODO(ambuc): This could return a std::str_view into the underlying tspan.
-StatusOr<std::string> OperationParser::ConsumeFnName(TSpan *tspan) {
+StatusOr<std::string> ConsumeFnName(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -491,8 +488,7 @@ StatusOr<std::string> OperationParser::ConsumeFnName(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression::OpUnary>
-OperationParser::ConsumeOpUnaryText(TSpan *tspan) {
+StatusOr<Expression::OpUnary> ConsumeOpUnaryText(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view> t;
@@ -518,8 +514,7 @@ OperationParser::ConsumeOpUnaryText(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression::OpBinary>
-OperationParser::ConsumeOpBinaryText(TSpan *tspan) {
+StatusOr<Expression::OpBinary> ConsumeOpBinaryText(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view,
@@ -552,7 +547,7 @@ OperationParser::ConsumeOpBinaryText(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<std::string> OperationParser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
+StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -583,8 +578,7 @@ StatusOr<std::string> OperationParser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression::OpBinary>
-OperationParser::ConsumeOpBinaryInfix(TSpan *tspan) {
+StatusOr<Expression::OpBinary> ConsumeOpBinaryInfix(TSpan *tspan) {
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
   RETURN_IF_ERROR_(RepeatGuard(Step::kOpBinaryInfix, tspan));
@@ -614,7 +608,7 @@ OperationParser::ConsumeOpBinaryInfix(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<Expression> OperationParser::ConsumeParentheses(TSpan *tspan) {
+StatusOr<Expression> ConsumeParentheses(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::tuple<std::string_view, Expression, std::string_view> t;
   ASSIGN_OR_RETURN_(
@@ -632,8 +626,7 @@ StatusOr<Expression> OperationParser::ConsumeParentheses(TSpan *tspan) {
   return std::get<1>(t);
 }
 
-StatusOr<Expression::OpTernary>
-OperationParser::ConsumeOpTernary(TSpan *tspan) {
+StatusOr<Expression::OpTernary> ConsumeOpTernary(TSpan *tspan) {
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::string_view, Expression, std::string_view,
@@ -687,20 +680,20 @@ StatusOr<Expression> ConsumeExpression(TSpan *tspan) {
       expression;
 
   ASSIGN_OR_RETURN_(expression,
-                    (AnyVariant<Expression::OpUnary,                    //
-                                Expression::OpBinary,                   //
-                                Expression::OpTernary,                  //
-                                Expression,                             //
-                                RangeLocation,                          //
-                                PointLocation,                          //
-                                Amount                                  //
-                                >(OperationParser::ConsumeOpUnary,      //
-                                  OperationParser::ConsumeOpBinary,     //
-                                  OperationParser::ConsumeOpTernary,    //
-                                  OperationParser::ConsumeParentheses,  //
-                                  LocationParser::ConsumeRangeLocation, //
-                                  LocationParser::ConsumePointLocation, //
-                                  ConsumeAmount                         //
+                    (AnyVariant<Expression::OpUnary,    //
+                                Expression::OpBinary,   //
+                                Expression::OpTernary,  //
+                                Expression,             //
+                                RangeLocation,          //
+                                PointLocation,          //
+                                Amount                  //
+                                >(ConsumeOpUnary,       //
+                                  ConsumeOpBinary,      //
+                                  ConsumeOpTernary,     //
+                                  ConsumeParentheses,   //
+                                  ConsumeRangeLocation, //
+                                  ConsumePointLocation, //
+                                  ConsumeAmount         //
                                   )(&lcl)));
 
   std::visit(
