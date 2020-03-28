@@ -90,54 +90,21 @@ public:
 
 private:
   // Private enum for counting/caching steps
-  enum class Step {
-    kExpression,
-    kOpTernary,
-    kOpBinary,
-    kOpBinaryText,
-    kOpBinaryInfix,
-    kOpUnary,
-    kAmount
-  };
-
-  std::string Print(Step s) {
-    switch (s) {
-    case (Step::kExpression):
-      return "expression  ";
-    case (Step::kOpTernary):
-      return "ternary     ";
-    case (Step::kOpBinary):
-      return "binary      ";
-    case (Step::kOpBinaryText):
-      return "binary_text ";
-    case (Step::kOpBinaryInfix):
-      return "binary_infix";
-    case (Step::kOpUnary):
-      return "unary       ";
-    case (Step::kAmount):
-      return "amount      ";
-    }
-    return "";
-  }
+  enum class Step { kOpBinaryInfix };
 
   using CacheItem = std::tuple<Step, TSpan::pointer, TSpan::size_type>;
-  using Cache = absl::flat_hash_set<CacheItem>;
-
-  Cache *GetCache() {
-    static Cache cache{};
-    return &cache;
-  }
+  absl::flat_hash_set<CacheItem> cache_;
 
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
   Status RepeatGuard(Step step, TSpan *tspan) {
     CacheItem item = {step, tspan->data(), tspan->size()};
 
-    if (GetCache()->contains(item)) {
+    if (cache_.contains(item)) {
       return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
                     "RepeatGuard denied! Already been here");
     }
-    GetCache()->insert(item);
+    cache_.insert(item);
 
     return OkStatus();
   }

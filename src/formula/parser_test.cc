@@ -442,8 +442,7 @@ INSTANTIATE_TEST_SUITE_P(
     Amounts, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"2", R"pb(value { int_amount: 2 })pb"},
-        // TODO(ambuc): FIX THIS
-        // {"3.0", R"pb(value { double_amount: 3.0 })pb"},
+        {"3.0", R"pb(value { double_amount: 3.0 })pb"},
     }));
 INSTANTIATE_TEST_SUITE_P(
     UnaryPrefix, ExpressionTestSuite,
