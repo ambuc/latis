@@ -15,7 +15,7 @@
 #include "src/formula/parser.h"
 
 #include "src/formula/parser_combinators.h"
-#include "src/status_utils/status_macros.h"
+#include "src/utils/status_macros.h"
 #include "src/xy.h"
 
 #include "absl/functional/bind_front.h"

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/status_utils/status_macros.h"
+#include "src/utils/status_macros.h"
 
 #include "proto/latis_msg.pb.h"
 #include "src/test_utils/test_utils.h"

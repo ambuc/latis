@@ -16,7 +16,7 @@
 
 #include <deque>
 
-#include "src/status_utils/status_macros.h"
+#include "src/utils/status_macros.h"
 
 #include "absl/memory/memory.h"
 #include "absl/strings/numbers.h"

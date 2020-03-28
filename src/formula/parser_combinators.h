@@ -18,7 +18,7 @@
 #define SRC_PARSER_PARSER_COMBINATORS_H_
 
 #include "src/formula/common.h"
-#include "src/status_utils/status_macros.h"
+#include "src/utils/status_macros.h"
 
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"

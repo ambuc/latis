@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SRC_STATUS_UTILS_STATUS_MACROS_H_
-#define SRC_STATUS_UTILS_STATUS_MACROS_H_
+#ifndef SRC_UTILS_STATUS_MACROS_H_
+#define SRC_UTILS_STATUS_MACROS_H_
 
 #include "proto/latis_msg.pb.h"
 
@@ -62,4 +62,4 @@ DoAssignOrReturn_(T &lhs, ::google::protobuf::util::StatusOr<T> result) {
 
 } // namespace latis
 
-#endif // SRC_STATUS_UTILS_STATUS_MACROS_H_
+#endif // SRC_UTILS_STATUS_MACROS_H_

@@ -3,6 +3,12 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 package(default_visibility = ["//src:__subpackages__"])
 
 cc_library(
+    name = "cleanup",
+    hdrs = ["cleanup.h"],
+    deps = [],
+)
+
+cc_library(
     name = "status_macros",
     hdrs = ["status_macros.h"],
     deps = [
