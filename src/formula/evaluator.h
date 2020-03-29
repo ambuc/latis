@@ -31,10 +31,16 @@ namespace formula {
 
 using LookupFn = std::function<absl::optional<Amount>(XY)>;
 
-// Evaluates |tokens| given a |lookup_fn| for looking up an amount at an XY
-// location.
-::google::protobuf::util::Status Evaluate(const Expression &expression,
-                                          LookupFn lookup_fn, Amount *amount);
+class Evaluator {
+public:
+  explicit Evaluator(LookupFn lookup_fn) : lookup_fn_(lookup_fn) {}
+
+  ::google::protobuf::util::StatusOr<Amount>
+  Crunch(const Expression &expression);
+
+private:
+  LookupFn lookup_fn_;
+};
 
 } // namespace formula
 } // namespace latis

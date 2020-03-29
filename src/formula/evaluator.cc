@@ -27,15 +27,12 @@ using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
-Status Evaluate(const Expression &expression, LookupFn lookup_fn,
-                Amount *amount) {
-
+StatusOr<Amount> Evaluator::Crunch(const Expression &expression) {
   if (expression.has_value()) {
-    *amount = expression.value();
-    return Status(OK, "");
+    return expression.value();
+  } else {
+    return Status(INVALID_ARGUMENT, "?");
   }
-
-  return Status(INVALID_ARGUMENT, "Evaluate() got no match.");
 }
 
 } // namespace formula

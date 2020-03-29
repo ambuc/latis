@@ -26,29 +26,46 @@ namespace formula {
 namespace {
 
 using ::testing::Eq;
+using ::testing::MockFunction;
+using ::testing::Not;
+using ::testing::ValuesIn;
+using ::testing::WithParamInterface;
 
-class EvaluatorTestClass : public ::testing::Test {
+class TestClassBase
+    : public ::testing::Test,
+      public WithParamInterface<std::pair<std::string, std::string>> {
 public:
-  LookupFn dummy_lookup_fn_ = [](XY) { return absl::nullopt; };
+  TestClassBase() : evaluator_(mock_lookup_fn_.AsStdFunction()) {
+    EXPECT_CALL(mock_lookup_fn_, Call).Times(0);
+  }
+
+protected:
+  MockFunction<absl::optional<Amount>(XY)> mock_lookup_fn_;
+  Parser parser_;
+  Evaluator evaluator_;
 };
 
-TEST_F(EvaluatorTestClass, Sample) {
-  const std::string input = "=4.605";
+TEST_P(TestClassBase, LexAndParseAndEvaluate) {
+  const std::string input = std::get<0>(GetParam());
 
   std::vector<Token> tokens = Lex(input).ValueOrDie();
+  TSpan tspan{tokens};
 
-  Expression expr;
-  // EXPECT_THAT(Parse(tokens, &expr), IsOk());
+  Expression expr = parser_.ConsumeExpression(&tspan).ValueOrDie();
 
-  // Amount expected;
-  // expected.set_double_amount(4.605);
+  Amount amt;
+  ASSERT_OK_AND_ASSIGN(amt, evaluator_.Crunch(expr));
 
-  // Amount actual;
-
-  // EXPECT_THAT(Evaluate(expr, dummy_lookup_fn_, &actual), IsOk());
-
-  // EXPECT_THAT(actual, EqualsProto(expected));
+  EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(std::get<1>(GetParam()))));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    All, TestClassBase,
+    ValuesIn(std::vector<std::pair<std::string, std::string>>{
+        {"1.234", "double_amount: 1.234"},
+        {"\"FOO\"", "str_amount: \"FOO\""},
+        {"2 + 2", "int_amount: 4"},
+    }));
 
 } // namespace
 } // namespace formula
