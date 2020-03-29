@@ -14,15 +14,67 @@
 
 #include "src/formula/functions.h"
 
-#include <cstdarg>
+#include "src/utils/status_macros.h"
 
 namespace latis {
 namespace formula {
 
+using ::google::protobuf::Timestamp;
 using ::google::protobuf::util::Status;
 using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
+
+StatusOr<Timestamp> operator+(const Timestamp &lhs, const Timestamp &rhs) {
+  Timestamp resultant;
+  resultant.set_seconds(lhs.seconds() + rhs.seconds());
+  resultant.set_nanos(lhs.nanos() + rhs.nanos());
+  return resultant;
+}
+
+StatusOr<Money> operator+(const Money &lhs, const Money &rhs) {
+  if (lhs.currency() != rhs.currency()) {
+    return Status(INVALID_ARGUMENT, "different currencies.");
+  }
+  Money resultant;
+  resultant.set_currency(lhs.currency());
+  resultant.set_dollars(lhs.dollars() + rhs.dollars());
+  resultant.set_cents(lhs.cents() + rhs.cents());
+  return resultant;
+}
+
+StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
+  Amount resultant;
+
+  if (lhs.has_str_amount() && rhs.has_str_amount()) {
+    resultant = lhs;
+    resultant.mutable_str_amount()->append(rhs.str_amount());
+    return resultant;
+  } else if (lhs.has_timestamp_amount() && rhs.has_timestamp_amount()) {
+    ASSIGN_OR_RETURN_(*resultant.mutable_timestamp_amount(),
+                      lhs.timestamp_amount() + rhs.timestamp_amount());
+    return resultant;
+  } else if (lhs.has_money_amount() && rhs.has_money_amount()) {
+    ASSIGN_OR_RETURN_(*resultant.mutable_money_amount(),
+                      lhs.money_amount() + rhs.money_amount());
+    return resultant;
+  } else if (lhs.has_int_amount() && rhs.has_int_amount()) {
+    resultant.set_int_amount(lhs.int_amount() + rhs.int_amount());
+    return resultant;
+  } else if (lhs.has_double_amount() && rhs.has_double_amount()) {
+    resultant.set_double_amount(lhs.double_amount() + rhs.double_amount());
+    return resultant;
+  } else if (lhs.has_int_amount() && rhs.has_double_amount()) {
+    resultant.set_double_amount(static_cast<double>(lhs.int_amount()) +
+                                rhs.double_amount());
+    return resultant;
+  } else if (lhs.has_double_amount() && rhs.has_int_amount()) {
+    resultant.set_double_amount(lhs.double_amount() +
+                                static_cast<double>(rhs.int_amount()));
+    return resultant;
+  }
+  return Status(INVALID_ARGUMENT, "no sum");
+}
 
 } // namespace formula
 } // namespace latis

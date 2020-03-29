@@ -29,17 +29,41 @@ using ::testing::Not;
 using ::testing::ValuesIn;
 using ::testing::WithParamInterface;
 
-TEST(Sum, SumTrials) {
-  const std::vector<Amount> inputs{
-      ToProto<Amount>("int_amount: 1"),
-      ToProto<Amount>("int_amount: 1"),
-  };
+class SumClassBase : public ::testing::Test,
+                     public WithParamInterface<
+                         std::tuple<std::string, std::string, std::string>> {};
 
-  const absl::Span<const Amount> span = absl::MakeSpan(inputs);
+TEST_P(SumClassBase, SumTrials) {
+  const auto amt_or_status = ToProto<Amount>(std::get<0>(GetParam())) +
+                             ToProto<Amount>(std::get<1>(GetParam()));
 
-  EXPECT_THAT(Sum(span),
-              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 2"))));
+  const auto expected = ToProto<Amount>(std::get<2>(GetParam()));
+
+  if (!amt_or_status.ok()) {
+    std::cout << amt_or_status.status();
+  }
+
+  ASSERT_THAT(amt_or_status, IsOk());
+  Amount amt = amt_or_status.ValueOrDie();
+
+  EXPECT_THAT(amt, EqualsProto(expected)) << amt.DebugString();
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    All, SumClassBase,
+    ValuesIn(std::vector<std::tuple<std::string, std::string, std::string>>{
+        // 1 + 2 = 3
+        {"int_amount: 1", "int_amount: 2", "int_amount: 3"},
+        // 1.234 + 2.345 = 3.579
+        {"double_amount: 1.234", "double_amount: 2.345",
+         "double_amount: 3.579"},
+        // "a" + "b" = "ab"
+        {"str_amount: \"a\"", "str_amount: \"b\"", "str_amount: \"ab\""},
+        // $1.23 + $2 = $3.23
+        {"money_amount: { currency: USD dollars: 1 cents: 23 }",
+         "money_amount: { currency: USD dollars: 2 }",
+         "money_amount: { currency: USD dollars: 3 cents: 23 }"},
+    }));
 
 } // namespace
 } // namespace formula

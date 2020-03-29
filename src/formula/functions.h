@@ -27,16 +27,14 @@
 namespace latis {
 namespace formula {
 
-// Sum(1,2) => 3
-// Sum(1, 2.0) => 3.0
-// Sum(1, 1, 1) => 3
-// Sum(2.0, 2.0, 2.0) => 6.0
-// Sum($1.50, $1.50) => $3.00
-// Sum(timestamp1, timestamp2) => timestamp1 + timestamp2
-// TODO(ambuc) start here
-
-// ::google::protobuf::util::StatusOr<Amount> Sum(absl::Span<const Amount>
-// inputs);
+// operator+
+::google::protobuf::util::StatusOr<::google::protobuf::Timestamp>
+operator+(const ::google::protobuf::Timestamp &lhs,
+          const ::google::protobuf::Timestamp &rhs);
+::google::protobuf::util::StatusOr<Money> operator+(const Money &lhs,
+                                                    const Money &rhs);
+::google::protobuf::util::StatusOr<Amount> operator+(const Amount &lhs,
+                                                     const Amount &rhs);
 
 } // namespace formula
 } // namespace latis
