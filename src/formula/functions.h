@@ -19,6 +19,8 @@
 
 #include "proto/latis_msg.pb.h"
 
+#include "src/utils/status_macros.h"
+
 #include "absl/types/span.h"
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/status_macros.h"
@@ -58,11 +60,9 @@ StatusOr<Amount> operator!(const Amount &arg);
 // Templated operators for protos (Money, Timestamp, etc.)
 template <typename T> //
 StatusOr<T> operator-(const T &lhs, const T &rhs) {
-  if (const StatusOr<T> maybe_neg_rhs = -rhs; !maybe_neg_rhs.ok()) {
-    return maybe_neg_rhs.status();
-  } else {
-    return lhs + maybe_neg_rhs.ValueOrDie();
-  }
+  T neg;
+  ASSIGN_OR_RETURN_(neg, -rhs);
+  return lhs + neg;
 }
 template <typename T> //
 StatusOr<bool> operator==(const T &lhs, const T &rhs) {
@@ -70,31 +70,31 @@ StatusOr<bool> operator==(const T &lhs, const T &rhs) {
 }
 template <typename T> //
 StatusOr<bool> operator!=(const T &lhs, const T &rhs) {
-  const auto eq_or_status = (lhs == rhs);
-  if (!eq_or_status.ok()) {
-    return eq_or_status.status();
-  }
-  return !(eq_or_status.ValueOrDie());
+  bool eq;
+  ASSIGN_OR_RETURN_(eq, lhs == rhs);
+  return !eq;
 }
 template <typename T> //
 StatusOr<bool> operator<(const T &lhs, const T &rhs) {
-  const auto leq_or_status = (lhs <= rhs);
-  if (!leq_or_status.ok()) {
-    return leq_or_status.status();
-  }
-  const auto neq_or_status = (lhs != rhs);
-  if (!neq_or_status.ok()) {
-    return neq_or_status.status();
-  }
-  return leq_or_status.ValueOrDie() && neq_or_status.ValueOrDie();
+  bool leq;
+  ASSIGN_OR_RETURN_(leq, lhs <= rhs);
+  bool neq;
+  ASSIGN_OR_RETURN_(neq, lhs != rhs);
+  return leq && neq;
 }
 template <typename T> //
 StatusOr<bool> operator>(const T &lhs, const T &rhs) {
-  return !(lhs <= rhs);
+  bool leq;
+  ASSIGN_OR_RETURN_(leq, lhs <= rhs);
+  return !leq;
 }
 template <typename T> //
 StatusOr<bool> operator>=(const T &lhs, const T &rhs) {
-  return lhs > rhs || lhs == rhs;
+  bool gt;
+  ASSIGN_OR_RETURN_(gt, lhs > rhs);
+  bool eq;
+  ASSIGN_OR_RETURN_(eq, lhs == rhs);
+  return gt || eq;
 }
 
 // TODO(ambuc): pow, mod, <, >,

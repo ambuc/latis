@@ -90,12 +90,16 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
     } else if (operation.fn_name() == functions::kOR) {
       return lhs || rhs;
     } else if (operation.fn_name() == functions::kLTHAN) {
-      StatusOr<bool> r = lhs < rhs;
-      if (!r.ok()) {
-        return r.status();
-      }
+      bool lthan;
+      ASSIGN_OR_RETURN_(lthan, lhs < rhs);
       Amount resultant;
-      resultant.set_bool_amount(r.ValueOrDie());
+      resultant.set_bool_amount(lthan);
+      return resultant;
+    } else if (operation.fn_name() == functions::kGTHAN) {
+      bool gthan;
+      ASSIGN_OR_RETURN_(gthan, lhs > rhs);
+      Amount resultant;
+      resultant.set_bool_amount(gthan);
       return resultant;
     }
   }

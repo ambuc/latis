@@ -100,6 +100,12 @@ INSTANTIATE_TEST_SUITE_P(
         // not
         {"NOT(True)", "bool_amount: False"},
         {"NOT(False)", "bool_amount: True"},
+        // lthan
+        {"1 < 2", "bool_amount: True"},
+        {"1 < 1", "bool_amount: False"},
+        // gthan
+        {"2 > 1", "bool_amount: True"},
+        {"1 > 1", "bool_amount: False"},
     }));
 
 } // namespace
