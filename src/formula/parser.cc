@@ -756,8 +756,8 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
 }
 
 StatusOr<Expression::Operation> Parser::ConsumeOperationInfix(TSpan *tspan) {
-  // NB: RepeatGuards are only necessary for right-recursive expressions... I
-  // think.
+  // Mark this point as tried. When this method ends, pop this key off the
+  // stack.
   Cache::key_type key;
   ASSIGN_OR_RETURN_(key, RepeatGuard("consume_op_binary_infix", tspan));
   auto d2 = MakeCleanup([&] { cache_.erase(key); });
@@ -811,11 +811,13 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
 
   TSpan::iterator rparen;
   ASSIGN_OR_RETURN_(rparen, MatchParentheses(&lcl));
+
   auto size_of_inner = std::distance(lcl.begin(), rparen);
   TSpan lcl_inner(lcl.data(), size_of_inner);
 
   std::vector<Expression> resultant{};
 
+  // Pop Expressions off the inner stack.
   while (true) {
     Expression expr;
     ASSIGN_OR_RETURN_(expr, ConsumeExpression(&lcl_inner));
@@ -823,9 +825,6 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
     if (!ConsumeExact(Token::T::comma, &lcl_inner).ok()) {
       break;
     }
-  }
-  if (!lcl_inner.empty()) {
-    return Status(INVALID_ARGUMENT, "Didn't exhaust lcl_inner.");
   }
   lcl.remove_prefix(size_of_inner + 1);
 
@@ -842,31 +841,22 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<Expression::Operation,   //
-                std::vector<Expression>, //
-                RangeLocation,           //
-                PointLocation,           //
-                Amount                   //
-                >
+  absl::variant<Expression::Operation, std::vector<Expression>, RangeLocation,
+                PointLocation, Amount>
       expression;
 
   ASSIGN_OR_RETURN_(
       expression,
-      (AnyVariant<Expression::Operation,   //
-                  std::vector<Expression>, //
-                  RangeLocation,           //
-                  PointLocation,           //
-                  Amount                   //
-                  >(
-          absl::bind_front(&Parser::ConsumeOperation, this), //
+      (AnyVariant<Expression::Operation, std::vector<Expression>, RangeLocation,
+                  PointLocation, Amount>(
+          absl::bind_front(&Parser::ConsumeOperation, this),
           WithRestriction<std::vector<Expression>>(
               [](const std::vector<Expression> exprs) -> bool {
                 return exprs.size() == 1;
-              })(absl::bind_front(&Parser::ConsumeParentheses, this)), //
-          absl::bind_front(&Parser::ConsumeRangeLocation, this),       //
-          absl::bind_front(&Parser::ConsumePointLocation, this),       //
-          absl::bind_front(&Parser::ConsumeAmount, this)               //
-          )(&lcl)));
+              })(absl::bind_front(&Parser::ConsumeParentheses, this)),
+          absl::bind_front(&Parser::ConsumeRangeLocation, this),
+          absl::bind_front(&Parser::ConsumePointLocation, this),
+          absl::bind_front(&Parser::ConsumeAmount, this))(&lcl)));
 
   std::visit(
       overload{

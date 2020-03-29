@@ -122,7 +122,6 @@ private:
                     "RepeatGuard denied! Already been here");
     }
     cache_.insert(item);
-
     return item;
   }
 
