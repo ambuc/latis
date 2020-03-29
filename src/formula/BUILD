@@ -55,6 +55,7 @@ cc_test(
         ":functions_lib",
         "//proto:latis_msg_cc_proto",
         "//src/test_utils:test_utils_lib",
+        "@com_google_absl//absl/types:optional",
         "@com_google_googletest//:gtest_main",
     ],
 )

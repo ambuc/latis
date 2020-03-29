@@ -27,14 +27,30 @@
 namespace latis {
 namespace formula {
 
-// operator+
-::google::protobuf::util::StatusOr<::google::protobuf::Timestamp>
-operator+(const ::google::protobuf::Timestamp &lhs,
-          const ::google::protobuf::Timestamp &rhs);
-::google::protobuf::util::StatusOr<Money> operator+(const Money &lhs,
-                                                    const Money &rhs);
-::google::protobuf::util::StatusOr<Amount> operator+(const Amount &lhs,
-                                                     const Amount &rhs);
+using ::google::protobuf::Timestamp;
+using ::google::protobuf::util::StatusOr;
+
+// Timestamp
+bool operator<(const Timestamp &lhs, const Timestamp &rhs);
+bool operator>(const Timestamp &lhs, const Timestamp &rhs);
+bool operator==(const Timestamp &lhs, const Timestamp &rhs);
+bool operator<=(const Timestamp &lhs, const Timestamp &rhs);
+bool operator>=(const Timestamp &lhs, const Timestamp &rhs);
+StatusOr<Timestamp> operator+(const Timestamp &lhs, const Timestamp &rhs);
+StatusOr<Timestamp> operator-(const Timestamp &lhs, const Timestamp &rhs);
+
+// Money
+bool operator<(const Money &lhs, const Money &rhs);
+bool operator>(const Money &lhs, const Money &rhs);
+bool operator==(const Money &lhs, const Money &rhs);
+bool operator<=(const Money &lhs, const Money &rhs);
+bool operator>=(const Money &lhs, const Money &rhs);
+StatusOr<Money> operator+(const Money &lhs, const Money &rhs);
+StatusOr<Money> operator-(const Money &lhs, const Money &rhs);
+
+// Amount
+StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs);
 
 } // namespace formula
 } // namespace latis

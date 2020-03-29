@@ -70,12 +70,15 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(std::vector<std::pair<std::string, std::string>>{
         {"1.234", "double_amount: 1.234"},
         {"\"FOO\"", "str_amount: \"FOO\""},
+        // addition
         {"2 + 2", "int_amount: 4"},
         {"2 + 3", "int_amount: 5"},
         {"2.0 + 3", "double_amount: 5.0"},
         {"1.5 + 1.5", "double_amount: 3.0"},
         {"2.1 + 3", "double_amount: 5.1"},
         {"1.2 + 3.4", "double_amount: 4.6"},
+        // subtraction
+        {"5-2.5", "double_amount: 2.5"},
     }));
 
 } // namespace

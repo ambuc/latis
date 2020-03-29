@@ -16,6 +16,7 @@
 
 #include "src/test_utils/test_utils.h"
 
+#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -29,38 +30,55 @@ using ::testing::Not;
 using ::testing::ValuesIn;
 using ::testing::WithParamInterface;
 
-class SumClassBase : public ::testing::Test,
-                     public WithParamInterface<
-                         std::tuple<std::string, std::string, std::string>> {};
+using Params =
+    std::tuple<std::string, std::string, absl::optional<std::string>>;
 
-TEST_P(SumClassBase, SumTrials) {
-  const auto amt_or_status = ToProto<Amount>(std::get<0>(GetParam())) +
-                             ToProto<Amount>(std::get<1>(GetParam()));
+class TestSuite : public ::testing::Test, public WithParamInterface<Params> {
+public:
+  virtual StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) = 0;
 
-  const auto expected = ToProto<Amount>(std::get<2>(GetParam()));
+  void RunTest() {
+    Amount lhs = ToProto<Amount>(std::get<0>(GetParam()));
+    Amount rhs = ToProto<Amount>(std::get<1>(GetParam()));
 
-  if (!amt_or_status.ok()) {
-    std::cout << amt_or_status.status();
+    const auto amt_or_status = Combine(lhs, rhs);
+
+    if (const auto maybe_expected_str = std::get<2>(GetParam());
+        !maybe_expected_str.has_value()) {
+      EXPECT_THAT(amt_or_status, Not(IsOk()));
+      if (amt_or_status.ok()) {
+        std::cout << amt_or_status.ValueOrDie().DebugString() << std::endl;
+      }
+    } else {
+      const auto expected = ToProto<Amount>(maybe_expected_str.value());
+
+      if (!amt_or_status.ok()) {
+        std::cout << amt_or_status.status();
+      }
+
+      ASSERT_THAT(amt_or_status, IsOk());
+      Amount amt = amt_or_status.ValueOrDie();
+
+      EXPECT_THAT(amt, EqualsProto(expected)) << amt.DebugString();
+    }
   }
+};
 
-  ASSERT_THAT(amt_or_status, IsOk());
-  Amount amt = amt_or_status.ValueOrDie();
+class AdditionTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
+    return lhs + rhs;
+  }
+};
 
-  EXPECT_THAT(amt, EqualsProto(expected)) << amt.DebugString();
-}
+TEST_P(AdditionTestSuite, RunTests) { RunTest(); }
 
 INSTANTIATE_TEST_SUITE_P(
-    All, SumClassBase,
-    ValuesIn(std::vector<std::tuple<std::string, std::string, std::string>>{
-        // 1 + 2 = 3
+    AllTests, AdditionTestSuite,
+    ValuesIn(std::vector<Params>{
         {"int_amount: 1", "int_amount: 2", "int_amount: 3"},
-        // 1 + 2.0 = 3.0
         {"int_amount: 1", "double_amount: 2.0", "double_amount: 3.0"},
-        // 1.0 + 2 = 3.0
         {"double_amount: 1.0", "int_amount: 2", "double_amount: 3.0"},
-        // 2.1 + 3 = 5.1
         {"double_amount: 2.1", "int_amount: 3", "double_amount: 5.1"},
-        // 1.234 + 2.345 = 3.579
         {"double_amount: 1.234", "double_amount: 2.345",
          "double_amount: 3.579"},
         // "a" + "b" = "ab"
@@ -69,6 +87,49 @@ INSTANTIATE_TEST_SUITE_P(
         {"money_amount: { currency: USD dollars: 1 cents: 23 }",
          "money_amount: { currency: USD dollars: 2 }",
          "money_amount: { currency: USD dollars: 3 cents: 23 }"},
+
+        // INVALID
+        {"int_amount : 1", "str_amount: \"a\"", absl::nullopt},
+        {"int_amount : 1", "money_amount: {} ", absl::nullopt},
+        {"int_amount : 1", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "money_amount: {} ", absl::nullopt},
+        {"timestamp_amount: {}", "money_amount: {} ", absl::nullopt},
+    }));
+
+class SubtractionTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
+    return lhs - rhs;
+  }
+};
+TEST_P(SubtractionTestSuite, RunTests) { RunTest(); }
+INSTANTIATE_TEST_SUITE_P(
+    AllTests, SubtractionTestSuite,
+    ValuesIn(std::vector<Params>{
+        {"int_amount: 3", "int_amount: 1", "int_amount: 2"},
+        {"int_amount: 1", "int_amount: 1", "int_amount: 0"},
+        {"int_amount: 0", "int_amount: 0", "int_amount: 0"},
+        {"double_amount: 3.0", "int_amount: 1", "double_amount: 2.0"},
+
+        // $2.23 + $1 = $1.23
+        {"money_amount: { currency: USD dollars: 2 cents: 23 }",
+         "money_amount: { currency: USD dollars: 1 }",
+         "money_amount: { currency: USD dollars: 1 cents: 23 }"},
+
+        // string subtraction is bogus
+        {"str_amount: \"a\"", "str_amount: \"b\"", absl::nullopt},
+
+        // Negative
+        {"int_amount: 1", "int_amount: 2", "int_amount: -1"},
+        {"double_amount: 1.0", "double_amount: 2.0", "double_amount: -1.0"},
+
+        // INVALID
+        {"int_amount : 1", "str_amount: \"a\"", absl::nullopt},
+        {"int_amount : 1", "money_amount: {} ", absl::nullopt},
+        {"int_amount : 1", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "money_amount: {} ", absl::nullopt},
+        {"timestamp_amount: {}", "money_amount: {} ", absl::nullopt},
     }));
 
 } // namespace
