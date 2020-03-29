@@ -576,9 +576,6 @@ INSTANTIATE_TEST_SUITE_P(
          R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb"},
     }));
 
-// TODO(ambuc): many more expression tests for unary, binary, ternary
-// TODO(ambuc: infix notation!
-
 } // namespace
 } // namespace formula
 } // namespace latis

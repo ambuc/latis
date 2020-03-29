@@ -142,6 +142,16 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
   return resultant;
 }
 
+StatusOr<absl::variant<double, int>> Parser::ConsumeNumeric(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt(tspan, "NUMERIC");
+
+  return AnyVariant<double, int>(absl::bind_front(&Parser::ConsumeDouble, this),
+                                 absl::bind_front(&Parser::ConsumeInt, this))(
+      tspan);
+}
+
 StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
@@ -200,6 +210,17 @@ StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
   PrintStep(&lcl, tspan, "4DIGIT");
   *tspan = lcl;
   return resultant;
+}
+
+StatusOr<Money::Currency> Parser::ConsumeCurrency(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  PrintAttempt(tspan, "CURRENCY");
+  return Any<Money::Currency>({
+      absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
+      absl::bind_front(&Parser::ConsumeCurrencyWord, this),
+  })(tspan);
 }
 
 // Expects "USD" or "CAD".
@@ -466,6 +487,18 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   return resultant;
 }
 
+StatusOr<RangeLocation> Parser::ConsumeRangeLocation(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  PrintAttempt(tspan, "RANGE_LOCATION");
+  return Any<RangeLocation>({
+      absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
+      absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
+      absl::bind_front(&Parser::ConsumeRangeLocationColThenCol, this),
+  })(tspan);
+}
+
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
@@ -546,6 +579,73 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   PrintStep(&lcl, tspan, "RANGE_LOCATION_COL_THEN_COL");
   *tspan = lcl;
   return resultant;
+}
+
+StatusOr<int> Parser::ConsumeDateFullYear(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  PrintAttempt(tspan, "FULL_YEAR");
+  return Consume4Digit(tspan);
+}
+
+StatusOr<int> Parser::ConsumeDateMonth(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  static auto r = [](int i) { return 1 <= i && i <= 12; };
+  PrintAttempt(tspan, "DATE_MONTH");
+  return WithRestriction<int>(r)(
+      absl::bind_front(&Parser::Consume2Digit, this))(tspan);
+}
+
+StatusOr<int> Parser::ConsumeDateMDay(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  static auto r = [](int i) { return 1 <= i && i <= 31; };
+  PrintAttempt(tspan, "DATE_MDAY");
+  return WithRestriction<int>(r)(
+      absl::bind_front(&Parser::Consume2Digit, this))(tspan);
+}
+
+StatusOr<int> Parser::ConsumeTimeHour(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  static auto r = [](int i) { return 0 <= i && i <= 23; };
+  PrintAttempt(tspan, "TIME_HOUR");
+  return WithRestriction<int>(r)(
+      absl::bind_front(&Parser::Consume2Digit, this))(tspan);
+}
+
+StatusOr<int> Parser::ConsumeTimeMinute(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  static auto r = [](int i) { return 0 <= i && i <= 59; };
+  PrintAttempt(tspan, "TIME_MINUTE");
+  return WithRestriction<int>(r)(
+      absl::bind_front(&Parser::Consume2Digit, this))(tspan);
+}
+
+StatusOr<int> Parser::ConsumeTimeSecond(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  // Up to 60, counting leap seconds.
+  static auto r = [](int i) { return 0 <= i && i <= 60; };
+  PrintAttempt(tspan, "TIME_SECOND");
+  return WithRestriction<int>(r)(
+      absl::bind_front(&Parser::Consume2Digit, this))(tspan);
+}
+
+StatusOr<double> Parser::ConsumeTimeSecFrac(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+
+  PrintAttempt(tspan, "TIME_SEC_FRAC");
+  return ConsumeDouble(tspan);
 }
 
 // [A-Z0-9_]
@@ -685,6 +785,16 @@ StatusOr<Expression::Operation> Parser::ConsumeOperationInfix(TSpan *tspan) {
   PrintStep(&lcl, tspan, "OP_BINARY_INFIX");
   *tspan = lcl;
   return resultant;
+}
+
+StatusOr<Expression::Operation> Parser::ConsumeOperation(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt(tspan, "OPERATION");
+  return Any<Expression::Operation>({
+      absl::bind_front(&Parser::ConsumeOperationInfix, this),
+      absl::bind_front(&Parser::ConsumeOperationPrefix, this),
+  })(tspan);
 }
 
 StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {

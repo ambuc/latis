@@ -56,37 +56,17 @@ public:
   // Consumers.
 
   StatusOr<int> ConsumeInt(TSpan *tspan);
-
   StatusOr<double> ConsumeDouble(TSpan *tspan);
-
-  StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-    PrintAttempt(tspan, "NUMERIC");
-
-    return AnyVariant<double, int>(
-        absl::bind_front(&Parser::ConsumeDouble, this),
-        absl::bind_front(&Parser::ConsumeInt, this))(tspan);
-  }
+  StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan);
 
   // TODO(ambuc): This could return a string view into the underlying
   // string.
   StatusOr<std::string> ConsumeString(TSpan *tspan);
 
   StatusOr<int> Consume2Digit(TSpan *tspan);
-
   StatusOr<int> Consume4Digit(TSpan *tspan);
 
-  StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    PrintAttempt(tspan, "CURRENCY");
-    return Any<Money::Currency>({
-        absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
-        absl::bind_front(&Parser::ConsumeCurrencyWord, this),
-    })(tspan);
-  }
+  StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan);
 
   StatusOr<Money> ConsumeMoney(TSpan *tspan);
   StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
@@ -95,23 +75,10 @@ public:
   StatusOr<Amount> ConsumeAmount(TSpan *tspan);
 
   StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
+  StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan);
 
-  StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    PrintAttempt(tspan, "RANGE_LOCATION");
-    return Any<RangeLocation>({
-        absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
-        absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
-        absl::bind_front(&Parser::ConsumeRangeLocationColThenCol, this),
-    })(tspan);
-  }
-
-  // ( .* )
   StatusOr<std::vector<Expression>> ConsumeParentheses(TSpan *tspan);
 
-  // [A-Z0-9_]
   StatusOr<std::string> ConsumeFnName(TSpan *tspan);
 
   StatusOr<Expression> ConsumeExpression(TSpan *tspan);
@@ -128,6 +95,7 @@ private:
                 << std::string(2 * depth_, ' ') << step << std::endl;
     }
   }
+
   void PrintStep(TSpan *lcl, TSpan *tspan, const std::string &step) {
     if (options_.should_log_verbosely) {
       auto whole = PrintTSpan(tspan);
@@ -160,8 +128,6 @@ private:
 
   // Private consumers.
 
-  // Consumes the token |type| off |tspan| and returns the token's held
-  // |.value|.
   StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
 
   StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
@@ -174,70 +140,13 @@ private:
   StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
   StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
 
-  StatusOr<int> ConsumeDateFullYear(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    PrintAttempt(tspan, "FULL_YEAR");
-    return Consume4Digit(tspan);
-  }
-
-  StatusOr<int> ConsumeDateMonth(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    static auto r = [](int i) { return 1 <= i && i <= 12; };
-    PrintAttempt(tspan, "DATE_MONTH");
-    return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
-  }
-
-  StatusOr<int> ConsumeDateMDay(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    static auto r = [](int i) { return 1 <= i && i <= 31; };
-    PrintAttempt(tspan, "DATE_MDAY");
-    return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
-  }
-
-  StatusOr<int> ConsumeTimeHour(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    static auto r = [](int i) { return 0 <= i && i <= 23; };
-    PrintAttempt(tspan, "TIME_HOUR");
-    return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
-  }
-
-  StatusOr<int> ConsumeTimeMinute(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    static auto r = [](int i) { return 0 <= i && i <= 59; };
-    PrintAttempt(tspan, "TIME_MINUTE");
-    return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
-  }
-  StatusOr<int> ConsumeTimeSecond(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    // Up to 60, counting leap seconds.
-    static auto r = [](int i) { return 0 <= i && i <= 60; };
-    PrintAttempt(tspan, "TIME_SECOND");
-    return WithRestriction<int>(r)(
-        absl::bind_front(&Parser::Consume2Digit, this))(tspan);
-  }
-  StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-
-    PrintAttempt(tspan, "TIME_SEC_FRAC");
-    return ConsumeDouble(tspan);
-  }
+  StatusOr<int> ConsumeDateFullYear(TSpan *tspan);
+  StatusOr<int> ConsumeDateMonth(TSpan *tspan);
+  StatusOr<int> ConsumeDateMDay(TSpan *tspan);
+  StatusOr<int> ConsumeTimeHour(TSpan *tspan);
+  StatusOr<int> ConsumeTimeMinute(TSpan *tspan);
+  StatusOr<int> ConsumeTimeSecond(TSpan *tspan);
+  StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan);
 
   // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
   // prefix notation.
@@ -245,15 +154,7 @@ private:
   StatusOr<Expression::Operation> ConsumeOperationInfix(TSpan *tspan);
   StatusOr<Expression::Operation> ConsumeOperationPrefix(TSpan *tspan);
 
-  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan) {
-    depth_++;
-    auto d = MakeCleanup([&] { depth_--; });
-    PrintAttempt(tspan, "OPERATION");
-    return Any<Expression::Operation>({
-        absl::bind_front(&Parser::ConsumeOperationInfix, this),
-        absl::bind_front(&Parser::ConsumeOperationPrefix, this),
-    })(tspan);
-  }
+  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan);
 };
 
 } // namespace formula
