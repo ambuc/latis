@@ -759,28 +759,11 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   TSpan lcl = *tspan;
   std::string resultant;
 
-  if (ConsumeExact(Token::T::plus, &lcl).ok()) {
-    resultant = functions::kPLUS;
-  } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
-    resultant = functions::kMINUS;
-  } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
-    resultant = functions::kTIMES;
-  } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
-    resultant = functions::kDIVIDED_BY;
-  } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
-    resultant = functions::kPOW;
-  } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
-    resultant = functions::kMOD;
-  } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
-    resultant = functions::kLTHAN;
-  } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
-    resultant = functions::kGTHAN;
-  } else if (InSequence<std::string, std::string>(
-                 absl::bind_front(&Parser::ConsumeExact, this,
-                                  Token::T::ampersand),
-                 absl::bind_front(&Parser::ConsumeExact, this,
-                                  Token::T::ampersand))(&lcl)
-                 .ok()) {
+  if (InSequence<std::string, std::string>(
+          absl::bind_front(&Parser::ConsumeExact, this, Token::T::ampersand),
+          absl::bind_front(&Parser::ConsumeExact, this, Token::T::ampersand))(
+          &lcl)
+          .ok()) {
     resultant = functions::kAND;
   } else if (InSequence<std::string, std::string>(
                  absl::bind_front(&Parser::ConsumeExact, this, Token::T::pipe),
@@ -813,6 +796,22 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
                                   Token::T::equals))(&lcl)
                  .ok()) {
     resultant = functions::kNEQ;
+  } else if (ConsumeExact(Token::T::plus, &lcl).ok()) {
+    resultant = functions::kPLUS;
+  } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
+    resultant = functions::kMINUS;
+  } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
+    resultant = functions::kTIMES;
+  } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
+    resultant = functions::kDIVIDED_BY;
+  } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
+    resultant = functions::kPOW;
+  } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
+    resultant = functions::kMOD;
+  } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
+    resultant = functions::kLTHAN;
+  } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
+    resultant = functions::kGTHAN;
   } else {
     return Status(INVALID_ARGUMENT,
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");

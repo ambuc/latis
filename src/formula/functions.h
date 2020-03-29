@@ -97,7 +97,7 @@ StatusOr<bool> operator>=(const T &lhs, const T &rhs) {
   return gt || eq;
 }
 
-// TODO(ambuc): pow, mod, <, >,
+// TODO(ambuc): pow, mod
 
 } // namespace formula
 } // namespace latis

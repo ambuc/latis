@@ -47,6 +47,7 @@ cc_library(
         "//proto:latis_msg_cc_proto",
         "//src/utils:status_macros",
         "@com_google_absl//absl/types:span",
+        "@com_google_absl//absl/types:variant",
     ],
 )
 

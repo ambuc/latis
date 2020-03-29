@@ -62,6 +62,8 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
     ASSIGN_OR_RETURN_(arg, CrunchExpression(operation.terms(0)));
     if (operation.fn_name() == functions::kNOT) {
       return !arg;
+    } else if (operation.fn_name() == functions::kNEG) {
+      return -arg;
     }
   }
   case (2): {
@@ -84,7 +86,7 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
       return lhs * rhs;
     } else if (operation.fn_name() == functions::kDIVIDED_BY ||
                operation.fn_name() == functions::kDIV) {
-      return lhs * rhs;
+      return lhs / rhs;
     } else if (operation.fn_name() == functions::kAND) {
       return lhs && rhs;
     } else if (operation.fn_name() == functions::kOR) {

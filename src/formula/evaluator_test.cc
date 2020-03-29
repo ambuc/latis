@@ -28,15 +28,37 @@ namespace {
 using ::testing::Eq;
 using ::testing::MockFunction;
 using ::testing::Not;
+using ::testing::Return;
 using ::testing::ValuesIn;
 using ::testing::WithParamInterface;
 
-class TestClassBase
-    : public ::testing::Test,
-      public WithParamInterface<std::pair<std::string, std::string>> {
+class TestClassBase : public ::testing::Test {
 public:
-  TestClassBase() : evaluator_(mock_lookup_fn_.AsStdFunction()) {
-    EXPECT_CALL(mock_lookup_fn_, Call).Times(0);
+  TestClassBase() : evaluator_(mock_lookup_fn_.AsStdFunction()) {}
+
+  void Run(std::string input, absl::optional<std::string> expected) {
+
+    std::vector<Token> tokens = Lex(input).ValueOrDie();
+    TSpan tspan{tokens};
+
+    Expression expr = parser_.ConsumeExpression(&tspan).ValueOrDie();
+
+    auto amt_or_status = evaluator_.CrunchExpression(expr);
+
+    if (!amt_or_status.ok()) {
+      std::cout << amt_or_status.status() << std::endl;
+    }
+
+    if (expected.has_value()) {
+      ASSERT_THAT(amt_or_status, IsOk());
+
+      Amount amt = amt_or_status.ValueOrDie();
+      EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(expected.value())))
+          << amt.DebugString();
+
+    } else {
+      ASSERT_THAT(amt_or_status, Not(IsOk()));
+    }
   }
 
 protected:
@@ -45,28 +67,17 @@ protected:
   Evaluator evaluator_;
 };
 
-TEST_P(TestClassBase, LexAndParseAndEvaluate) {
-  const std::string input = std::get<0>(GetParam());
+class NoExpectations
+    : public TestClassBase,
+      public WithParamInterface<std::pair<std::string, std::string>> {};
 
-  std::vector<Token> tokens = Lex(input).ValueOrDie();
-  TSpan tspan{tokens};
-
-  Expression expr = parser_.ConsumeExpression(&tspan).ValueOrDie();
-
-  auto amt_or_status = evaluator_.CrunchExpression(expr);
-
-  if (!amt_or_status.ok()) {
-    std::cout << amt_or_status.status() << std::endl;
-  }
-  ASSERT_THAT(amt_or_status, IsOk());
-  Amount amt = amt_or_status.ValueOrDie();
-
-  EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(std::get<1>(GetParam()))))
-      << amt.DebugString();
+TEST_P(NoExpectations, LexAndParseAndEvaluate) {
+  EXPECT_CALL(mock_lookup_fn_, Call).Times(0);
+  Run(std::get<0>(GetParam()), std::get<1>(GetParam()));
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    All, TestClassBase,
+    All, NoExpectations,
     ValuesIn(std::vector<std::pair<std::string, std::string>>{
         {"1.234", "double_amount: 1.234"},
         {"\"FOO\"", "str_amount: \"FOO\""},
@@ -110,6 +121,56 @@ INSTANTIATE_TEST_SUITE_P(
         {" 1 <= 2 ", "bool_amount: True"},
         {" 2 <= 2 ", "bool_amount: True"},
         {" 3 <= 2 ", "bool_amount: False"},
+        // geq
+        {" 1 >= 2 ", "bool_amount: False"},
+        {" 2 >= 2 ", "bool_amount: True"},
+        {" 3 >= 2 ", "bool_amount: True"},
+        // eq
+        {" 1 == 2 ", "bool_amount: False"},
+        {" 2 == 2 ", "bool_amount: True"},
+        {" 3 == 2 ", "bool_amount: False"},
+        // neq
+        {" 1 != 2 ", "bool_amount: True"},
+        {" 2 != 2 ", "bool_amount: False"},
+        {" 3 != 2 ", "bool_amount: True"},
+    }));
+
+using OneExpectationParams =
+    std::tuple<XY, std::string, std::string, absl::optional<std::string>>;
+class OneExpectation : public TestClassBase,
+                       public WithParamInterface<OneExpectationParams> {};
+
+TEST_P(OneExpectation, LexAndParseAndEvaluate) {
+  EXPECT_CALL(mock_lookup_fn_, Call(std::get<0>(GetParam())))
+      .Times(1)
+      .WillOnce(Return(ToProto<Amount>(std::get<1>(GetParam()))));
+
+  Run(std::get<2>(GetParam()), std::get<3>(GetParam()));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    All, OneExpectation,
+    ValuesIn(std::vector<OneExpectationParams>{
+        // Called, Response, Expression, EvaluatedTo
+        {XY(0, 0), "int_amount: 1", "A1", "int_amount: 1"},
+        {XY(0, 0), "int_amount: 42", "A1", "int_amount: 42"},
+        // Some unary ops
+        {XY(0, 0), "bool_amount: True", "NOT(A1)", "bool_amount: False"},
+        // Some binary ops with one lookup
+        {XY(0, 0), "int_amount: 77", "A1 * 2", "int_amount: 154"},
+        // Some int/double arithmetic.
+        {XY(0, 0), "int_amount: 4", "A1 / 2", "double_amount: 2"},
+        {XY(0, 0), "int_amount: 4", "A1 / 2.0", "double_amount: 2.0"},
+        {XY(0, 0), "double_amount: 4.0", "A1 / 2", "double_amount: 2.0"},
+        {XY(0, 0), "double_amount: 4.0", "A1 / 2.0", "double_amount: 2.0"},
+
+        // Some money arithmetic.
+        {
+            XY(0, 0),
+            "money_amount: { currency: USD dollars: 1 cents: 2 }",
+            "NEG(A1)",
+            "money_amount: { currency: USD dollars: -1 cents: -2 }",
+        },
     }));
 
 } // namespace

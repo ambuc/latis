@@ -28,11 +28,46 @@ using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
+namespace {
+
+// Numeric conversions.
+
+bool IsNumeric(const Amount &a) {
+  return a.has_int_amount() || a.has_double_amount();
+}
+double AsDouble(const Amount &a) {
+  return a.double_amount() + static_cast<double>(a.int_amount());
+}
+
+// Money conversions.
+
+double AsDouble(const Money &m) {
+  return m.dollars() + (static_cast<double>(m.cents()) / 100.0);
+}
+
+Money AsMoney(double d) {
+  Money resultant;
+  resultant.set_dollars(std::floor(d));
+  resultant.set_cents(
+      static_cast<int>(std::round((d - std::floor(d)) * 100.0)));
+  return resultant;
+}
+
+Status CheckSameCurrency(const Money &lhs, const Money &rhs) {
+  if (lhs.currency() != rhs.currency()) {
+    return Status(INVALID_ARGUMENT, "different currencies.");
+  }
+  return OkStatus();
+}
+
+} // namespace
+
 // TIMESTAMP
 
 StatusOr<bool> operator<=(const Timestamp &lhs, const Timestamp &rhs) {
   return lhs.seconds() <= rhs.seconds() && lhs.nanos() <= rhs.nanos();
 }
+
 StatusOr<Timestamp> operator+(const Timestamp &lhs, const Timestamp &rhs) {
   Timestamp resultant;
   resultant.set_seconds(lhs.seconds() + rhs.seconds());
@@ -51,51 +86,31 @@ Timestamp operator-(const Timestamp &arg) {
 StatusOr<bool> operator<=(const Money &lhs, const Money &rhs) {
   return lhs.dollars() <= rhs.dollars() && lhs.cents() <= rhs.cents();
 }
+
 StatusOr<Money> operator+(const Money &lhs, const Money &rhs) {
-  if (lhs.currency() != rhs.currency()) {
-    return Status(INVALID_ARGUMENT, "different currencies.");
-  }
-  Money resultant;
+  RETURN_IF_ERROR_(CheckSameCurrency(lhs, rhs));
+  Money resultant = AsMoney(AsDouble(lhs) + AsDouble(rhs));
   resultant.set_currency(lhs.currency());
-  resultant.set_dollars(lhs.dollars() + rhs.dollars());
-  resultant.set_cents(lhs.cents() + rhs.cents());
   return resultant;
 }
+
 Money operator-(const Money &arg) {
-  Money resultant;
+  Money resultant = AsMoney(-1.0 * AsDouble(arg));
   resultant.set_currency(arg.currency());
-  resultant.set_dollars(-arg.dollars());
-  resultant.set_cents(-arg.cents());
   return resultant;
 }
+
 StatusOr<Money> operator*(const Money &lhs, const Money &rhs) {
-  if (lhs.currency() != rhs.currency()) {
-    return Status(INVALID_ARGUMENT, "different currencies.");
-  }
-  Money resultant;
+  RETURN_IF_ERROR_(CheckSameCurrency(lhs, rhs));
+  Money resultant = AsMoney(AsDouble(lhs) * AsDouble(rhs));
   resultant.set_currency(lhs.currency());
-  double lhs_d = lhs.dollars() + (static_cast<double>(lhs.cents()) / 100.0);
-  double rhs_d = rhs.dollars() + (static_cast<double>(rhs.cents()) / 100.0);
-  double resultant_d = lhs_d * rhs_d;
-  int dollars = std::floor(resultant_d);
-  resultant.set_dollars(dollars);
-  resultant.set_cents(
-      static_cast<int>(std::round((resultant_d - dollars) * 100.0)));
   return resultant;
 }
+
 StatusOr<Money> operator/(const Money &lhs, const Money &rhs) {
-  if (lhs.currency() != rhs.currency()) {
-    return Status(INVALID_ARGUMENT, "different currencies.");
-  }
-  Money resultant;
+  RETURN_IF_ERROR_(CheckSameCurrency(lhs, rhs));
+  Money resultant = AsMoney(AsDouble(lhs) / AsDouble(rhs));
   resultant.set_currency(lhs.currency());
-  double lhs_d = lhs.dollars() + (static_cast<double>(lhs.cents()) / 100.0);
-  double rhs_d = rhs.dollars() + (static_cast<double>(rhs.cents()) / 100.0);
-  double resultant_d = lhs_d / rhs_d;
-  int dollars = std::floor(resultant_d);
-  resultant.set_dollars(dollars);
-  resultant.set_cents(
-      static_cast<int>(std::round((resultant_d - dollars) * 100.0)));
   return resultant;
 }
 
@@ -112,13 +127,12 @@ StatusOr<bool> operator<=(const Amount &lhs, const Amount &rhs) {
     return lhs.int_amount() <= rhs.int_amount();
   } else if (lhs.has_bool_amount() && rhs.has_bool_amount()) {
     return lhs.bool_amount() <= rhs.bool_amount();
-  } else if ((lhs.has_int_amount() || lhs.has_double_amount()) &&
-             (rhs.has_int_amount() || rhs.has_double_amount())) {
-    return (static_cast<double>(lhs.int_amount()) + lhs.double_amount()) <=
-           (static_cast<double>(rhs.int_amount()) + rhs.double_amount());
+  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
+    return AsDouble(lhs) <= AsDouble(rhs);
   }
   return Status(INVALID_ARGUMENT, "No operator<=() implemented.");
 }
+
 StatusOr<bool> operator==(const Amount &lhs, const Amount &rhs) {
   if (lhs.has_str_amount() && rhs.has_str_amount()) {
     return lhs.str_amount() == rhs.str_amount();
@@ -130,13 +144,12 @@ StatusOr<bool> operator==(const Amount &lhs, const Amount &rhs) {
     return lhs.int_amount() == rhs.int_amount();
   } else if (lhs.has_bool_amount() && rhs.has_bool_amount()) {
     return lhs.bool_amount() == rhs.bool_amount();
-  } else if ((lhs.has_int_amount() || lhs.has_double_amount()) &&
-             (rhs.has_int_amount() || rhs.has_double_amount())) {
-    return (static_cast<double>(lhs.int_amount()) + lhs.double_amount()) ==
-           (static_cast<double>(rhs.int_amount()) + rhs.double_amount());
+  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
+    return AsDouble(lhs) == AsDouble(rhs);
   }
   return Status(INVALID_ARGUMENT, "No operator<=() implemented.");
 }
+
 StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
 
@@ -155,12 +168,9 @@ StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
   } else if (lhs.has_int_amount() && rhs.has_int_amount()) {
     resultant.set_int_amount(lhs.int_amount() + rhs.int_amount());
     return resultant;
-  } else if ((lhs.has_int_amount() || lhs.has_double_amount()) &&
-             (rhs.has_int_amount() || rhs.has_double_amount())) {
+  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
     // guaranteed not to double-count ;)
-    resultant.set_double_amount(
-        (lhs.double_amount() + static_cast<double>(lhs.int_amount())) +
-        (rhs.double_amount() + static_cast<double>(rhs.int_amount())));
+    resultant.set_double_amount(AsDouble(lhs) + AsDouble(rhs));
     return resultant;
   }
   return Status(INVALID_ARGUMENT, "no sum");
@@ -194,16 +204,14 @@ StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs) {
   } else if (lhs.has_int_amount() && rhs.has_int_amount()) {
     resultant.set_int_amount(lhs.int_amount() * rhs.int_amount());
     return resultant;
-  } else if ((lhs.has_int_amount() || lhs.has_double_amount()) &&
-             (rhs.has_int_amount() || rhs.has_double_amount())) {
-    resultant.set_double_amount(
-        (lhs.double_amount() + static_cast<double>(lhs.int_amount())) *
-        (rhs.double_amount() + static_cast<double>(rhs.int_amount())));
+  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
+    resultant.set_double_amount(AsDouble(lhs) * AsDouble(rhs));
     return resultant;
   }
 
   return Status(INVALID_ARGUMENT, "no product");
 }
+
 StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
 
@@ -211,11 +219,8 @@ StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs) {
     ASSIGN_OR_RETURN_(*resultant.mutable_money_amount(),
                       lhs.money_amount() / rhs.money_amount());
     return resultant;
-  } else if ((lhs.has_int_amount() || lhs.has_double_amount()) &&
-             (rhs.has_int_amount() || rhs.has_double_amount())) {
-    resultant.set_double_amount(
-        (lhs.double_amount() + static_cast<double>(lhs.int_amount())) /
-        (lhs.double_amount() + static_cast<double>(rhs.int_amount())));
+  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
+    resultant.set_double_amount(AsDouble(lhs) / AsDouble(rhs));
     return resultant;
   }
 

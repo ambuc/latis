@@ -59,7 +59,8 @@ public:
       ASSERT_THAT(amt_or_status, IsOk()) << amt_or_status.status();
       Amount amt = amt_or_status.ValueOrDie();
 
-      EXPECT_THAT(amt, EqualsProto(expected)) << amt.DebugString();
+      EXPECT_THAT(amt, EqualsProto(expected))
+          << amt.DebugString() << ", " << expected.DebugString();
     }
   }
 };
@@ -197,16 +198,35 @@ INSTANTIATE_TEST_SUITE_P(
         {"bool_amount: false", "bool_amount: false", "bool_amount: false"},
     }));
 
+// HACK. TODO(ambuc): unary test suites too.
+//
 class BooleanNotTestSuite : public TestSuite {
   StatusOr<Amount> Combine(const Amount &lhs, const Amount &) { return !lhs; }
 };
 TEST_P(BooleanNotTestSuite, RunTests) { RunTest(); }
-// HACK. TODO(ambuc): unary test suites too.
 INSTANTIATE_TEST_SUITE_P(AllTests, BooleanNotTestSuite,
                          ValuesIn(std::vector<Params>{
                              {"bool_amount: true", "", "bool_amount: false"},
                              {"bool_amount: false", "", "bool_amount: true"},
                          }));
+
+class NegationTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &) { return -lhs; }
+};
+TEST_P(NegationTestSuite, RunTests) { RunTest(); }
+INSTANTIATE_TEST_SUITE_P(
+    AllTests, NegationTestSuite,
+    ValuesIn(std::vector<Params>{
+        {"int_amount: 1", "", "int_amount: -1"},
+        {"double_amount: 1.0", "", "double_amount: -1.0"},
+
+        // -$1.02 = $-1.-02.
+        {
+            "money_amount: { currency: USD dollars: 1 cents: 2 }", "",
+            "money_amount: { currency: USD dollars: -1 cents: -2 } ",
+            // TODO ambuc FIXME
+        },
+    }));
 
 } // namespace
 } // namespace formula

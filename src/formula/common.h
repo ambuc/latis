@@ -102,6 +102,7 @@ inline constexpr absl::string_view kMINUS = "MINUS";
 inline constexpr absl::string_view kMOD = "MOD";
 inline constexpr absl::string_view kMULTIPLIED_BY = "MULTIPLIED_BY";
 inline constexpr absl::string_view kNEQ = "NEQ";
+inline constexpr absl::string_view kNEG = "NEG";
 inline constexpr absl::string_view kNOT = "NOT";
 inline constexpr absl::string_view kOR = "OR";
 inline constexpr absl::string_view kPLUS = "PLUS";
