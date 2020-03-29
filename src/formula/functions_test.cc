@@ -132,6 +132,41 @@ INSTANTIATE_TEST_SUITE_P(
         {"timestamp_amount: {}", "money_amount: {} ", absl::nullopt},
     }));
 
+class MultiplicationTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
+    return lhs * rhs;
+  }
+};
+TEST_P(MultiplicationTestSuite, RunTests) { RunTest(); }
+INSTANTIATE_TEST_SUITE_P(
+    AllTests, MultiplicationTestSuite,
+    ValuesIn(std::vector<Params>{
+        {"int_amount: 3", "int_amount: 1", "int_amount: 3"},
+        {"int_amount: 1", "int_amount: 1", "int_amount: 1"},
+        {"int_amount: 0", "int_amount: 0", "int_amount: 0"},
+        {"double_amount: 3.0", "int_amount: 1", "double_amount: 3.0"},
+
+        // $2.23 * $1 = $1.23
+        {"money_amount: { currency: USD dollars: 2 cents: 23 }",
+         "money_amount: { currency: USD dollars: 1 }",
+         "money_amount: { currency: USD dollars: 2 cents: 23 }"},
+
+        // string multiplication is bogus
+        {"str_amount: \"a\"", "str_amount: \"b\"", absl::nullopt},
+
+        // Negative
+        {"int_amount: 1", "int_amount: -2", "int_amount: -2"},
+        {"double_amount: 1.0", "double_amount: -2.0", "double_amount: -2.0"},
+
+        // INVALID
+        {"int_amount : 1", "str_amount: \"a\"", absl::nullopt},
+        {"int_amount : 1", "money_amount: {} ", absl::nullopt},
+        {"int_amount : 1", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "timestamp_amount: {} ", absl::nullopt},
+        {"str_amount: \"a\"", "money_amount: {} ", absl::nullopt},
+        {"timestamp_amount: {}", "money_amount: {} ", absl::nullopt},
+    }));
+
 class BooleanAndTestSuite : public TestSuite {
   StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
     return lhs && rhs;

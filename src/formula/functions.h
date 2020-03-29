@@ -47,13 +47,19 @@ bool operator<=(const Money &lhs, const Money &rhs);
 bool operator>=(const Money &lhs, const Money &rhs);
 StatusOr<Money> operator+(const Money &lhs, const Money &rhs);
 StatusOr<Money> operator-(const Money &lhs, const Money &rhs);
+StatusOr<Money> operator*(const Money &lhs, const Money &rhs);
+StatusOr<Money> operator/(const Money &lhs, const Money &rhs);
 
 // Amount
 StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator||(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator!(const Amount &arg);
+
+// TODO(ambuc): pow, mod, <, >,
 
 } // namespace formula
 } // namespace latis

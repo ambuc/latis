@@ -15,6 +15,7 @@
 #include "src/formula/functions.h"
 
 #include "src/utils/status_macros.h"
+#include <cmath>
 
 namespace latis {
 namespace formula {
@@ -98,6 +99,38 @@ StatusOr<Money> operator-(const Money &lhs, const Money &rhs) {
   resultant.set_cents(lhs.cents() - rhs.cents());
   return resultant;
 }
+StatusOr<Money> operator*(const Money &lhs, const Money &rhs) {
+  if (lhs.currency() != rhs.currency()) {
+    return Status(INVALID_ARGUMENT, "different currencies.");
+  }
+  Money resultant;
+  resultant.set_currency(lhs.currency());
+  double lhs_d = lhs.dollars() + (static_cast<double>(lhs.cents()) / 100.0);
+  double rhs_d = rhs.dollars() + (static_cast<double>(rhs.cents()) / 100.0);
+  double resultant_d = lhs_d * rhs_d;
+  int dollars = std::floor(resultant_d);
+  resultant.set_dollars(dollars);
+  resultant.set_cents(
+      static_cast<int>(std::round((resultant_d - dollars) * 100.0)));
+  return resultant;
+}
+StatusOr<Money> operator/(const Money &lhs, const Money &rhs) {
+  if (lhs.currency() != rhs.currency()) {
+    return Status(INVALID_ARGUMENT, "different currencies.");
+  }
+  Money resultant;
+  resultant.set_currency(lhs.currency());
+  double lhs_d = lhs.dollars() + (static_cast<double>(lhs.cents()) / 100.0);
+  double rhs_d = rhs.dollars() + (static_cast<double>(rhs.cents()) / 100.0);
+  double resultant_d = lhs_d / rhs_d;
+  int dollars = std::floor(resultant_d);
+  resultant.set_dollars(dollars);
+  resultant.set_cents(
+      static_cast<int>(std::round((resultant_d - dollars) * 100.0)));
+  return resultant;
+}
+
+// AMOUNTS
 
 StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
@@ -168,6 +201,64 @@ StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs) {
   }
 
   return Status(INVALID_ARGUMENT, "no difference");
+}
+StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs) {
+  Amount resultant;
+
+  if (lhs.has_money_amount() && rhs.has_money_amount()) {
+    ASSIGN_OR_RETURN_(*resultant.mutable_money_amount(),
+                      lhs.money_amount() * rhs.money_amount());
+    return resultant;
+  } else if (lhs.has_int_amount()) {
+    if (rhs.has_int_amount()) {
+      resultant.set_int_amount(lhs.int_amount() * rhs.int_amount());
+      return resultant;
+    } else if (rhs.has_double_amount()) {
+      resultant.set_double_amount(static_cast<double>(lhs.int_amount()) *
+                                  rhs.double_amount());
+      return resultant;
+    }
+  } else if (lhs.has_double_amount()) {
+    if (rhs.has_double_amount()) {
+      resultant.set_double_amount(lhs.double_amount() * rhs.double_amount());
+      return resultant;
+    } else if (rhs.has_int_amount()) {
+      resultant.set_double_amount(lhs.double_amount() *
+                                  static_cast<double>(rhs.int_amount()));
+      return resultant;
+    }
+  }
+
+  return Status(INVALID_ARGUMENT, "no product");
+}
+StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs) {
+  Amount resultant;
+
+  if (lhs.has_money_amount() && rhs.has_money_amount()) {
+    ASSIGN_OR_RETURN_(*resultant.mutable_money_amount(),
+                      lhs.money_amount() / rhs.money_amount());
+    return resultant;
+  } else if (lhs.has_int_amount()) {
+    if (rhs.has_int_amount()) {
+      resultant.set_int_amount(lhs.int_amount() / rhs.int_amount());
+      return resultant;
+    } else if (rhs.has_double_amount()) {
+      resultant.set_double_amount(static_cast<double>(lhs.int_amount()) /
+                                  rhs.double_amount());
+      return resultant;
+    }
+  } else if (lhs.has_double_amount()) {
+    if (rhs.has_double_amount()) {
+      resultant.set_double_amount(lhs.double_amount() / rhs.double_amount());
+      return resultant;
+    } else if (rhs.has_int_amount()) {
+      resultant.set_double_amount(lhs.double_amount() /
+                                  static_cast<double>(rhs.int_amount()));
+      return resultant;
+    }
+  }
+
+  return Status(INVALID_ARGUMENT, "no division");
 }
 
 StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs) {

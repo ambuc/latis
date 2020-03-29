@@ -67,10 +67,19 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
     Amount rhs;
     ASSIGN_OR_RETURN_(rhs, CrunchExpression(operation.terms(1)));
 
-    if (operation.fn_name() == "PLUS") {
+    if (operation.fn_name() == "PLUS" || operation.fn_name() == "SUM" ||
+        operation.fn_name() == "ADD") {
       return lhs + rhs;
-    } else if (operation.fn_name() == "MINUS") {
+    } else if (operation.fn_name() == "MINUS" || operation.fn_name() == "SUB" ||
+               operation.fn_name() == "SUBTRACT") {
       return lhs - rhs;
+    } else if (operation.fn_name() == "MULTIPLIED_BY" ||
+               operation.fn_name() == "TIMES" ||
+               operation.fn_name() == "PRODUCT") {
+      return lhs * rhs;
+    } else if (operation.fn_name() == "DIVIDED_BY" ||
+               operation.fn_name() == "DIV") {
+      return lhs * rhs;
     } else if (operation.fn_name() == "AND") {
       return lhs && rhs;
     } else if (operation.fn_name() == "OR") {

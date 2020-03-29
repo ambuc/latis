@@ -72,13 +72,21 @@ INSTANTIATE_TEST_SUITE_P(
         {"\"FOO\"", "str_amount: \"FOO\""},
         // addition
         {"2 + 2", "int_amount: 4"},
-        {"2 + 3", "int_amount: 5"},
-        {"2.0 + 3", "double_amount: 5.0"},
-        {"1.5 + 1.5", "double_amount: 3.0"},
+        {"PLUS(2,3)", "int_amount: 5"},
+        {"SUM(2.0,3)", "double_amount: 5.0"},
+        {"ADD(1.5,1.5)", "double_amount: 3.0"},
         {"2.1 + 3", "double_amount: 5.1"},
         {"1.2 + 3.4", "double_amount: 4.6"},
         // subtraction
         {"5-2.5", "double_amount: 2.5"},
+        {"SUB(3.0,2.5)", "double_amount: 0.5"},
+        {"SUBTRACT(0,0)", "int_amount: 0"},
+        {"MINUS(0.0,1.0)", "double_amount: -1.0"},
+        // multiplication
+        {"5*2.5", "double_amount: 12.5"},
+        {"MULTIPLIED_BY(3.0,2.5)", "double_amount: 7.5"},
+        {"TIMES(0,0)", "int_amount: 0"},
+        {"PRODUCT(1.0,2.0)", "double_amount: 2.0"},
         // and
         {"True & True", "bool_amount: True"},
         {"True & False", "bool_amount: False"},
