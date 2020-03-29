@@ -290,6 +290,30 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
   return money;
 }
 
+StatusOr<bool> Parser::ConsumeBool(TSpan *tspan) {
+  depth_++;
+  auto d = MakeCleanup([&] { depth_--; });
+  PrintAttempt(tspan, "BOOL");
+
+  TSpan lcl = *tspan;
+  bool resultant;
+
+  std::string_view extracted;
+  ASSIGN_OR_RETURN_(extracted, ConsumeExact(Token::T::alpha, &lcl));
+
+  if (extracted == "True") {
+    resultant = true;
+  } else if (extracted == "False") {
+    resultant = false;
+  } else {
+    return Status(INVALID_ARGUMENT, "neither 'True' nor 'False'.");
+  }
+
+  PrintStep(&lcl, tspan, "BOOL");
+  *tspan = lcl;
+  return resultant;
+}
+
 StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
@@ -397,15 +421,16 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
 
   TSpan lcl = *tspan;
 
-  absl::variant<std::string, absl::Time, double, int, Money> amount;
+  absl::variant<std::string, absl::Time, double, int, Money, bool> amount;
 
-  ASSIGN_OR_RETURN_(amount,
-                    (AnyVariant<std::string, absl::Time, double, int, Money>(
-                        absl::bind_front(&Parser::ConsumeString, this),
-                        absl::bind_front(&Parser::ConsumeDateTime, this),
-                        absl::bind_front(&Parser::ConsumeDouble, this),
-                        absl::bind_front(&Parser::ConsumeInt, this),
-                        absl::bind_front(&Parser::ConsumeMoney, this))(&lcl)));
+  ASSIGN_OR_RETURN_(
+      amount, (AnyVariant<std::string, absl::Time, double, int, Money, bool>(
+                  absl::bind_front(&Parser::ConsumeString, this),
+                  absl::bind_front(&Parser::ConsumeDateTime, this),
+                  absl::bind_front(&Parser::ConsumeDouble, this),
+                  absl::bind_front(&Parser::ConsumeInt, this),
+                  absl::bind_front(&Parser::ConsumeMoney, this),
+                  absl::bind_front(&Parser::ConsumeBool, this))(&lcl)));
 
   Amount resultant;
   std::visit(
@@ -421,6 +446,7 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
           [&resultant](double d) { resultant.set_double_amount(d); },
           [&resultant](int d) { resultant.set_int_amount(d); },
           [&resultant](Money m) { *resultant.mutable_money_amount() = m; },
+          [&resultant](bool b) { resultant.set_bool_amount(b); },
       },
       amount);
 
@@ -749,6 +775,10 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
     resultant = "LTHAN";
   } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
     resultant = "GTHAN";
+  } else if (ConsumeExact(Token::T::ampersand, &lcl).ok()) {
+    resultant = "AND";
+  } else if (ConsumeExact(Token::T::pipe, &lcl).ok()) {
+    resultant = "OR";
   } else {
     return Status(INVALID_ARGUMENT,
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");

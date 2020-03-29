@@ -52,6 +52,8 @@ struct Token {
     question,   // ?
     colon,      // :
     underscore, // _
+    ampersand,  // &
+    pipe,       // |
 
     // unusual
     literal, // \?, for escapint a single character

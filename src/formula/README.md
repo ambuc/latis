@@ -86,12 +86,15 @@ This grammar respects order of precedence in PEMDAS.
                      / LOCATION_VAL ":" ROW_INDICATOR    ; A1:3
                      / LOCATION_VAL ":" LOCATION_VAL     ; A1:B3
 
+    BOOL_VAL         = "True" / "False"
+
     VAL              = CURRENCY_VAL
                      / DATE_TIME
                      / NUM_VAL
                      / STR_VAL
                      / LOCATION_VAL
                      / RANGE_VAL
+                     / BOOL_VAL
     
     FN               = 1*(ALPHANUMERIC / "_")
 

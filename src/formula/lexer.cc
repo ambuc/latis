@@ -103,24 +103,16 @@ StatusOr<Token> AsToken(std::string_view *input) {
   const char front = input->front();
 
   for (const auto [c, token] : std::vector<std::tuple<char, Token::T>>{
-           {'=', Token::T::equals},
-           {'.', Token::T::period},
-           {',', Token::T::comma},
-           {'(', Token::T::lparen},
-           {')', Token::T::rparen},
-           {'+', Token::T::plus},
-           {'-', Token::T::minus},
-           {'*', Token::T::asterisk},
-           {'/', Token::T::slash},
-           {'^', Token::T::carat},
-           {'$', Token::T::dollar},
-           {'%', Token::T::percent},
-           {'\'', Token::T::tick},
-           {'<', Token::T::lthan},
-           {'>', Token::T::gthan},
-           {'?', Token::T::question},
-           {':', Token::T::colon},
-           {'_', Token::T::underscore},
+           {'=', Token::T::equals},    {'.', Token::T::period},
+           {',', Token::T::comma},     {'(', Token::T::lparen},
+           {')', Token::T::rparen},    {'+', Token::T::plus},
+           {'-', Token::T::minus},     {'*', Token::T::asterisk},
+           {'/', Token::T::slash},     {'^', Token::T::carat},
+           {'$', Token::T::dollar},    {'%', Token::T::percent},
+           {'\'', Token::T::tick},     {'<', Token::T::lthan},
+           {'>', Token::T::gthan},     {'?', Token::T::question},
+           {':', Token::T::colon},     {'_', Token::T::underscore},
+           {'&', Token::T::ampersand}, {'|', Token::T::pipe},
        }) {
     if (front == c) {
       input->remove_prefix(1);

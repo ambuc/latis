@@ -69,6 +69,8 @@ public:
   StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan);
 
   StatusOr<Money> ConsumeMoney(TSpan *tspan);
+  StatusOr<bool> ConsumeBool(TSpan *tspan);
+
   StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
   StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
 

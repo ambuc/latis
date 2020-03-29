@@ -357,6 +357,8 @@ INSTANTIATE_TEST_SUITE_P(
          "timestamp_amount: { seconds:1451675045 }"},
         {"$23", "money_amount: {dollars: 23 currency: USD}"},
         {"$123.45", "money_amount: {dollars: 123 cents: 45 currency: USD}"},
+        {"True", "bool_amount: true"},
+        {"False", "bool_amount: false"},
     }));
 
 // POINT LOCATION TEST SUITE
@@ -530,6 +532,10 @@ INSTANTIATE_TEST_SUITE_P(
             R"(GRAULT($123.45))",
             R"pb(operation { fn_name: "GRAULT" terms: { value: { money_amount: { dollars: 123 cents: 45 currency: USD } } } })pb",
         },
+        {
+            R"(FOOBAR(True))",
+            R"pb(operation { fn_name: "FOOBAR" terms: { value: { bool_amount: true } } })pb",
+        },
 
         // Nested unary prefix operations.
         {
@@ -670,6 +676,14 @@ INSTANTIATE_TEST_SUITE_P(
         {
             "((3+2)+1)",
             R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb",
+        },
+        {
+            "True & False",
+            R"pb( operation { fn_name: "AND" terms: { value: { bool_amount: true } } terms: { value: { bool_amount: False } } })pb",
+        },
+        {
+            "True | False",
+            R"pb( operation { fn_name: "OR" terms: { value: { bool_amount: true } } terms: { value: { bool_amount: False } } })pb",
         },
     }));
 
