@@ -75,6 +75,7 @@ INSTANTIATE_TEST_SUITE_P(
         {"2.0 + 3", "double_amount: 5.0"},
         {"1.5 + 1.5", "double_amount: 3.0"},
         {"2.1 + 3", "double_amount: 5.1"},
+        {"1.2 + 3.4", "double_amount: 4.6"},
     }));
 
 } // namespace

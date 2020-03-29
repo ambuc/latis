@@ -30,7 +30,6 @@ using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
 StatusOr<Amount> Evaluator::CrunchExpression(const Expression &expression) {
-  expression.PrintDebugString();
   // NB: no has_range.
   if (expression.has_value()) {
     return expression.value();
@@ -60,10 +59,8 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
   if (operation.fn_name() == "PLUS" && operation.terms_size() == 2) {
     Amount lhs;
     ASSIGN_OR_RETURN_(lhs, CrunchExpression(operation.terms(0)));
-    lhs.PrintDebugString();
     Amount rhs;
     ASSIGN_OR_RETURN_(rhs, CrunchExpression(operation.terms(1)));
-    rhs.PrintDebugString();
     return lhs + rhs;
   }
 
