@@ -88,15 +88,15 @@ INSTANTIATE_TEST_SUITE_P(
         {"TIMES(0,0)", "int_amount: 0"},
         {"PRODUCT(1.0,2.0)", "double_amount: 2.0"},
         // and
-        {"True & True", "bool_amount: True"},
-        {"True & False", "bool_amount: False"},
-        {"False & True", "bool_amount: False"},
-        {"False & False", "bool_amount: False"},
+        {"True && True", "bool_amount: True"},
+        {"True && False", "bool_amount: False"},
+        {"False && True", "bool_amount: False"},
+        {"False && False", "bool_amount: False"},
         // or
-        {"True | True", "bool_amount: True"},
-        {"True | False", "bool_amount: True"},
-        {"False | True", "bool_amount: True"},
-        {"False | False", "bool_amount: False"},
+        {"True || True", "bool_amount: True"},
+        {"True || False", "bool_amount: True"},
+        {"False || True", "bool_amount: True"},
+        {"False || False", "bool_amount: False"},
         // not
         {"NOT(True)", "bool_amount: False"},
         {"NOT(False)", "bool_amount: True"},
@@ -106,6 +106,10 @@ INSTANTIATE_TEST_SUITE_P(
         // gthan
         {"2 > 1", "bool_amount: True"},
         {"1 > 1", "bool_amount: False"},
+        // leq
+        {" 1 <= 2 ", "bool_amount: True"},
+        {" 2 <= 2 ", "bool_amount: True"},
+        {" 3 <= 2 ", "bool_amount: False"},
     }));
 
 } // namespace

@@ -113,6 +113,7 @@ StatusOr<Token> AsToken(std::string_view *input) {
            {'>', Token::T::gthan},     {'?', Token::T::question},
            {':', Token::T::colon},     {'_', Token::T::underscore},
            {'&', Token::T::ampersand}, {'|', Token::T::pipe},
+           {'!', Token::T::bang},
        }) {
     if (front == c) {
       input->remove_prefix(1);

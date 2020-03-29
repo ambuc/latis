@@ -775,10 +775,44 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
     resultant = functions::kLTHAN;
   } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
     resultant = functions::kGTHAN;
-  } else if (ConsumeExact(Token::T::ampersand, &lcl).ok()) {
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::ampersand),
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::ampersand))(&lcl)
+                 .ok()) {
     resultant = functions::kAND;
-  } else if (ConsumeExact(Token::T::pipe, &lcl).ok()) {
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this, Token::T::pipe),
+                 absl::bind_front(&Parser::ConsumeExact, this, Token::T::pipe))(
+                 &lcl)
+                 .ok()) {
     resultant = functions::kOR;
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this, Token::T::lthan),
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::equals))(&lcl)
+                 .ok()) {
+    resultant = functions::kLEQ;
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this, Token::T::gthan),
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::equals))(&lcl)
+                 .ok()) {
+    resultant = functions::kGEQ;
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::equals),
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::equals))(&lcl)
+                 .ok()) {
+    resultant = functions::kEQ;
+  } else if (InSequence<std::string, std::string>(
+                 absl::bind_front(&Parser::ConsumeExact, this, Token::T::bang),
+                 absl::bind_front(&Parser::ConsumeExact, this,
+                                  Token::T::equals))(&lcl)
+                 .ok()) {
+    resultant = functions::kNEQ;
   } else {
     return Status(INVALID_ARGUMENT,
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");

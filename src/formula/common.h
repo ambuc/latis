@@ -55,6 +55,7 @@ struct Token {
     underscore, // _
     ampersand,  // &
     pipe,       // |
+    bang,       // !
 
     // unusual
     literal, // \?, for escapint a single character
@@ -92,11 +93,15 @@ inline constexpr absl::string_view kADD = "ADD";
 inline constexpr absl::string_view kAND = "AND";
 inline constexpr absl::string_view kDIV = "DIV";
 inline constexpr absl::string_view kDIVIDED_BY = "DIVIDED_BY";
+inline constexpr absl::string_view kEQ = "EQ";
+inline constexpr absl::string_view kGEQ = "GEQ";
 inline constexpr absl::string_view kGTHAN = "GTHAN";
+inline constexpr absl::string_view kLEQ = "LEQ";
 inline constexpr absl::string_view kLTHAN = "LTHAN";
 inline constexpr absl::string_view kMINUS = "MINUS";
 inline constexpr absl::string_view kMOD = "MOD";
 inline constexpr absl::string_view kMULTIPLIED_BY = "MULTIPLIED_BY";
+inline constexpr absl::string_view kNEQ = "NEQ";
 inline constexpr absl::string_view kNOT = "NOT";
 inline constexpr absl::string_view kOR = "OR";
 inline constexpr absl::string_view kPLUS = "PLUS";

@@ -101,6 +101,30 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
       Amount resultant;
       resultant.set_bool_amount(gthan);
       return resultant;
+    } else if (operation.fn_name() == functions::kLEQ) {
+      bool leq;
+      ASSIGN_OR_RETURN_(leq, lhs <= rhs);
+      Amount resultant;
+      resultant.set_bool_amount(leq);
+      return resultant;
+    } else if (operation.fn_name() == functions::kGEQ) {
+      bool geq;
+      ASSIGN_OR_RETURN_(geq, lhs >= rhs);
+      Amount resultant;
+      resultant.set_bool_amount(geq);
+      return resultant;
+    } else if (operation.fn_name() == functions::kEQ) {
+      bool eq;
+      ASSIGN_OR_RETURN_(eq, lhs == rhs);
+      Amount resultant;
+      resultant.set_bool_amount(eq);
+      return resultant;
+    } else if (operation.fn_name() == functions::kNEQ) {
+      bool neq;
+      ASSIGN_OR_RETURN_(neq, lhs != rhs);
+      Amount resultant;
+      resultant.set_bool_amount(neq);
+      return resultant;
     }
   }
   default: {

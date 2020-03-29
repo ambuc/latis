@@ -677,13 +677,18 @@ INSTANTIATE_TEST_SUITE_P(
             "((3+2)+1)",
             R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb",
         },
+    }));
+
+INSTANTIATE_TEST_SUITE_P(
+    BinaryInfixTwoCharacter, ExpressionTestSuite,
+    ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {
-            "True & False",
-            R"pb( operation { fn_name: "AND" terms: { value: { bool_amount: true } } terms: { value: { bool_amount: False } } })pb",
+            " True && False ",
+            R"pb( operation { fn_name: "AND" terms: { value { bool_amount: true } } terms: { value: { bool_amount: false } } })pb",
         },
         {
-            "True | False",
-            R"pb( operation { fn_name: "OR" terms: { value: { bool_amount: true } } terms: { value: { bool_amount: False } } })pb",
+            " True || False ",
+            R"pb( operation { fn_name: "OR" terms: { value { bool_amount: true } } terms: { value: { bool_amount: false } } })pb",
         },
     }));
 
