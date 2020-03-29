@@ -62,7 +62,7 @@ public:
   StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan) {
     depth_++;
     auto d = MakeCleanup([&] { depth_--; });
-    PrintAttempt("NUMERIC");
+    PrintAttempt(tspan, "NUMERIC");
 
     return AnyVariant<double, int>(
         absl::bind_front(&Parser::ConsumeDouble, this),
@@ -81,7 +81,7 @@ public:
     depth_++;
     auto d = MakeCleanup([&] { depth_--; });
 
-    PrintAttempt("CURRENCY");
+    PrintAttempt(tspan, "CURRENCY");
     return Any<Money::Currency>({
         absl::bind_front(&Parser::ConsumeCurrencySymbol, this),
         absl::bind_front(&Parser::ConsumeCurrencyWord, this),
@@ -100,7 +100,7 @@ public:
     depth_++;
     auto d = MakeCleanup([&] { depth_--; });
 
-    PrintAttempt("RANGE_LOCATION");
+    PrintAttempt(tspan, "RANGE_LOCATION");
     return Any<RangeLocation>({
         absl::bind_front(&Parser::ConsumeRangeLocationPointThenAny, this),
         absl::bind_front(&Parser::ConsumeRangeLocationRowThenRow, this),
@@ -122,9 +122,10 @@ private:
   int depth_{0};
 
   // Logging w/ depth_
-  void PrintAttempt(const std::string &step) {
+  void PrintAttempt(TSpan *tspan, const std::string &step) {
     if (options_.should_log_verbosely) {
-      std::cout << std::string(depth_, ' ') << step << std::endl;
+      std::cout << depth_ << "\t" << PrintTSpan(tspan)
+                << std::string(2 * depth_, ' ') << step << std::endl;
     }
   }
   void PrintStep(TSpan *lcl, TSpan *tspan, const std::string &step) {
@@ -140,11 +141,12 @@ private:
 
   // RepeatGuard apparatus
   using CacheItem = std::tuple<std::string, TSpan::pointer, TSpan::size_type>;
-  absl::flat_hash_set<CacheItem> cache_;
+  using Cache = absl::flat_hash_set<CacheItem>;
+  Cache cache_;
 
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
-  Status RepeatGuard(std::string step, TSpan *tspan) {
+  StatusOr<Cache::key_type> RepeatGuard(std::string step, TSpan *tspan) {
     CacheItem item = {step, tspan->data(), tspan->size()};
 
     if (cache_.contains(item)) {
@@ -153,7 +155,7 @@ private:
     }
     cache_.insert(item);
 
-    return OkStatus();
+    return item;
   }
 
   // Private consumers.
@@ -176,7 +178,7 @@ private:
     depth_++;
     auto d = MakeCleanup([&] { depth_--; });
 
-    PrintAttempt("FULL_YEAR");
+    PrintAttempt(tspan, "FULL_YEAR");
     return Consume4Digit(tspan);
   }
 
@@ -185,7 +187,7 @@ private:
     auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 1 <= i && i <= 12; };
-    PrintAttempt("DATE_MONTH");
+    PrintAttempt(tspan, "DATE_MONTH");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
@@ -195,7 +197,7 @@ private:
     auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 1 <= i && i <= 31; };
-    PrintAttempt("DATE_MDAY");
+    PrintAttempt(tspan, "DATE_MDAY");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
@@ -205,7 +207,7 @@ private:
     auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 0 <= i && i <= 23; };
-    PrintAttempt("TIME_HOUR");
+    PrintAttempt(tspan, "TIME_HOUR");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
@@ -215,7 +217,7 @@ private:
     auto d = MakeCleanup([&] { depth_--; });
 
     static auto r = [](int i) { return 0 <= i && i <= 59; };
-    PrintAttempt("TIME_MINUTE");
+    PrintAttempt(tspan, "TIME_MINUTE");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
@@ -225,7 +227,7 @@ private:
 
     // Up to 60, counting leap seconds.
     static auto r = [](int i) { return 0 <= i && i <= 60; };
-    PrintAttempt("TIME_SECOND");
+    PrintAttempt(tspan, "TIME_SECOND");
     return WithRestriction<int>(r)(
         absl::bind_front(&Parser::Consume2Digit, this))(tspan);
   }
@@ -233,7 +235,7 @@ private:
     depth_++;
     auto d = MakeCleanup([&] { depth_--; });
 
-    PrintAttempt("TIME_SEC_FRAC");
+    PrintAttempt(tspan, "TIME_SEC_FRAC");
     return ConsumeDouble(tspan);
   }
 
@@ -244,6 +246,9 @@ private:
   StatusOr<Expression::Operation> ConsumeOperationPrefix(TSpan *tspan);
 
   StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan) {
+    depth_++;
+    auto d = MakeCleanup([&] { depth_--; });
+    PrintAttempt(tspan, "OPERATION");
     return Any<Expression::Operation>({
         absl::bind_front(&Parser::ConsumeOperationInfix, this),
         absl::bind_front(&Parser::ConsumeOperationPrefix, this),

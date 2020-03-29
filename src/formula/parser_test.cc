@@ -69,6 +69,10 @@ public:
       }
       ASSERT_THAT(object_or_status, IsOk());
       Compare(object_or_status.ValueOrDie(), expectation_or_nullopt.value());
+      if (!tspan.empty()) {
+        std::cout << "TSPAN not empty: '" << PrintTSpan(&tspan) << "'."
+                  << std::endl;
+      }
       ASSERT_THAT(tspan, IsEmpty());
     } else {
       ASSERT_FALSE(object_or_status.ok());
@@ -435,7 +439,7 @@ public:
 };
 
 TEST_P(ExpressionTestSuite, LexAndParse) {
-  p_.EnableVerboseLogging(); // TODO remove this.
+  // p_.EnableVerboseLogging();
   RunBodyOfTest(absl::bind_front(&Parser::ConsumeExpression, &p_),
                 std::get<0>(GetParam()),
                 MaybeToProto<Expression>(std::get<1>(GetParam())));
@@ -548,38 +552,27 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     BinaryInfix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        // Infix.
         {"3+2",
          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb"},
-
         {"3+2.0",
          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { double_amount: 2.0 } } })pb"},
-
-        // Infix with strings? And a different operator?
         {R"pb("3" / "2")pb",
          R"pb( operation { fn_name: "DIVIDED_BY" terms: { value: { str_amount: "3" } } terms: { value: { str_amount: "2" } } })pb"},
-
+        {R"pb(1-2)pb",
+         R"pb( operation { fn_name: "MINUS" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } })pb"},
         {R"pb(0.0 - 2.0)pb",
          R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-
-        // Infix with parens?
-        // TODO FIXME broken
         {R"pb(((0.0)-(2.0)))pb",
          R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-
-        // Infix with parens?
-        // TODO FIXME broken
         {R"pb((0.0)-(2.0))pb",
          R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-
         {"(3+2)",
          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb"},
-
         {"3+(2+1)",
          R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 1 } } } } })pb"},
-
-        // TODO FIXME broken
-        {"(3+2)+1)",
+        {"(3+2)+1",
+         R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb"},
+        {"((3+2)+1)",
          R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb"},
     }));
 

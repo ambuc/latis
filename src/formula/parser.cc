@@ -67,7 +67,7 @@ StatusOr<TSpan::iterator> MatchParentheses(TSpan *tspan) {
 StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("EXACT");
+  PrintAttempt(tspan, "EXACT");
 
   if (tspan->empty()) {
     return Status(
@@ -91,7 +91,7 @@ StatusOr<std::string_view> Parser::ConsumeExact(Token::T type, TSpan *tspan) {
 StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("INT");
+  PrintAttempt(tspan, "INT");
 
   TSpan lcl = *tspan;
 
@@ -111,7 +111,7 @@ StatusOr<int> Parser::ConsumeInt(TSpan *tspan) {
 StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("DOUBLE");
+  PrintAttempt(tspan, "DOUBLE");
 
   TSpan lcl = *tspan;
 
@@ -145,7 +145,7 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
 StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("STRING");
+  PrintAttempt(tspan, "STRING");
 
   TSpan lcl = *tspan;
   std::string_view resultant;
@@ -159,7 +159,7 @@ StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
 StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("2DIGIT");
+  PrintAttempt(tspan, "2DIGIT");
 
   TSpan lcl = *tspan;
   std::string_view value;
@@ -182,7 +182,7 @@ StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
 StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("4DIGIT");
+  PrintAttempt(tspan, "4DIGIT");
 
   TSpan lcl = *tspan;
   std::string_view value;
@@ -206,7 +206,7 @@ StatusOr<int> Parser::Consume4Digit(TSpan *tspan) {
 StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("CURRENCY_WORD");
+  PrintAttempt(tspan, "CURRENCY_WORD");
 
   static std::unordered_map<std::string, Money::Currency> lookup_map{
       {"USD", Money::USD}, {"CAD", Money::CAD}};
@@ -218,7 +218,7 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencyWord(TSpan *tspan) {
 StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("CURRENCY_SYMBOL");
+  PrintAttempt(tspan, "CURRENCY_SYMBOL");
 
   TSpan lcl = *tspan;
 
@@ -235,7 +235,7 @@ StatusOr<Money::Currency> Parser::ConsumeCurrencySymbol(TSpan *tspan) {
 StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("MONEY");
+  PrintAttempt(tspan, "MONEY");
 
   TSpan lcl = *tspan;
   Money money;
@@ -268,7 +268,7 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
 StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("TIME_OFFSET");
+  PrintAttempt(tspan, "TIME_OFFSET");
 
   TSpan lcl = *tspan;
 
@@ -299,7 +299,7 @@ StatusOr<absl::TimeZone> Parser::ConsumeTimeOffset(TSpan *tspan) {
 StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("DATE_TIME");
+  PrintAttempt(tspan, "DATE_TIME");
 
   auto only_T = [](std::string_view s) -> bool { return s == "T"; };
 
@@ -368,7 +368,7 @@ StatusOr<absl::Time> Parser::ConsumeDateTime(TSpan *tspan) {
 StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("AMOUNT");
+  PrintAttempt(tspan, "AMOUNT");
 
   TSpan lcl = *tspan;
 
@@ -407,7 +407,7 @@ StatusOr<Amount> Parser::ConsumeAmount(TSpan *tspan) {
 StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("ROW_INDICATOR");
+  PrintAttempt(tspan, "ROW_INDICATOR");
 
   auto tr = [](int i) -> int { return i - 1; };
   auto r = [](int i) -> bool { return i > 0; };
@@ -418,7 +418,7 @@ StatusOr<int> Parser::ConsumeRowIndicator(TSpan *tspan) {
 StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("COL_INDICATOR");
+  PrintAttempt(tspan, "COL_INDICATOR");
 
   // TODO(ambuc): WithTransformationReturningOptional ?
   TSpan lcl = *tspan;
@@ -446,7 +446,7 @@ StatusOr<int> Parser::ConsumeColIndicator(TSpan *tspan) {
 StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("POINT_LOCATION");
+  PrintAttempt(tspan, "POINT_LOCATION");
   TSpan lcl = *tspan;
   PointLocation resultant;
 
@@ -469,7 +469,7 @@ StatusOr<PointLocation> Parser::ConsumePointLocation(TSpan *tspan) {
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("RANGE_LOCATION_POINT_THEN_ANY");
+  PrintAttempt(tspan, "RANGE_LOCATION_POINT_THEN_ANY");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -502,7 +502,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationPointThenAny(TSpan *tspan) {
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("RANGE_LOCATION_ROW_THEN_ROW");
+  PrintAttempt(tspan, "RANGE_LOCATION_ROW_THEN_ROW");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -526,7 +526,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationRowThenRow(TSpan *tspan) {
 StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("RANGE_LOCATION_COL_THEN_COL");
+  PrintAttempt(tspan, "RANGE_LOCATION_COL_THEN_COL");
   TSpan lcl = *tspan;
   RangeLocation resultant;
 
@@ -553,7 +553,7 @@ StatusOr<RangeLocation> Parser::ConsumeRangeLocationColThenCol(TSpan *tspan) {
 StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("FN_NAME");
+  PrintAttempt(tspan, "FN_NAME");
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -600,7 +600,7 @@ StatusOr<std::string> Parser::ConsumeFnName(TSpan *tspan) {
 StatusOr<Expression::Operation> Parser::ConsumeOperationPrefix(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("OPERATION");
+  PrintAttempt(tspan, "OPERATION_PREFIX");
   TSpan lcl = *tspan;
 
   std::tuple<std::string, std::vector<Expression>> t;
@@ -617,7 +617,7 @@ StatusOr<Expression::Operation> Parser::ConsumeOperationPrefix(TSpan *tspan) {
     *resultant.add_terms() = expr;
   }
 
-  PrintStep(&lcl, tspan, "OPERATION");
+  PrintStep(&lcl, tspan, "OPERATION_PREFIX");
   *tspan = lcl;
   return resultant;
 }
@@ -625,7 +625,7 @@ StatusOr<Expression::Operation> Parser::ConsumeOperationPrefix(TSpan *tspan) {
 StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("OP_BINARY_INFIX_FN");
+  PrintAttempt(tspan, "OP_BINARY_INFIX_FN");
   TSpan lcl = *tspan;
   std::string resultant;
 
@@ -658,11 +658,13 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
 StatusOr<Expression::Operation> Parser::ConsumeOperationInfix(TSpan *tspan) {
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
-  RETURN_IF_ERROR_(RepeatGuard("consume_op_binary_infix", tspan));
+  Cache::key_type key;
+  ASSIGN_OR_RETURN_(key, RepeatGuard("consume_op_binary_infix", tspan));
+  auto d2 = MakeCleanup([&] { cache_.erase(key); });
 
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("OP_BINARY_INFIX");
+  PrintAttempt(tspan, "OP_BINARY_INFIX");
   TSpan lcl = *tspan;
 
   std::tuple<Expression, std::string, Expression> t;
@@ -688,7 +690,7 @@ StatusOr<Expression::Operation> Parser::ConsumeOperationInfix(TSpan *tspan) {
 StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("PARENTHESES");
+  PrintAttempt(tspan, "PARENTHESES");
 
   TSpan lcl = *tspan;
 
@@ -712,6 +714,9 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
       break;
     }
   }
+  if (!lcl_inner.empty()) {
+    return Status(INVALID_ARGUMENT, "Didn't exhaust lcl_inner.");
+  }
   lcl.remove_prefix(size_of_inner + 1);
 
   PrintStep(&lcl, tspan, "PARENTHESES");
@@ -722,13 +727,13 @@ StatusOr<std::vector<Expression>> Parser::ConsumeParentheses(TSpan *tspan) {
 StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
-  PrintAttempt("EXPRESSION");
+  PrintAttempt(tspan, "EXPRESSION");
 
   TSpan lcl = *tspan;
   Expression resultant;
 
-  absl::variant<std::vector<Expression>, //
-                Expression::Operation,   //
+  absl::variant<Expression::Operation,   //
+                std::vector<Expression>, //
                 RangeLocation,           //
                 PointLocation,           //
                 Amount                   //
@@ -737,17 +742,17 @@ StatusOr<Expression> Parser::ConsumeExpression(TSpan *tspan) {
 
   ASSIGN_OR_RETURN_(
       expression,
-      (AnyVariant<std::vector<Expression>, //
-                  Expression::Operation,   //
+      (AnyVariant<Expression::Operation,   //
+                  std::vector<Expression>, //
                   RangeLocation,           //
                   PointLocation,           //
                   Amount                   //
                   >(
+          absl::bind_front(&Parser::ConsumeOperation, this), //
           WithRestriction<std::vector<Expression>>(
               [](const std::vector<Expression> exprs) -> bool {
                 return exprs.size() == 1;
               })(absl::bind_front(&Parser::ConsumeParentheses, this)), //
-          absl::bind_front(&Parser::ConsumeOperation, this),           //
           absl::bind_front(&Parser::ConsumeRangeLocation, this),       //
           absl::bind_front(&Parser::ConsumePointLocation, this),       //
           absl::bind_front(&Parser::ConsumeAmount, this)               //
