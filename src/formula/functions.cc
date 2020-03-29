@@ -170,5 +170,32 @@ StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs) {
   return Status(INVALID_ARGUMENT, "no difference");
 }
 
+StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs) {
+  Amount resultant;
+  if (lhs.has_bool_amount() && rhs.has_bool_amount()) {
+    resultant.set_bool_amount(lhs.bool_amount() && rhs.bool_amount());
+    return resultant;
+  }
+  return Status(INVALID_ARGUMENT, "Can't && non-bools.");
+}
+
+StatusOr<Amount> operator||(const Amount &lhs, const Amount &rhs) {
+  Amount resultant;
+  if (lhs.has_bool_amount() && rhs.has_bool_amount()) {
+    resultant.set_bool_amount(lhs.bool_amount() || rhs.bool_amount());
+    return resultant;
+  }
+  return Status(INVALID_ARGUMENT, "Can't || non-bools.");
+}
+
+StatusOr<Amount> operator!(const Amount &arg) {
+  Amount resultant;
+  if (arg.has_bool_amount()) {
+    resultant.set_bool_amount(!arg.bool_amount());
+    return resultant;
+  }
+  return Status(INVALID_ARGUMENT, "Can't ! non-bools.");
+}
+
 } // namespace formula
 } // namespace latis

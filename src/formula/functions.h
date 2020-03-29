@@ -51,6 +51,9 @@ StatusOr<Money> operator-(const Money &lhs, const Money &rhs);
 // Amount
 StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator||(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator!(const Amount &arg);
 
 } // namespace formula
 } // namespace latis

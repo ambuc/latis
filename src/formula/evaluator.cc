@@ -55,7 +55,13 @@ Evaluator::CrunchPointLocation(const PointLocation &point_location) {
 StatusOr<Amount>
 Evaluator::CrunchOperation(const Expression::Operation &operation) {
 
-  if (operation.terms_size() == 2) {
+  if (operation.terms_size() == 1) {
+    Amount arg;
+    ASSIGN_OR_RETURN_(arg, CrunchExpression(operation.terms(0)));
+    if (operation.fn_name() == "NOT") {
+      return !arg;
+    }
+  } else if (operation.terms_size() == 2) {
     Amount lhs;
     ASSIGN_OR_RETURN_(lhs, CrunchExpression(operation.terms(0)));
     Amount rhs;
@@ -65,6 +71,10 @@ Evaluator::CrunchOperation(const Expression::Operation &operation) {
       return lhs + rhs;
     } else if (operation.fn_name() == "MINUS") {
       return lhs - rhs;
+    } else if (operation.fn_name() == "AND") {
+      return lhs && rhs;
+    } else if (operation.fn_name() == "OR") {
+      return lhs || rhs;
     }
   }
 

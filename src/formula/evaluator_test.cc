@@ -79,6 +79,19 @@ INSTANTIATE_TEST_SUITE_P(
         {"1.2 + 3.4", "double_amount: 4.6"},
         // subtraction
         {"5-2.5", "double_amount: 2.5"},
+        // and
+        {"True & True", "bool_amount: True"},
+        {"True & False", "bool_amount: False"},
+        {"False & True", "bool_amount: False"},
+        {"False & False", "bool_amount: False"},
+        // or
+        {"True | True", "bool_amount: True"},
+        {"True | False", "bool_amount: True"},
+        {"False | True", "bool_amount: True"},
+        {"False | False", "bool_amount: False"},
+        // not
+        {"NOT(True)", "bool_amount: False"},
+        {"NOT(False)", "bool_amount: True"},
     }));
 
 } // namespace

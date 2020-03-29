@@ -132,6 +132,47 @@ INSTANTIATE_TEST_SUITE_P(
         {"timestamp_amount: {}", "money_amount: {} ", absl::nullopt},
     }));
 
+class BooleanAndTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
+    return lhs && rhs;
+  }
+};
+TEST_P(BooleanAndTestSuite, RunTests) { RunTest(); }
+INSTANTIATE_TEST_SUITE_P(
+    AllTests, BooleanAndTestSuite,
+    ValuesIn(std::vector<Params>{
+        {"bool_amount: true", "bool_amount: true", "bool_amount: true"},
+        {"bool_amount: true", "bool_amount: false", "bool_amount: false"},
+        {"bool_amount: false", "bool_amount: true", "bool_amount: false"},
+        {"bool_amount: false", "bool_amount: false", "bool_amount: false"},
+    }));
+
+class BooleanOrTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &rhs) {
+    return lhs || rhs;
+  }
+};
+TEST_P(BooleanOrTestSuite, RunTests) { RunTest(); }
+INSTANTIATE_TEST_SUITE_P(
+    AllTests, BooleanOrTestSuite,
+    ValuesIn(std::vector<Params>{
+        {"bool_amount: true", "bool_amount: true", "bool_amount: true"},
+        {"bool_amount: true", "bool_amount: false", "bool_amount: true"},
+        {"bool_amount: false", "bool_amount: true", "bool_amount: true"},
+        {"bool_amount: false", "bool_amount: false", "bool_amount: false"},
+    }));
+
+class BooleanNotTestSuite : public TestSuite {
+  StatusOr<Amount> Combine(const Amount &lhs, const Amount &) { return !lhs; }
+};
+TEST_P(BooleanNotTestSuite, RunTests) { RunTest(); }
+// HACK. TODO(ambuc): unary test suites too.
+INSTANTIATE_TEST_SUITE_P(AllTests, BooleanNotTestSuite,
+                         ValuesIn(std::vector<Params>{
+                             {"bool_amount: true", "", "bool_amount: false"},
+                             {"bool_amount: false", "", "bool_amount: true"},
+                         }));
+
 } // namespace
 } // namespace formula
 } // namespace latis
