@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef SRC_FORMULA_EVALUATOR_H_
-#define SRC_FORMULA_EVALUATOR_H_
+#ifndef SRC_FORMULA_FUNCTIONS_H_
+#define SRC_FORMULA_FUNCTIONS_H_
 
 #include "proto/latis_msg.pb.h"
-#include "src/xy.h"
 
-#include "absl/types/optional.h"
-
+#include "absl/types/span.h"
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/status_macros.h"
 #include "google/protobuf/stubs/statusor.h"
@@ -29,26 +27,18 @@
 namespace latis {
 namespace formula {
 
-using LookupFn = std::function<absl::optional<Amount>(XY)>;
+// Sum(1,2) => 3
+// Sum(1, 2.0) => 3.0
+// Sum(1, 1, 1) => 3
+// Sum(2.0, 2.0, 2.0) => 6.0
+// Sum($1.50, $1.50) => $3.00
+// Sum(timestamp1, timestamp2) => timestamp1 + timestamp2
+// TODO(ambuc) start here
 
-class Evaluator {
-public:
-  explicit Evaluator(LookupFn lookup_fn) : lookup_fn_(lookup_fn) {}
-
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchExpression(const Expression &expression);
-
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchPointLocation(const PointLocation &operation);
-
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchOperation(const Expression::Operation &operation);
-
-private:
-  LookupFn lookup_fn_;
-};
+// ::google::protobuf::util::StatusOr<Amount> Sum(absl::Span<const Amount>
+// inputs);
 
 } // namespace formula
 } // namespace latis
 
-#endif // SRC_FORMULA_EVALUATOR_H_
+#endif // SRC_FORMULA_FUNCTIONS_H_

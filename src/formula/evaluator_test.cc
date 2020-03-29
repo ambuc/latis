@@ -53,8 +53,10 @@ TEST_P(TestClassBase, LexAndParseAndEvaluate) {
 
   Expression expr = parser_.ConsumeExpression(&tspan).ValueOrDie();
 
-  Amount amt;
-  ASSERT_OK_AND_ASSIGN(amt, evaluator_.Crunch(expr));
+  auto amt_or_status = evaluator_.CrunchExpression(expr);
+
+  ASSERT_THAT(amt_or_status, IsOk());
+  Amount amt = amt_or_status.ValueOrDie();
 
   EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(std::get<1>(GetParam()))));
 }

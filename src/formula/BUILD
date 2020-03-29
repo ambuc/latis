@@ -36,6 +36,27 @@ cc_test(
 )
 
 cc_library(
+    name = "functions_lib",
+    srcs = ["functions.cc"],
+    hdrs = ["functions.h"],
+    deps = [
+        "//proto:latis_msg_cc_proto",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "functions_test",
+    srcs = ["functions_test.cc"],
+    deps = [
+        ":functions_lib",
+        "//proto:latis_msg_cc_proto",
+        "//src/test_utils:test_utils_lib",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "lexer_lib",
     srcs = ["lexer.cc"],
     hdrs = ["lexer.h"],
