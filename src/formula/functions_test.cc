@@ -56,7 +56,7 @@ public:
         std::cout << amt_or_status.status();
       }
 
-      ASSERT_THAT(amt_or_status, IsOk());
+      ASSERT_THAT(amt_or_status, IsOk()) << amt_or_status.status();
       Amount amt = amt_or_status.ValueOrDie();
 
       EXPECT_THAT(amt, EqualsProto(expected)) << amt.DebugString();

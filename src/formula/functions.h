@@ -23,6 +23,7 @@
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/status_macros.h"
 #include "google/protobuf/stubs/statusor.h"
+#include <google/protobuf/util/message_differencer.h>
 
 namespace latis {
 namespace formula {
@@ -31,33 +32,70 @@ using ::google::protobuf::Timestamp;
 using ::google::protobuf::util::StatusOr;
 
 // Timestamp
-bool operator<(const Timestamp &lhs, const Timestamp &rhs);
-bool operator>(const Timestamp &lhs, const Timestamp &rhs);
-bool operator==(const Timestamp &lhs, const Timestamp &rhs);
-bool operator<=(const Timestamp &lhs, const Timestamp &rhs);
-bool operator>=(const Timestamp &lhs, const Timestamp &rhs);
+StatusOr<bool> operator<=(const Timestamp &lhs, const Timestamp &rhs);
 StatusOr<Timestamp> operator+(const Timestamp &lhs, const Timestamp &rhs);
-StatusOr<Timestamp> operator-(const Timestamp &lhs, const Timestamp &rhs);
+Timestamp operator-(const Timestamp &arg);
 
 // Money
-bool operator<(const Money &lhs, const Money &rhs);
-bool operator>(const Money &lhs, const Money &rhs);
-bool operator==(const Money &lhs, const Money &rhs);
-bool operator<=(const Money &lhs, const Money &rhs);
-bool operator>=(const Money &lhs, const Money &rhs);
+StatusOr<bool> operator<=(const Money &lhs, const Money &rhs);
 StatusOr<Money> operator+(const Money &lhs, const Money &rhs);
-StatusOr<Money> operator-(const Money &lhs, const Money &rhs);
+Money operator-(const Money &arg);
 StatusOr<Money> operator*(const Money &lhs, const Money &rhs);
 StatusOr<Money> operator/(const Money &lhs, const Money &rhs);
 
-// Amount
+// Amount (operating on numeric)
+StatusOr<bool> operator<=(const Amount &lhs, const Amount &rhs);
+StatusOr<bool> operator==(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs);
-StatusOr<Amount> operator-(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator-(const Amount &arg);
 StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs);
+// Amount (operating on bool)
 StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator||(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator!(const Amount &arg);
+
+// Templated operators for protos (Money, Timestamp, etc.)
+template <typename T> //
+StatusOr<T> operator-(const T &lhs, const T &rhs) {
+  if (const StatusOr<T> maybe_neg_rhs = -rhs; !maybe_neg_rhs.ok()) {
+    return maybe_neg_rhs.status();
+  } else {
+    return lhs + maybe_neg_rhs.ValueOrDie();
+  }
+}
+template <typename T> //
+StatusOr<bool> operator==(const T &lhs, const T &rhs) {
+  return ::google::protobuf::util::MessageDifferencer::Equals(lhs, rhs);
+}
+template <typename T> //
+StatusOr<bool> operator!=(const T &lhs, const T &rhs) {
+  const auto eq_or_status = (lhs == rhs);
+  if (!eq_or_status.ok()) {
+    return eq_or_status.status();
+  }
+  return !(eq_or_status.ValueOrDie());
+}
+template <typename T> //
+StatusOr<bool> operator<(const T &lhs, const T &rhs) {
+  const auto leq_or_status = (lhs <= rhs);
+  if (!leq_or_status.ok()) {
+    return leq_or_status.status();
+  }
+  const auto neq_or_status = (lhs != rhs);
+  if (!neq_or_status.ok()) {
+    return neq_or_status.status();
+  }
+  return leq_or_status.ValueOrDie() && neq_or_status.ValueOrDie();
+}
+template <typename T> //
+StatusOr<bool> operator>(const T &lhs, const T &rhs) {
+  return !(lhs <= rhs);
+}
+template <typename T> //
+StatusOr<bool> operator>=(const T &lhs, const T &rhs) {
+  return lhs > rhs || lhs == rhs;
+}
 
 // TODO(ambuc): pow, mod, <, >,
 

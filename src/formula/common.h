@@ -17,6 +17,7 @@
 #ifndef SRC_PARSER_COMMON_H_
 #define SRC_PARSER_COMMON_H_
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/statusor.h"
@@ -84,6 +85,29 @@ void PrintLnTSpan(TSpan *tspan) { std::cout << PrintTSpan(tspan) << std::endl; }
 
 template <typename T> //
 using Prsr = std::function<StatusOr<T>(TSpan *)>;
+
+namespace functions {
+// abseil.io/tips/168
+inline constexpr absl::string_view kADD = "ADD";
+inline constexpr absl::string_view kAND = "AND";
+inline constexpr absl::string_view kDIV = "DIV";
+inline constexpr absl::string_view kDIVIDED_BY = "DIVIDED_BY";
+inline constexpr absl::string_view kGTHAN = "GTHAN";
+inline constexpr absl::string_view kLTHAN = "LTHAN";
+inline constexpr absl::string_view kMINUS = "MINUS";
+inline constexpr absl::string_view kMOD = "MOD";
+inline constexpr absl::string_view kMULTIPLIED_BY = "MULTIPLIED_BY";
+inline constexpr absl::string_view kNOT = "NOT";
+inline constexpr absl::string_view kOR = "OR";
+inline constexpr absl::string_view kPLUS = "PLUS";
+inline constexpr absl::string_view kPOW = "POW";
+inline constexpr absl::string_view kPOW10 = "POW10";
+inline constexpr absl::string_view kPRODUCT = "PRODUCT";
+inline constexpr absl::string_view kSUB = "SUB";
+inline constexpr absl::string_view kSUBTRACT = "SUBTRACT";
+inline constexpr absl::string_view kSUM = "SUM";
+inline constexpr absl::string_view kTIMES = "TIMES";
+} // namespace functions
 
 } // namespace formula
 } // namespace latis

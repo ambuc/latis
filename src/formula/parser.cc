@@ -760,25 +760,25 @@ StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   std::string resultant;
 
   if (ConsumeExact(Token::T::plus, &lcl).ok()) {
-    resultant = "PLUS";
+    resultant = functions::kPLUS;
   } else if (ConsumeExact(Token::T::minus, &lcl).ok()) {
-    resultant = "MINUS";
+    resultant = functions::kMINUS;
   } else if (ConsumeExact(Token::T::asterisk, &lcl).ok()) {
-    resultant = "TIMES";
+    resultant = functions::kTIMES;
   } else if (ConsumeExact(Token::T::slash, &lcl).ok()) {
-    resultant = "DIVIDED_BY";
+    resultant = functions::kDIVIDED_BY;
   } else if (ConsumeExact(Token::T::carat, &lcl).ok()) {
-    resultant = "POW";
+    resultant = functions::kPOW;
   } else if (ConsumeExact(Token::T::percent, &lcl).ok()) {
-    resultant = "MOD";
+    resultant = functions::kMOD;
   } else if (ConsumeExact(Token::T::lthan, &lcl).ok()) {
-    resultant = "LTHAN";
+    resultant = functions::kLTHAN;
   } else if (ConsumeExact(Token::T::gthan, &lcl).ok()) {
-    resultant = "GTHAN";
+    resultant = functions::kGTHAN;
   } else if (ConsumeExact(Token::T::ampersand, &lcl).ok()) {
-    resultant = "AND";
+    resultant = functions::kAND;
   } else if (ConsumeExact(Token::T::pipe, &lcl).ok()) {
-    resultant = "OR";
+    resultant = functions::kOR;
   } else {
     return Status(INVALID_ARGUMENT,
                   "Can't ConsumeOpBinaryInfixFn: Not a binary infix.");

@@ -15,6 +15,7 @@
 #include "src/formula/evaluator.h"
 
 #include "proto/latis_msg.pb.h"
+#include "src/formula/common.h"
 #include "src/formula/functions.h"
 #include "src/utils/status_macros.h"
 
@@ -55,39 +56,53 @@ Evaluator::CrunchPointLocation(const PointLocation &point_location) {
 StatusOr<Amount>
 Evaluator::CrunchOperation(const Expression::Operation &operation) {
 
-  if (operation.terms_size() == 1) {
+  switch (operation.terms_size()) {
+  case (1): {
     Amount arg;
     ASSIGN_OR_RETURN_(arg, CrunchExpression(operation.terms(0)));
-    if (operation.fn_name() == "NOT") {
+    if (operation.fn_name() == functions::kNOT) {
       return !arg;
     }
-  } else if (operation.terms_size() == 2) {
+  }
+  case (2): {
     Amount lhs;
     ASSIGN_OR_RETURN_(lhs, CrunchExpression(operation.terms(0)));
     Amount rhs;
     ASSIGN_OR_RETURN_(rhs, CrunchExpression(operation.terms(1)));
 
-    if (operation.fn_name() == "PLUS" || operation.fn_name() == "SUM" ||
-        operation.fn_name() == "ADD") {
+    if (operation.fn_name() == functions::kPLUS ||
+        operation.fn_name() == functions::kSUM ||
+        operation.fn_name() == functions::kADD) {
       return lhs + rhs;
-    } else if (operation.fn_name() == "MINUS" || operation.fn_name() == "SUB" ||
-               operation.fn_name() == "SUBTRACT") {
+    } else if (operation.fn_name() == functions::kMINUS ||
+               operation.fn_name() == functions::kSUB ||
+               operation.fn_name() == functions::kSUBTRACT) {
       return lhs - rhs;
-    } else if (operation.fn_name() == "MULTIPLIED_BY" ||
-               operation.fn_name() == "TIMES" ||
-               operation.fn_name() == "PRODUCT") {
+    } else if (operation.fn_name() == functions::kMULTIPLIED_BY ||
+               operation.fn_name() == functions::kTIMES ||
+               operation.fn_name() == functions::kPRODUCT) {
       return lhs * rhs;
-    } else if (operation.fn_name() == "DIVIDED_BY" ||
-               operation.fn_name() == "DIV") {
+    } else if (operation.fn_name() == functions::kDIVIDED_BY ||
+               operation.fn_name() == functions::kDIV) {
       return lhs * rhs;
-    } else if (operation.fn_name() == "AND") {
+    } else if (operation.fn_name() == functions::kAND) {
       return lhs && rhs;
-    } else if (operation.fn_name() == "OR") {
+    } else if (operation.fn_name() == functions::kOR) {
       return lhs || rhs;
+    } else if (operation.fn_name() == functions::kLTHAN) {
+      StatusOr<bool> r = lhs < rhs;
+      if (!r.ok()) {
+        return r.status();
+      }
+      Amount resultant;
+      resultant.set_bool_amount(r.ValueOrDie());
+      return resultant;
     }
   }
-
-  return Status(INVALID_ARGUMENT, " no operation match.");
+  default: {
+    return Status(INVALID_ARGUMENT, " no operation match.");
+  }
+  }
 }
 
 } // namespace formula

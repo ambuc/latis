@@ -6,6 +6,7 @@ cc_library(
     name = "common_lib",
     hdrs = ["common.h"],
     deps = [
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -15,6 +16,7 @@ cc_library(
     srcs = ["evaluator.cc"],
     hdrs = ["evaluator.h"],
     deps = [
+        ":common_lib",
         ":functions_lib",
         "//proto:latis_msg_cc_proto",
         "//src:xy_lib",
