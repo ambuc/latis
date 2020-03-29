@@ -54,6 +54,12 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(std::vector<std::tuple<std::string, std::string, std::string>>{
         // 1 + 2 = 3
         {"int_amount: 1", "int_amount: 2", "int_amount: 3"},
+        // 1 + 2.0 = 3.0
+        {"int_amount: 1", "double_amount: 2.0", "double_amount: 3.0"},
+        // 1.0 + 2 = 3.0
+        {"double_amount: 1.0", "int_amount: 2", "double_amount: 3.0"},
+        // 2.1 + 3 = 5.1
+        {"double_amount: 2.1", "int_amount: 3", "double_amount: 5.1"},
         // 1.234 + 2.345 = 3.579
         {"double_amount: 1.234", "double_amount: 2.345",
          "double_amount: 3.579"},

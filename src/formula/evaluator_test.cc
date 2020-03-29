@@ -55,10 +55,14 @@ TEST_P(TestClassBase, LexAndParseAndEvaluate) {
 
   auto amt_or_status = evaluator_.CrunchExpression(expr);
 
+  if (!amt_or_status.ok()) {
+    std::cout << amt_or_status.status() << std::endl;
+  }
   ASSERT_THAT(amt_or_status, IsOk());
   Amount amt = amt_or_status.ValueOrDie();
 
-  EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(std::get<1>(GetParam()))));
+  EXPECT_THAT(amt, EqualsProto(ToProto<Amount>(std::get<1>(GetParam()))))
+      << amt.DebugString();
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -67,6 +71,10 @@ INSTANTIATE_TEST_SUITE_P(
         {"1.234", "double_amount: 1.234"},
         {"\"FOO\"", "str_amount: \"FOO\""},
         {"2 + 2", "int_amount: 4"},
+        {"2 + 3", "int_amount: 5"},
+        {"2.0 + 3", "double_amount: 5.0"},
+        {"1.5 + 1.5", "double_amount: 3.0"},
+        {"2.1 + 3", "double_amount: 5.1"},
     }));
 
 } // namespace

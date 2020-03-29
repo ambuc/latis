@@ -132,8 +132,12 @@ StatusOr<double> Parser::ConsumeDouble(TSpan *tspan) {
   }
   if (const auto after = std::get<2>(t); after.has_value()) {
     if (after != 0) {
-      resultant += static_cast<double>(after.value() /
-                                       pow(10.0, ceil(log10(after.value()))));
+      double after_mut = static_cast<double>(after.value());
+      // 123 => .123.
+      while (after_mut >= 1.0) {
+        after_mut /= 10.0;
+      }
+      resultant += after_mut;
     }
   }
 
@@ -273,10 +277,10 @@ StatusOr<Money> Parser::ConsumeMoney(TSpan *tspan) {
   std::visit(overload{
                  [&money](int i) { money.set_dollars(i); },
                  [&money](double d) {
-                   int dollars = floor(d);
-                   int cents = (d * 100) - (dollars * 100);
+                   int dollars = static_cast<int>(floor(d));
                    money.set_dollars(dollars);
-                   money.set_cents(cents);
+                   money.set_cents(
+                       static_cast<int>(round((d - dollars) * 100.0)));
                  },
              },
              numeric);

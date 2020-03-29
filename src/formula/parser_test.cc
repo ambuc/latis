@@ -124,6 +124,20 @@ TEST_P(DoubleTestSuite, LexAndParse) {
 INSTANTIATE_TEST_SUITE_P(
     AllDoubles, DoubleTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<double>>>{
+        {"4.0", 4.0},
+        {"5.1", 5.1},
+        {"6.2", 6.2},
+        {"7.3", 7.3},
+        {"8.4", 8.4},
+        {"9.5", 9.5},
+        {"10.6", 10.6},
+        {"11.7", 11.7},
+        {"12.8", 12.8},
+        {"13.9", 13.9},
+        {"14.10", 14.10},
+        {"4.56", 4.56},
+        {"5.57", 5.57},
+        {"6.58", 6.58},
         {"4.605", 4.605},
         {".605", 0.605},
         {"42.", 42.0},
@@ -188,7 +202,8 @@ class MoneyTestSuite
           std::pair<std::string, absl::optional<std::string>>> {
 public:
   void Compare(const Money &a, const Money &b) const override {
-    EXPECT_THAT(a, EqualsProto(b));
+    EXPECT_THAT(a, EqualsProto(b))
+        << a.DebugString() << ", " << b.DebugString();
   }
 };
 TEST_P(MoneyTestSuite, LexAndParse) {
@@ -201,7 +216,8 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         {"USD3", "dollars: 3 currency: USD"},
         {"CAD4.56", "dollars: 4 cents: 56 currency: CAD"},
-        {"$123.456", "dollars: 123 cents: 45 currency: USD"},
+        // rounded.
+        {"$123.456", "dollars: 123 cents: 46 currency: USD"},
         {"", absl::nullopt},
     }));
 
@@ -606,6 +622,10 @@ INSTANTIATE_TEST_SUITE_P(
         {
             "3+2",
             R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb",
+        },
+        {
+            "2.1+3",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { double_amount: 2.1 } } terms: { value: { int_amount: 3 } } })pb",
         },
         {
             "3+2.0",

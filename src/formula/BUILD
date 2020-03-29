@@ -15,8 +15,10 @@ cc_library(
     srcs = ["evaluator.cc"],
     hdrs = ["evaluator.h"],
     deps = [
+        ":functions_lib",
         "//proto:latis_msg_cc_proto",
         "//src:xy_lib",
+        "//src/utils:status_macros",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:optional",

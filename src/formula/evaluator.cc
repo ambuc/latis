@@ -15,6 +15,8 @@
 #include "src/formula/evaluator.h"
 
 #include "proto/latis_msg.pb.h"
+#include "src/formula/functions.h"
+#include "src/utils/status_macros.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
@@ -28,6 +30,7 @@ using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
 StatusOr<Amount> Evaluator::CrunchExpression(const Expression &expression) {
+  expression.PrintDebugString();
   // NB: no has_range.
   if (expression.has_value()) {
     return expression.value();
@@ -52,8 +55,19 @@ Evaluator::CrunchPointLocation(const PointLocation &point_location) {
 
 StatusOr<Amount>
 Evaluator::CrunchOperation(const Expression::Operation &operation) {
-  // TODO(ambuc): look up operation by name.
-  return Status(INVALID_ARGUMENT, "");
+
+  // PLUS(A,B)
+  if (operation.fn_name() == "PLUS" && operation.terms_size() == 2) {
+    Amount lhs;
+    ASSIGN_OR_RETURN_(lhs, CrunchExpression(operation.terms(0)));
+    lhs.PrintDebugString();
+    Amount rhs;
+    ASSIGN_OR_RETURN_(rhs, CrunchExpression(operation.terms(1)));
+    rhs.PrintDebugString();
+    return lhs + rhs;
+  }
+
+  return Status(INVALID_ARGUMENT, " no operation match.");
 }
 
 } // namespace formula
