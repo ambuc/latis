@@ -448,54 +448,93 @@ TEST_P(ExpressionTestSuite, LexAndParse) {
 INSTANTIATE_TEST_SUITE_P(
     Amounts, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"2", R"pb(value { int_amount: 2 })pb"},
-        {"3.0", R"pb(value { double_amount: 3.0 })pb"},
+        {
+            "2",
+            R"pb(value { int_amount: 2 })pb",
+        },
+        {
+            "3.0",
+            R"pb(value { double_amount: 3.0 })pb",
+        },
     }));
 
 INSTANTIATE_TEST_SUITE_P(
     Parentheses, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         // Parentheses around a bunch of single values.
-        {"(2)", R"pb(value { int_amount: 2 })pb"},
-        {"(3.0)", R"pb(value { double_amount: 3.0 })pb"},
-        {R"pb(("s"))pb", R"pb(value { str_amount: "s" })pb"},
+        {
+            "(2)",
+            R"pb(value { int_amount: 2 })pb",
+        },
+        {
+            "(3.0)",
+            R"pb(value { double_amount: 3.0 })pb",
+        },
+        {
+            R"pb(("s"))pb",
+            R"pb(value { str_amount: "s" })pb",
+        },
     }));
 
 INSTANTIATE_TEST_SUITE_P(
     UnaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
         // Point and Range locations.
-        {R"pb(WALDO(A1))pb",
-         R"pb(operation { fn_name: "WALDO" terms: { lookup: { row : 0 col : 0 } } })pb"},
-        {R"pb(GARPLY(A1:B2))pb",
-         R"pb(operation { fn_name: "GARPLY" terms: { range: { from_cell: { row: 0 col: 0 } to_cell: { row: 1  col: 1} } } })pb"},
+        {
+            R"pb(WALDO(A1))pb",
+            R"pb(operation { fn_name: "WALDO" terms: { lookup: { row : 0 col : 0 } } })pb",
+        },
+        {
+            R"pb(GARPLY(A1:B2))pb",
+            R"pb(operation { fn_name: "GARPLY" terms: { range: { from_cell: { row: 0 col: 0 } to_cell: { row: 1  col: 1} } } })pb",
+        },
 
         // Basic amounts.
-        {R"(FOO("foo"))",
-         R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "foo" } } })pb"},
-        {R"(BAR(240))",
-         R"pb(operation { fn_name: "BAR" terms: { value: { int_amount: 240 } } })pb"},
-        {R"(BAZ(240.248))",
-         R"pb(operation { fn_name: "BAZ" terms: { value: { double_amount: 240.248 } } })pb"},
-        {R"(QUX(2016-01-02T03:04:05.678+08:00))",
-         R"pb(operation { fn_name: "QUX" terms: { value: { timestamp_amount: { seconds: 1451675045 } } } })pb"},
-        {R"(CORGE($23))",
-         R"pb(operation { fn_name: "CORGE" terms: { value: { money_amount: { dollars: 23 currency: USD } } } })pb"},
-        {R"(GRAULT($123.45))",
-         R"pb(operation { fn_name: "GRAULT" terms: { value: { money_amount: { dollars: 123 cents: 45 currency: USD } } } })pb"},
+        {
+            R"(FOO("foo"))",
+            R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "foo" } } })pb",
+        },
+        {
+            R"(BAR(240))",
+            R"pb(operation { fn_name: "BAR" terms: { value: { int_amount: 240 } } })pb",
+        },
+        {
+            R"(BAZ(240.248))",
+            R"pb(operation { fn_name: "BAZ" terms: { value: { double_amount: 240.248 } } })pb",
+        },
+        {
+            R"(QUX(2016-01-02T03:04:05.678+08:00))",
+            R"pb(operation { fn_name: "QUX" terms: { value: { timestamp_amount: { seconds: 1451675045 } } } })pb",
+        },
+        {
+            R"(CORGE($23))",
+            R"pb(operation { fn_name: "CORGE" terms: { value: { money_amount: { dollars: 23 currency: USD } } } })pb",
+        },
+        {
+            R"(GRAULT($123.45))",
+            R"pb(operation { fn_name: "GRAULT" terms: { value: { money_amount: { dollars: 123 cents: 45 currency: USD } } } })pb",
+        },
 
         // Nested unary prefix operations.
-        {R"(FOO1(FOO2(3)))",
-         R"pb(operation { fn_name: "FOO1" terms: { operation: { fn_name: "FOO2" terms: { value: { int_amount: 3 } } } } })pb"},
-        {R"(FOO1(FOO2("3")))",
-         R"pb(operation { fn_name: "FOO1" terms: { operation: { fn_name: "FOO2" terms: { value: { str_amount: "3" } } } } })pb"},
+        {
+            R"(FOO1(FOO2(3)))",
+            R"pb(operation { fn_name: "FOO1" terms: { operation: { fn_name: "FOO2" terms: { value: { int_amount: 3 } } } } })pb",
+        },
+        {
+            R"(FOO1(FOO2("3")))",
+            R"pb(operation { fn_name: "FOO1" terms: { operation: { fn_name: "FOO2" terms: { value: { str_amount: "3" } } } } })pb",
+        },
 
         // Ignoring the inner parentheses of a string.
-        {R"pb(FOO1("FOO2(3)"))pb",
-         R"pb(operation { fn_name: "FOO1" terms: { value: { str_amount: "FOO2(3)" } } })pb"},
+        {
+            R"pb(FOO1("FOO2(3)"))pb",
+            R"pb(operation { fn_name: "FOO1" terms: { value: { str_amount: "FOO2(3)" } } })pb",
+        },
         // Ignoring the inner parentheses of a string, even if empty.
-        {R"pb(FOO1(""))pb",
-         R"pb(operation { fn_name: "FOO1" terms: { value: { str_amount: "" } } })pb"},
+        {
+            R"pb(FOO1(""))pb",
+            R"pb(operation { fn_name: "FOO1" terms: { value: { str_amount: "" } } })pb",
+        },
     }));
 
 const std::string PARENTHESES_AROUND_UNARY_PREFIX_EXPECTATION = std::string(
@@ -513,27 +552,39 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     BinaryPrefix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"FOO(1,2.0)",
-         R"pb(operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { double_amount: 2.0 } } })pb"},
+        {
+            "FOO(1,2.0)",
+            R"pb(operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { double_amount: 2.0 } } })pb",
+        },
 
-        {R"pb(FOO("BAR", $3.45))pb",
-         R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "BAR" } } terms: { value: { money_amount: { dollars: 3 cents: 45 currency: USD } } } })pb"},
+        {
+            R"pb(FOO("BAR", $3.45))pb",
+            R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "BAR" } } terms: { value: { money_amount: { dollars: 3 cents: 45 currency: USD } } } })pb",
+        },
 
         // Ignoring the inner parentheses of a string.
-        {R"pb(FOO("B(AR", "BA)Z"))pb",
-         R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "B(AR" } } terms: { value: { str_amount: "BA)Z" } } })pb"},
+        {
+            R"pb(FOO("B(AR", "BA)Z"))pb",
+            R"pb(operation { fn_name: "FOO" terms: { value: { str_amount: "B(AR" } } terms: { value: { str_amount: "BA)Z" } } })pb",
+        },
 
         // Nested in the former.
-        {"BAR(BAZ(1,2),3)",
-         R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "BAZ" terms: { value : { int_amount: 1 } } terms: { value : { int_amount: 2 } } } } terms: { value : { int_amount: 3 } } })pb"},
+        {
+            "BAR(BAZ(1,2),3)",
+            R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "BAZ" terms: { value : { int_amount: 1 } } terms: { value : { int_amount: 2 } } } } terms: { value : { int_amount: 3 } } })pb",
+        },
 
         // Nested in the latter.
-        {"BAR(1,BAZ(2,3))",
-         R"pb(operation { fn_name: "BAR" terms: { value: { int_amount: 1 } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 3 } } } } })pb"},
+        {
+            "BAR(1,BAZ(2,3))",
+            R"pb(operation { fn_name: "BAR" terms: { value: { int_amount: 1 } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 3 } } } } })pb",
+        },
 
         // Nested in both.
-        {"BAR(FOO(1,2),BAZ(3,4))",
-         R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 4 } } } } })pb"},
+        {
+            "BAR(FOO(1,2),BAZ(3,4))",
+            R"pb(operation { fn_name: "BAR" terms: { operation { fn_name: "FOO" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } } } terms: { operation { fn_name: "BAZ" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 4 } } } } })pb",
+        },
     }));
 
 const std::string PARENTHESES_AROUND_BINARY_PREFIX_EXPECTATION = std::string(
@@ -552,28 +603,54 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     BinaryInfix, ExpressionTestSuite,
     ValuesIn(std::vector<std::pair<std::string, absl::optional<std::string>>>{
-        {"3+2",
-         R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb"},
-        {"3+2.0",
-         R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { double_amount: 2.0 } } })pb"},
-        {R"pb("3" / "2")pb",
-         R"pb( operation { fn_name: "DIVIDED_BY" terms: { value: { str_amount: "3" } } terms: { value: { str_amount: "2" } } })pb"},
-        {R"pb(1-2)pb",
-         R"pb( operation { fn_name: "MINUS" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } })pb"},
-        {R"pb(0.0 - 2.0)pb",
-         R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-        {R"pb(((0.0)-(2.0)))pb",
-         R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-        {R"pb((0.0)-(2.0))pb",
-         R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb"},
-        {"(3+2)",
-         R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb"},
-        {"3+(2+1)",
-         R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 1 } } } } })pb"},
-        {"(3+2)+1",
-         R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb"},
-        {"((3+2)+1)",
-         R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb"},
+        {
+            "3+2",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb",
+        },
+        {
+            "3+2.0",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { double_amount: 2.0 } } })pb",
+        },
+        {
+            R"pb("3" / "2")pb",
+            R"pb( operation { fn_name: "DIVIDED_BY" terms: { value: { str_amount: "3" } } terms: { value: { str_amount: "2" } } })pb",
+        },
+        {
+            R"pb(1-2)pb",
+            R"pb( operation { fn_name: "MINUS" terms: { value: { int_amount: 1 } } terms: { value: { int_amount: 2 } } })pb",
+        },
+        {
+            R"pb(0.0 - 2.0)pb",
+            R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb",
+        },
+        {
+            R"pb(((0.0)-(2.0)))pb",
+            R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb",
+        },
+        {
+            R"pb((0.0)-(2.0))pb",
+            R"pb( operation { fn_name: "MINUS" terms: { value: { double_amount: 0.0 } } terms: { value: { double_amount: 2.0 } } })pb",
+        },
+        {
+            "(3+2)",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } })pb",
+        },
+        {
+            "3+(2+1)",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 1 } } } } })pb",
+        },
+        {
+            "3+2+1",
+            R"pb( operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 2 } } terms: { value: { int_amount: 1 } } } } })pb",
+        },
+        {
+            "(3+2)+1",
+            R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb",
+        },
+        {
+            "((3+2)+1)",
+            R"pb( operation { fn_name: "PLUS" terms: { operation { fn_name: "PLUS" terms: { value: { int_amount: 3 } } terms: { value: { int_amount: 2 } } } } terms: { value: { int_amount: 1 } } })pb",
+        },
     }));
 
 } // namespace

@@ -108,14 +108,14 @@ private:
   }
 
   // RepeatGuard apparatus
-  using CacheItem = std::tuple<std::string, TSpan::pointer, TSpan::size_type>;
+  using CacheItem = std::tuple<std::string, TSpan::pointer>;
   using Cache = absl::flat_hash_set<CacheItem>;
   Cache cache_;
 
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
   StatusOr<Cache::key_type> RepeatGuard(std::string step, TSpan *tspan) {
-    CacheItem item = {step, tspan->data(), tspan->size()};
+    CacheItem item = {step, tspan->data()};
 
     if (cache_.contains(item)) {
       return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
