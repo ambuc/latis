@@ -107,7 +107,6 @@ inline constexpr absl::string_view kNOT = "NOT";
 inline constexpr absl::string_view kOR = "OR";
 inline constexpr absl::string_view kPLUS = "PLUS";
 inline constexpr absl::string_view kPOW = "POW";
-inline constexpr absl::string_view kPOW10 = "POW10";
 inline constexpr absl::string_view kPRODUCT = "PRODUCT";
 inline constexpr absl::string_view kSUB = "SUB";
 inline constexpr absl::string_view kSUBTRACT = "SUBTRACT";

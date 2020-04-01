@@ -30,6 +30,23 @@ using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
+namespace {
+
+Amount BoolToAmount(bool b) {
+  Amount a;
+  a.set_bool_amount(b);
+  return a;
+}
+// Monadic shim.
+StatusOr<Amount> BoolToAmount(StatusOr<bool> b) {
+  if (b.ok()) {
+    return BoolToAmount(b.ValueOrDie());
+  }
+  return b.status();
+}
+
+} // namespace
+
 StatusOr<Amount> Evaluator::CrunchExpression(const Expression &expression) {
   // NB: no has_range.
   if (expression.has_value()) {
@@ -53,80 +70,57 @@ Evaluator::CrunchPointLocation(const PointLocation &point_location) {
   return maybe_value.value();
 }
 
-StatusOr<Amount>
-Evaluator::CrunchOperation(const Expression::Operation &operation) {
+StatusOr<Amount> Evaluator::CrunchOperation(const Expression::Operation &op) {
+  std::string_view fn_name = op.fn_name();
 
-  switch (operation.terms_size()) {
+  switch (op.terms_size()) {
   case (1): {
     Amount arg;
-    ASSIGN_OR_RETURN_(arg, CrunchExpression(operation.terms(0)));
-    if (operation.fn_name() == functions::kNOT) {
+    ASSIGN_OR_RETURN_(arg, CrunchExpression(op.terms(0)));
+    if (fn_name == functions::kNOT) {
       return !arg;
-    } else if (operation.fn_name() == functions::kNEG) {
+    } else if (fn_name == functions::kNEG) {
       return -arg;
     }
   }
   case (2): {
     Amount lhs;
-    ASSIGN_OR_RETURN_(lhs, CrunchExpression(operation.terms(0)));
+    ASSIGN_OR_RETURN_(lhs, CrunchExpression(op.terms(0)));
     Amount rhs;
-    ASSIGN_OR_RETURN_(rhs, CrunchExpression(operation.terms(1)));
+    ASSIGN_OR_RETURN_(rhs, CrunchExpression(op.terms(1)));
 
-    if (operation.fn_name() == functions::kPLUS ||
-        operation.fn_name() == functions::kSUM ||
-        operation.fn_name() == functions::kADD) {
+    if (fn_name == functions::kPLUS || fn_name == functions::kSUM ||
+        fn_name == functions::kADD) {
       return lhs + rhs;
-    } else if (operation.fn_name() == functions::kMINUS ||
-               operation.fn_name() == functions::kSUB ||
-               operation.fn_name() == functions::kSUBTRACT) {
+    } else if (fn_name == functions::kMINUS || fn_name == functions::kSUB ||
+               fn_name == functions::kSUBTRACT) {
       return lhs - rhs;
-    } else if (operation.fn_name() == functions::kMULTIPLIED_BY ||
-               operation.fn_name() == functions::kTIMES ||
-               operation.fn_name() == functions::kPRODUCT) {
+    } else if (fn_name == functions::kMULTIPLIED_BY ||
+               fn_name == functions::kTIMES || fn_name == functions::kPRODUCT) {
       return lhs * rhs;
-    } else if (operation.fn_name() == functions::kDIVIDED_BY ||
-               operation.fn_name() == functions::kDIV) {
+    } else if (fn_name == functions::kDIVIDED_BY ||
+               fn_name == functions::kDIV) {
       return lhs / rhs;
-    } else if (operation.fn_name() == functions::kAND) {
+    } else if (fn_name == functions::kAND) {
       return lhs && rhs;
-    } else if (operation.fn_name() == functions::kOR) {
+    } else if (fn_name == functions::kOR) {
       return lhs || rhs;
-    } else if (operation.fn_name() == functions::kLTHAN) {
-      bool lthan;
-      ASSIGN_OR_RETURN_(lthan, lhs < rhs);
-      Amount resultant;
-      resultant.set_bool_amount(lthan);
-      return resultant;
-    } else if (operation.fn_name() == functions::kGTHAN) {
-      bool gthan;
-      ASSIGN_OR_RETURN_(gthan, lhs > rhs);
-      Amount resultant;
-      resultant.set_bool_amount(gthan);
-      return resultant;
-    } else if (operation.fn_name() == functions::kLEQ) {
-      bool leq;
-      ASSIGN_OR_RETURN_(leq, lhs <= rhs);
-      Amount resultant;
-      resultant.set_bool_amount(leq);
-      return resultant;
-    } else if (operation.fn_name() == functions::kGEQ) {
-      bool geq;
-      ASSIGN_OR_RETURN_(geq, lhs >= rhs);
-      Amount resultant;
-      resultant.set_bool_amount(geq);
-      return resultant;
-    } else if (operation.fn_name() == functions::kEQ) {
-      bool eq;
-      ASSIGN_OR_RETURN_(eq, lhs == rhs);
-      Amount resultant;
-      resultant.set_bool_amount(eq);
-      return resultant;
-    } else if (operation.fn_name() == functions::kNEQ) {
-      bool neq;
-      ASSIGN_OR_RETURN_(neq, lhs != rhs);
-      Amount resultant;
-      resultant.set_bool_amount(neq);
-      return resultant;
+    } else if (fn_name == functions::kLTHAN) {
+      return BoolToAmount(lhs < rhs);
+    } else if (fn_name == functions::kGTHAN) {
+      return BoolToAmount(lhs > rhs);
+    } else if (fn_name == functions::kLEQ) {
+      return BoolToAmount(lhs <= rhs);
+    } else if (fn_name == functions::kGEQ) {
+      return BoolToAmount(lhs >= rhs);
+    } else if (fn_name == functions::kEQ) {
+      return BoolToAmount(lhs == rhs);
+    } else if (fn_name == functions::kNEQ) {
+      return BoolToAmount(lhs != rhs);
+    } else if (fn_name == functions::kPOW) {
+      return lhs ^ rhs;
+    } else if (fn_name == functions::kMOD) {
+      return lhs % rhs;
     }
   }
   default: {

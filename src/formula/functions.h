@@ -52,6 +52,8 @@ StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator-(const Amount &arg);
 StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator^(const Amount &lhs, const Amount &rhs);
+StatusOr<Amount> operator%(const Amount &lhs, const Amount &rhs);
 // Amount (operating on bool)
 StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs);
 StatusOr<Amount> operator||(const Amount &lhs, const Amount &rhs);

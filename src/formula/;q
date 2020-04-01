@@ -242,18 +242,6 @@ StatusOr<Amount> operator^(const Amount &lhs, const Amount &rhs) {
   return Status(INVALID_ARGUMENT, "no exponent");
 }
 
-StatusOr<Amount> operator%(const Amount &lhs, const Amount &rhs) {
-  Amount resultant;
-  if (lhs.has_int_amount() && rhs.has_int_amount()) {
-    resultant.set_int_amount(lhs.int_amount() % rhs.int_amount());
-    return resultant;
-  } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
-    resultant.set_double_amount(fmod(AsDouble(lhs), AsDouble(rhs)));
-    return resultant;
-  }
-  return Status(INVALID_ARGUMENT, "no exponent");
-}
-
 StatusOr<Amount> operator&&(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
   if (lhs.has_bool_amount() && rhs.has_bool_amount()) {

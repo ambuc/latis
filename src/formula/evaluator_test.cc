@@ -133,6 +133,21 @@ INSTANTIATE_TEST_SUITE_P(
         {" 1 != 2 ", "bool_amount: True"},
         {" 2 != 2 ", "bool_amount: False"},
         {" 3 != 2 ", "bool_amount: True"},
+        // pow
+        {"POW(10,2)", "double_amount:100.0"},
+        {"POW(0.5,1)", "double_amount:0.5"},
+        {"10 ^ 2", "double_amount:100.0"},
+        {"0.5 ^ 1", "double_amount:0.5"},
+        // mod
+        {"MOD(10,3)", "int_amount:1"},
+        {"MOD(10,5)", "int_amount:0"},
+        {"10 % 3", "int_amount:1"},
+        {"10 % 5", "int_amount:0"},
+        // mod with doubles
+        {"MOD(10,3.0)", "double_amount:1.0"},
+        {"MOD(10,5.0)", "double_amount:0.0"},
+        {"10 % 3.0", "double_amount:1.0"},
+        {"10 % 5.0", "double_amount:0.0"},
     }));
 
 using OneExpectationParams =
