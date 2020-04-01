@@ -222,9 +222,9 @@ INSTANTIATE_TEST_SUITE_P(
 
         // -$1.02 = $-1.-02.
         {
-            "money_amount: { currency: USD dollars: 1 cents: 2 }", "",
+            "money_amount: { currency: USD dollars: 1 cents: 2 }",
+            "",
             "money_amount: { currency: USD dollars: -1 cents: -2 } ",
-            // TODO ambuc FIXME
         },
     }));
 

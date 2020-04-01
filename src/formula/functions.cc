@@ -47,9 +47,15 @@ double AsDouble(const Money &m) {
 
 Money AsMoney(double d) {
   Money resultant;
-  resultant.set_dollars(std::floor(d));
-  resultant.set_cents(
-      static_cast<int>(std::round((d - std::floor(d)) * 100.0)));
+  if (d < 0) {
+    resultant.set_dollars(std::ceil(d));
+    resultant.set_cents(
+        static_cast<int>(std::round((d - std::ceil(d)) * 100.0)));
+  } else {
+    resultant.set_dollars(std::floor(d));
+    resultant.set_cents(
+        static_cast<int>(std::round((d - std::floor(d)) * 100.0)));
+  }
   return resultant;
 }
 
