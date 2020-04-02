@@ -66,6 +66,18 @@ Status CheckSameCurrency(const Money &lhs, const Money &rhs) {
   return OkStatus();
 }
 
+// Amount conversions
+Amount FromInt(int i) {
+  Amount resultant;
+  resultant.set_int_amount(i);
+  return resultant;
+}
+Amount FromDouble(double d) {
+  Amount resultant;
+  resultant.set_double_amount(d);
+  return resultant;
+}
+
 } // namespace
 
 // TIMESTAMP
@@ -172,12 +184,10 @@ StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
                       lhs.money_amount() + rhs.money_amount());
     return resultant;
   } else if (lhs.has_int_amount() && rhs.has_int_amount()) {
-    resultant.set_int_amount(lhs.int_amount() + rhs.int_amount());
-    return resultant;
+    return FromInt(lhs.int_amount() + rhs.int_amount());
   } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
     // guaranteed not to double-count ;)
-    resultant.set_double_amount(AsDouble(lhs) + AsDouble(rhs));
-    return resultant;
+    return FromDouble(AsDouble(lhs) + AsDouble(rhs));
   }
   return Status(INVALID_ARGUMENT, "no sum");
 }
@@ -185,9 +195,9 @@ StatusOr<Amount> operator+(const Amount &lhs, const Amount &rhs) {
 StatusOr<Amount> operator-(const Amount &arg) {
   Amount resultant = arg;
   if (resultant.has_int_amount()) {
-    resultant.set_int_amount(-resultant.int_amount());
+    return FromInt(-arg.int_amount());
   } else if (resultant.has_double_amount()) {
-    resultant.set_double_amount(-resultant.double_amount());
+    return FromDouble(-arg.double_amount());
   } else if (resultant.has_money_amount()) {
     *resultant.mutable_money_amount() = -resultant.money_amount();
   } else if (resultant.has_timestamp_amount()) {
@@ -208,11 +218,9 @@ StatusOr<Amount> operator*(const Amount &lhs, const Amount &rhs) {
                       lhs.money_amount() * rhs.money_amount());
     return resultant;
   } else if (lhs.has_int_amount() && rhs.has_int_amount()) {
-    resultant.set_int_amount(lhs.int_amount() * rhs.int_amount());
-    return resultant;
+    return FromInt(lhs.int_amount() * rhs.int_amount());
   } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
-    resultant.set_double_amount(AsDouble(lhs) * AsDouble(rhs));
-    return resultant;
+    return FromDouble(AsDouble(lhs) * AsDouble(rhs));
   }
 
   return Status(INVALID_ARGUMENT, "no product");
@@ -226,8 +234,7 @@ StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs) {
                       lhs.money_amount() / rhs.money_amount());
     return resultant;
   } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
-    resultant.set_double_amount(AsDouble(lhs) / AsDouble(rhs));
-    return resultant;
+    return FromDouble(AsDouble(lhs) / AsDouble(rhs));
   }
 
   return Status(INVALID_ARGUMENT, "no division");
@@ -236,8 +243,7 @@ StatusOr<Amount> operator/(const Amount &lhs, const Amount &rhs) {
 StatusOr<Amount> operator^(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
   if (IsNumeric(lhs) && IsNumeric(rhs)) {
-    resultant.set_double_amount(pow(AsDouble(lhs), AsDouble(rhs)));
-    return resultant;
+    return FromDouble(pow(AsDouble(lhs), AsDouble(rhs)));
   }
   return Status(INVALID_ARGUMENT, "no exponent");
 }
@@ -245,11 +251,9 @@ StatusOr<Amount> operator^(const Amount &lhs, const Amount &rhs) {
 StatusOr<Amount> operator%(const Amount &lhs, const Amount &rhs) {
   Amount resultant;
   if (lhs.has_int_amount() && rhs.has_int_amount()) {
-    resultant.set_int_amount(lhs.int_amount() % rhs.int_amount());
-    return resultant;
+    return FromInt(lhs.int_amount() % rhs.int_amount());
   } else if (IsNumeric(lhs) && IsNumeric(rhs)) {
-    resultant.set_double_amount(fmod(AsDouble(lhs), AsDouble(rhs)));
-    return resultant;
+    return FromDouble(fmod(AsDouble(lhs), AsDouble(rhs)));
   }
   return Status(INVALID_ARGUMENT, "no exponent");
 }
