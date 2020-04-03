@@ -156,7 +156,7 @@ StatusOr<absl::variant<double, int>> Parser::ConsumeNumeric(TSpan *tspan) {
       tspan);
 }
 
-StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
+StatusOr<std::string_view> Parser::ConsumeString(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
   PrintAttempt(tspan, "STRING");
@@ -167,7 +167,7 @@ StatusOr<std::string> Parser::ConsumeString(TSpan *tspan) {
 
   PrintStep(&lcl, tspan, "STRING");
   *tspan = lcl;
-  return std::string(resultant);
+  return resultant;
 }
 
 StatusOr<int> Parser::Consume2Digit(TSpan *tspan) {
@@ -752,12 +752,12 @@ StatusOr<Expression::Operation> Parser::ConsumeOperationPrefix(TSpan *tspan) {
   return resultant;
 }
 
-StatusOr<std::string> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
+StatusOr<std::string_view> Parser::ConsumeOpBinaryInfixFn(TSpan *tspan) {
   depth_++;
   auto d = MakeCleanup([&] { depth_--; });
   PrintAttempt(tspan, "OP_BINARY_INFIX_FN");
   TSpan lcl = *tspan;
-  std::string resultant;
+  std::string_view resultant;
 
   if (InSequence<std::string, std::string>(
           absl::bind_front(&Parser::ConsumeExact, this, Token::T::ampersand),

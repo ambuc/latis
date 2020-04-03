@@ -61,7 +61,7 @@ public:
 
   // TODO(ambuc): This could return a string view into the underlying
   // string.
-  StatusOr<std::string> ConsumeString(TSpan *tspan);
+  StatusOr<std::string_view> ConsumeString(TSpan *tspan);
 
   StatusOr<int> Consume2Digit(TSpan *tspan);
   StatusOr<int> Consume4Digit(TSpan *tspan);
@@ -151,7 +151,7 @@ private:
 
   // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
   // prefix notation.
-  StatusOr<std::string> ConsumeOpBinaryInfixFn(TSpan *tspan);
+  StatusOr<std::string_view> ConsumeOpBinaryInfixFn(TSpan *tspan);
   StatusOr<Expression::Operation> ConsumeOperationInfix(TSpan *tspan);
   StatusOr<Expression::Operation> ConsumeOperationPrefix(TSpan *tspan);
 
