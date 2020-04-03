@@ -65,7 +65,8 @@ Evaluator::CrunchPointLocation(const PointLocation &point_location) {
   const XY xy = XY::From(point_location);
   const absl::optional<Amount> maybe_value = lookup_fn_(xy);
   if (!maybe_value.has_value()) {
-    return Status(INVALID_ARGUMENT, "no value.");
+    return Status(INVALID_ARGUMENT,
+                  absl::StrFormat("Evaluator: no value in cell %s", xy.ToA1()));
   }
   return maybe_value.value();
 }

@@ -17,6 +17,7 @@
 #include "absl/time/time.h"
 #include "google/protobuf/text_format.h"
 #include "src/display_utils.h"
+#include "src/test_utils/test_utils.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -28,109 +29,27 @@ using ::google::protobuf::util::StatusOr;
 using ::testing::Eq;
 using ::testing::Le;
 
-class GetTest : public ::testing::Test {
-public:
-  void SetUp() override {
-    Cell *cell = latis_msg_input_.add_cells();
-    *cell->mutable_point_location() =
-        XY::From("A1").ValueOrDie().ToPointLocation();
-  }
+TEST(Latis, SetAndGet) {
+  const XY A1 = XY::From("A1").ValueOrDie();
+  const XY B1 = XY::From("B1").ValueOrDie();
+  const XY C1 = XY::From("C1").ValueOrDie();
 
-  Cell *MutableCell() { return latis_msg_input_.mutable_cells(0); }
-
-  Amount *MutableAmount() {
-    return latis_msg_input_.mutable_cells(0)->mutable_amount();
-  }
-
-  void TearDown() override {
-    Latis latis(latis_msg_input_);
-
-    EXPECT_EQ(latis.Get(XY::From("A1").ValueOrDie())->Export().DebugString(),
-              MutableCell()->DebugString());
-  }
-
-protected:
-  LatisMsg latis_msg_input_;
-};
-
-TEST(GetTestEmpty, GetAmountEmpty) {
   Latis latis;
-  EXPECT_EQ(latis.Get(XY(0, 0)), nullptr);
+
+  EXPECT_OK(latis.Set(A1, "2.0"));
+  EXPECT_THAT(latis.Get(A1),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("double_amount: 2.0"))));
+
+  EXPECT_OK(latis.Set(A1, "\"string\""));
+  EXPECT_THAT(latis.Get(A1), IsOkAndHolds(EqualsProto(
+                                 ToProto<Amount>("str_amount: \"string\""))));
+
+  EXPECT_OK(latis.Set(A1, "2"));
+  EXPECT_OK(latis.Set(B1, "2"));
+  EXPECT_OK(latis.Set(C1, "A1+B1"));
+  EXPECT_THAT(latis.Get(C1),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
 }
 
-TEST_F(GetTest, GetAmountSimpleString) {
-  MutableAmount()->set_str_amount("foo");
-}
-
-TEST_F(GetTest, GetAmountInt) { MutableAmount()->set_int_amount(1234); }
-
-TEST_F(GetTest, GetAmountMoneyZero) {
-  TextFormat::ParseFromString(
-      R"pb(money_amount {dollars: 0 cents: 0 currency: USD })pb",
-      MutableAmount());
-}
-
-TEST_F(GetTest, GetAmountMoneyNonZero) {
-  TextFormat::ParseFromString(
-      R"pb(money_amount {dollars: 12 cents: 34 currency: USD })pb",
-      MutableAmount());
-}
-
-class SetTest : public ::testing::Test {
-protected:
-  Latis latis_;
-  XY a1_{XY::From("A1").ValueOrDie()};
-};
-
-// TEST_F(SetTest, SetInt) {
-//   latis_.Set(CellObj::From(a1_, "1").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "1");
-//
-//   latis_.Set(CellObj::From(a1_, "0").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "0");
-//
-//   latis_.Set(CellObj::From(a1_, "-2").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "-2");
-// }
-//
-// TEST_F(SetTest, SetDouble) {
-//   latis_.Set(CellObj::From(a1_, "1.2345").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "1.23");
-//
-//   latis_.Set(CellObj::From(a1_, "0.00").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "0.00");
-//
-//   latis_.Set(CellObj::From(a1_, "-1.2345").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "-1.23");
-// }
-//
-// TEST_F(SetTest, SetMoney) {
-//   latis_.Set(CellObj::From(a1_, "$1.23").ValueOrDie());
-//   EXPECT_EQ(latis_.Print(a1_), "$1.23");
-// }
-
-//
-// class FormulaTest : public ::testing::Test {
-// public:
-//   void SetUp() override {}
-//
-// protected:
-//   Latis latis_;
-//   XY a1_{XY::From("A1").ValueOrDie()};
-//   XY a2_{XY::From("A2").ValueOrDie()};
-//   XY a3_{XY::From("A3").ValueOrDie()};
-// };
-//
-// TEST_F(FormulaTest, TestSetFormula) {
-//   // A1 = 1
-//   latis_.Set(CellObj::From(a1_, "1").ValueOrDie());
-//   // A2 = 2
-//   latis_.Set(CellObj::From(a2_, "2").ValueOrDie());
-//   // A3 = A1 + A2
-//   latis_.Set(CellObj::From(a3_, "=A1+A2").ValueOrDie());
-//
-//   EXPECT_EQ(latis_.Print(a3_), "3");
-// }
-//
 } // namespace
 } // namespace latis

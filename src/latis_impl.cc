@@ -14,12 +14,15 @@
 
 #include "src/latis_impl.h"
 
+#include "src/display_utils.h"
 #include "src/metadata_impl.h"
 
 #include "absl/memory/memory.h"
 
 namespace latis {
 
+using ::google::protobuf::util::Status;
+using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 
 Latis::Latis() {}
@@ -31,12 +34,12 @@ Latis::Latis(const LatisMsg &sheet)
   }
 }
 
-CellObj *Latis::Get(XY xy) {
-  if (const auto &it = cells_.find(xy); it != cells_.end()) {
-    return &it->second;
+StatusOr<Amount> Latis::Get(XY xy) {
+  if (const auto it = cells_.find(xy); it != cells_.end()) {
+    return it->second.GetAmount();
   }
 
-  return nullptr;
+  return Status(INVALID_ARGUMENT, "");
 }
 
 std::string Latis::Print(XY xy) const {
@@ -44,6 +47,16 @@ std::string Latis::Print(XY xy) const {
     return it->second.Print();
   }
   return "";
+}
+
+Status Latis::Set(XY xy, std::string_view input) {
+  CellObj c;
+  ASSIGN_OR_RETURN_(c, CellObj::From(xy, input, GetLookupFn()));
+  cells_[xy] = c;
+  for (const auto [xy, cobj] : cells_) {
+    std::cout << xy.ToA1() << ", " << cobj.Print() << std::endl;
+  }
+  return OkStatus();
 }
 
 LatisMsg Latis::Write() const {
@@ -57,6 +70,18 @@ LatisMsg Latis::Write() const {
   }
 
   return latis_msgb;
+}
+
+formula::LookupFn *Latis::GetLookupFn() {
+  static formula::LookupFn fn = [&](XY xy) -> absl::optional<Amount> {
+    auto it = cells_.find(xy);
+    if (it == cells_.end()) {
+      return absl::nullopt;
+    }
+    return it->second.GetAmount();
+  };
+
+  return &fn;
 }
 
 } // namespace latis

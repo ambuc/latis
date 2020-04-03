@@ -43,12 +43,13 @@ cc_test(
 
 cc_library(
     name = "formula_lib",
-    hdrs = ["functions.h"],
+    hdrs = ["formula.h"],
     deps = [
         ":evaluator_lib",
         ":lexer_lib",
         ":parser_lib",
         "//proto:latis_msg_cc_proto",
+        "//src/utils:status_macros",
         "@com_google_absl//absl/types:optional",
     ],
 )

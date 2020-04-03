@@ -18,10 +18,14 @@
 #define SRC_FORMULA_FORMULA_H_
 
 #include "proto/latis_msg.pb.h"
+#include "src/formula/common.h"
+#include "src/formula/evaluator.h"
+#include "src/formula/lexer.h"
+#include "src/formula/parser.h"
+#include "src/utils/status_macros.h"
 #include "src/xy.h"
 
 #include "absl/types/optional.h"
-
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/status_macros.h"
 #include "google/protobuf/stubs/statusor.h"
@@ -31,14 +35,16 @@ namespace formula {
 
 ::google::protobuf::util::StatusOr<Amount> Parse(std::string_view input,
                                                  LookupFn lookup_fn) {
+  static Parser parser{};
+
   std::vector<Token> tokens;
-  ASSIGN_OR_RETURN_(tokens, Lex(input).ValueOrDie());
+  ASSIGN_OR_RETURN_(tokens, Lex(input));
   TSpan tspan{tokens};
 
   Expression expr;
-  ASSIGN_OR_RETURN_(expr, Parser().ConsumeExpression(&tspan));
+  ASSIGN_OR_RETURN_(expr, parser.ConsumeExpression(&tspan));
 
-  return Evaluator().CrunchExpression(expr, lookup_fn);
+  return Evaluator(lookup_fn).CrunchExpression(expr);
 }
 
 } // namespace formula

@@ -18,20 +18,21 @@
 #define SRC_LATIS_INTERFACE_H_
 
 #include "proto/latis_msg.pb.h"
-#include "src/cell_impl.h"
 #include "src/metadata_interface.h"
 #include "src/xy.h"
 
 namespace latis {
 
+// LatisInterface is the spreadsheet engine. It doesn't know anything about
+// graphics or display or anything, it just has a few methods. Thread-safe.
 class LatisInterface {
 public:
   // Getters
-  virtual CellObj *Get(XY xy) = 0;
+  virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) = 0;
   virtual std::string Print(XY xy) const = 0;
 
-  // Setters
-  virtual void Set(CellObj cell) = 0;
+  virtual ::google::protobuf::util::Status Set(XY xy,
+                                               std::string_view input) = 0;
 
   // Export
   virtual LatisMsg Write() const = 0;
