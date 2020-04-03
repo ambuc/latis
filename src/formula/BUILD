@@ -6,7 +6,9 @@ cc_library(
     name = "common_lib",
     hdrs = ["common.h"],
     deps = [
+        "//src:xy_lib",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -36,6 +38,18 @@ cc_test(
         ":parser_lib",
         "//src/test_utils:test_utils_lib",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "formula_lib",
+    hdrs = ["functions.h"],
+    deps = [
+        ":evaluator_lib",
+        ":lexer_lib",
+        ":parser_lib",
+        "//proto:latis_msg_cc_proto",
+        "@com_google_absl//absl/types:optional",
     ],
 )
 

@@ -17,7 +17,10 @@
 #ifndef SRC_PARSER_COMMON_H_
 #define SRC_PARSER_COMMON_H_
 
+#include "src/xy.h"
+
 #include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include "absl/types/span.h"
 #include "google/protobuf/stubs/status.h"
 #include "google/protobuf/stubs/statusor.h"
@@ -86,6 +89,8 @@ void PrintLnTSpan(TSpan *tspan) { std::cout << PrintTSpan(tspan) << std::endl; }
 
 template <typename T> //
 using Prsr = std::function<StatusOr<T>(TSpan *)>;
+
+using LookupFn = std::function<absl::optional<Amount>(XY)>;
 
 namespace functions {
 // abseil.io/tips/168

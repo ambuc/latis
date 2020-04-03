@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef SRC_FORMULA_EVALUATOR_H_
-#define SRC_FORMULA_EVALUATOR_H_
+#ifndef SRC_FORMULA_FORMULA_H_
+#define SRC_FORMULA_FORMULA_H_
 
 #include "proto/latis_msg.pb.h"
-#include "src/formula/common.h"
 #include "src/xy.h"
 
 #include "absl/types/optional.h"
@@ -30,24 +29,19 @@
 namespace latis {
 namespace formula {
 
-class Evaluator {
-public:
-  explicit Evaluator(LookupFn lookup_fn) : lookup_fn_(lookup_fn) {}
+::google::protobuf::util::StatusOr<Amount> Parse(std::string_view input,
+                                                 LookupFn lookup_fn) {
+  std::vector<Token> tokens;
+  ASSIGN_OR_RETURN_(tokens, Lex(input).ValueOrDie());
+  TSpan tspan{tokens};
 
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchExpression(const Expression &expression);
+  Expression expr;
+  ASSIGN_OR_RETURN_(expr, Parser().ConsumeExpression(&tspan));
 
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchPointLocation(const PointLocation &operation);
-
-  ::google::protobuf::util::StatusOr<Amount>
-  CrunchOperation(const Expression::Operation &operation);
-
-private:
-  LookupFn lookup_fn_;
-};
+  return Evaluator().CrunchExpression(expr, lookup_fn);
+}
 
 } // namespace formula
 } // namespace latis
 
-#endif // SRC_FORMULA_EVALUATOR_H_
+#endif // SRC_FORMULA_FORMULA_H_
