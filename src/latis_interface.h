@@ -27,17 +27,15 @@ namespace latis {
 // graphics or display or anything, it just has a few methods. Thread-safe.
 class LatisInterface {
 public:
-  // Getters
   virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) = 0;
+
   virtual std::string Print(XY xy) const = 0;
 
   virtual ::google::protobuf::util::Status Set(XY xy,
                                                std::string_view input) = 0;
 
-  // Export
   virtual LatisMsg Write() const = 0;
 
-  // Kept structs
   virtual MetadataInterface *Metadata() = 0;
 };
 

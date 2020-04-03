@@ -25,18 +25,25 @@ using ::google::protobuf::util::Status;
 using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 
-Latis::Latis() {}
+Latis::Latis()
+    : lookup_fn_([&](XY xy) -> absl::optional<Amount> {
+        if (const auto it = cells_.find(xy); it == cells_.end()) {
+          return absl::nullopt;
+        } else {
+          return it->second.Get();
+        }
+      }) {}
 
-Latis::Latis(const LatisMsg &sheet)
-    : metadata_(absl::make_unique<MetadataImpl>(sheet.metadata())) {
-  for (const auto &cell : sheet.cells()) {
-    cells_[XY::From(cell.point_location())] = CellObj(cell);
-  }
-}
+// jLatis::Latis(const LatisMsg &sheet)
+// j    : metadata_(absl::make_unique<MetadataImpl>(sheet.metadata())) {
+// j  for (const auto &cell : sheet.cells()) {
+// j    cells_[XY::From(cell.point_location())] = CellObj(cell);
+// j  }
+// j}
 
 StatusOr<Amount> Latis::Get(XY xy) {
   if (const auto it = cells_.find(xy); it != cells_.end()) {
-    return it->second.GetAmount();
+    return it->second.Get();
   }
 
   return Status(INVALID_ARGUMENT, "");
@@ -53,9 +60,6 @@ Status Latis::Set(XY xy, std::string_view input) {
   CellObj c;
   ASSIGN_OR_RETURN_(c, CellObj::From(xy, input, GetLookupFn()));
   cells_[xy] = c;
-  for (const auto [xy, cobj] : cells_) {
-    std::cout << xy.ToA1() << ", " << cobj.Print() << std::endl;
-  }
   return OkStatus();
 }
 
@@ -64,7 +68,6 @@ LatisMsg Latis::Write() const {
 
   metadata_->WriteTo(&latis_msgb);
 
-  // cells
   for (const auto &[pt, cell] : cells_) {
     *latis_msgb.add_cells() = cell.Export();
   }
@@ -72,13 +75,42 @@ LatisMsg Latis::Write() const {
   return latis_msgb;
 }
 
+Latis::CellObj::CellObj(XY xy, Amount amount) {
+  *cell_.mutable_point_location() = xy.ToPointLocation();
+  *cell_.mutable_amount() = amount;
+}
+
+Latis::CellObj::CellObj(XY xy, Expression expression) {
+  *cell_.mutable_point_location() = xy.ToPointLocation();
+  *cell_.mutable_formula()->mutable_expression() = expression;
+  // TODO cache amount FIXME
+  // *cell_.mutable_formula().set_cached_amount() = amount;
+}
+
+::google::protobuf::util::StatusOr<Latis::CellObj>
+Latis::CellObj::CellObj::From(XY xy, std::string_view input,
+                              formula::LookupFn *lookup_fn) {
+  Amount a;
+  ASSIGN_OR_RETURN_(a, formula::Parse(input, *lookup_fn));
+  return Latis::CellObj(xy, a);
+}
+
+Amount Latis::CellObj::CellObj::Get() const {
+  return cell_.has_amount() ? cell_.amount() : cell_.formula().cached_amount();
+}
+
+void Latis::UpdateEditTime() {
+  absl::MutexLock l(&mu_);
+  metadata_->UpdateEditTime();
+}
+
 formula::LookupFn *Latis::GetLookupFn() {
   static formula::LookupFn fn = [&](XY xy) -> absl::optional<Amount> {
-    auto it = cells_.find(xy);
-    if (it == cells_.end()) {
+    if (const auto it = cells_.find(xy); it == cells_.end()) {
       return absl::nullopt;
+    } else {
+      return it->second.Get();
     }
-    return it->second.GetAmount();
   };
 
   return &fn;

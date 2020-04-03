@@ -35,7 +35,7 @@ namespace latis {
 class Latis : public LatisInterface {
 public:
   Latis();
-  Latis(const LatisMsg &sheet);
+  // Latis(const LatisMsg &sheet);
 
   // Getters
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
@@ -58,55 +58,28 @@ private:
 
     explicit CellObj(Cell cell) : cell_(cell) {}
 
-    CellObj(XY xy, Amount amount) {
-      *cell_.mutable_point_location() = xy.ToPointLocation();
-      *cell_.mutable_amount() = amount;
-    }
+    CellObj(XY xy, Amount amount);
 
-    CellObj(XY xy, Expression expression) {
-      *cell_.mutable_point_location() = xy.ToPointLocation();
-      *cell_.mutable_formula()->mutable_expression() = expression;
-      // TODO cache amount
-      // *cell_.mutable_formula().set_cached_amount() = amount;
-    }
+    CellObj(XY xy, Expression expression);
 
     static ::google::protobuf::util::StatusOr<CellObj>
-    From(XY xy, std::string_view input, formula::LookupFn *lookup_fn) {
-      Amount a;
-      ASSIGN_OR_RETURN_(a, formula::Parse(input, *lookup_fn));
-      return CellObj(xy, a);
-    }
+    From(XY xy, std::string_view input, formula::LookupFn *lookup_fn);
 
-    // Getter
-    XY Xy() const { return XY::From(cell_.point_location()); }
+    Amount Get() const;
 
-    Amount GetAmount() const {
-      // proto Cells always have one or the other.
-      if (cell_.has_amount()) {
-        return cell_.amount();
-      } else if (cell_.has_formula()) {
-        return cell_.formula().cached_amount();
-      }
-      throw 1;
-    }
-
-    // Export
     Cell Export() const { return cell_; }
 
-    // Print
     std::string Print() const { return PrintCell(cell_); }
 
   private:
     Cell cell_;
   };
 
-  void UpdateEditTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
-    absl::MutexLock l(&mu_);
-    metadata_->UpdateEditTime();
-  }
+  void UpdateEditTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   formula::LookupFn *GetLookupFn();
 
+  const formula::LookupFn lookup_fn_;
   mutable absl::Mutex mu_;
 
   std::unique_ptr<MetadataInterface> metadata_ ABSL_GUARDED_BY(mu_);
