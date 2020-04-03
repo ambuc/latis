@@ -28,12 +28,6 @@
 namespace latis {
 namespace formula {
 
-// Helpful usings which make writing code in a header feel more natural.
-using Status = ::google::protobuf::util::Status;
-
-template <typename T> //
-using StatusOr = ::google::protobuf::util::StatusOr<T>;
-
 // no default ctor
 struct Token {
   enum T {
@@ -88,7 +82,7 @@ std::string PrintTSpan(TSpan *tspan) {
 void PrintLnTSpan(TSpan *tspan) { std::cout << PrintTSpan(tspan) << std::endl; }
 
 template <typename T> //
-using Prsr = std::function<StatusOr<T>(TSpan *)>;
+using Prsr = std::function<::google::protobuf::util::StatusOr<T>(TSpan *)>;
 
 using LookupFn = std::function<absl::optional<Amount>(XY)>;
 

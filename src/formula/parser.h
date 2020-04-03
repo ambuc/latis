@@ -54,36 +54,44 @@ public:
   void DisableVerboseLogging() { options_.should_log_verbosely = false; }
 
   // Consumers.
-  StatusOr<int> ConsumeInt(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeInt(TSpan *tspan);
 
-  StatusOr<double> ConsumeDouble(TSpan *tspan);
-  StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<double> ConsumeDouble(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<absl::variant<double, int>>
+  ConsumeNumeric(TSpan *tspan);
 
   // TODO(ambuc): This could return a string view into the underlying
   // string.
-  StatusOr<std::string_view> ConsumeString(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<std::string_view>
+  ConsumeString(TSpan *tspan);
 
-  StatusOr<int> Consume2Digit(TSpan *tspan);
-  StatusOr<int> Consume4Digit(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> Consume2Digit(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> Consume4Digit(TSpan *tspan);
 
-  StatusOr<Money::Currency> ConsumeCurrency(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Money::Currency>
+  ConsumeCurrency(TSpan *tspan);
 
-  StatusOr<Money> ConsumeMoney(TSpan *tspan);
-  StatusOr<bool> ConsumeBool(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Money> ConsumeMoney(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<bool> ConsumeBool(TSpan *tspan);
 
-  StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
-  StatusOr<absl::TimeZone> ConsumeTimeOffset(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<absl::Time> ConsumeDateTime(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<absl::TimeZone>
+  ConsumeTimeOffset(TSpan *tspan);
 
-  StatusOr<Amount> ConsumeAmount(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Amount> ConsumeAmount(TSpan *tspan);
 
-  StatusOr<PointLocation> ConsumePointLocation(TSpan *tspan);
-  StatusOr<RangeLocation> ConsumeRangeLocation(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<PointLocation>
+  ConsumePointLocation(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<RangeLocation>
+  ConsumeRangeLocation(TSpan *tspan);
 
-  StatusOr<std::vector<Expression>> ConsumeParentheses(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<std::vector<Expression>>
+  ConsumeParentheses(TSpan *tspan);
 
-  StatusOr<std::string> ConsumeFnName(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<std::string> ConsumeFnName(TSpan *tspan);
 
-  StatusOr<Expression> ConsumeExpression(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Expression>
+  ConsumeExpression(TSpan *tspan);
 
 private:
   Options options_;
@@ -116,12 +124,14 @@ private:
 
   // NB: RepeatGuards are only necessary for right-recursive expressions... I
   // think.
-  StatusOr<Cache::key_type> RepeatGuard(std::string step, TSpan *tspan) {
+  ::google::protobuf::util::StatusOr<Cache::key_type>
+  RepeatGuard(std::string step, TSpan *tspan) {
     CacheItem item = {step, tspan->data()};
 
     if (cache_.contains(item)) {
-      return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                    "RepeatGuard denied! Already been here");
+      return ::google::protobuf::util::Status(
+          ::google::protobuf::util::error::INVALID_ARGUMENT,
+          "RepeatGuard denied! Already been here");
     }
     cache_.insert(item);
     return item;
@@ -129,33 +139,43 @@ private:
 
   // Private consumers.
 
-  StatusOr<std::string_view> ConsumeExact(Token::T type, TSpan *tspan);
+  ::google::protobuf::util::StatusOr<std::string_view>
+  ConsumeExact(Token::T type, TSpan *tspan);
 
-  StatusOr<Money::Currency> ConsumeCurrencyWord(TSpan *tspan);
-  StatusOr<Money::Currency> ConsumeCurrencySymbol(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Money::Currency>
+  ConsumeCurrencyWord(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Money::Currency>
+  ConsumeCurrencySymbol(TSpan *tspan);
 
-  StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
-  StatusOr<int> ConsumeColIndicator(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeRowIndicator(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeColIndicator(TSpan *tspan);
 
-  StatusOr<RangeLocation> ConsumeRangeLocationPointThenAny(TSpan *tspan);
-  StatusOr<RangeLocation> ConsumeRangeLocationRowThenRow(TSpan *tspan);
-  StatusOr<RangeLocation> ConsumeRangeLocationColThenCol(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<RangeLocation>
+  ConsumeRangeLocationPointThenAny(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<RangeLocation>
+  ConsumeRangeLocationRowThenRow(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<RangeLocation>
+  ConsumeRangeLocationColThenCol(TSpan *tspan);
 
-  StatusOr<int> ConsumeDateFullYear(TSpan *tspan);
-  StatusOr<int> ConsumeDateMonth(TSpan *tspan);
-  StatusOr<int> ConsumeDateMDay(TSpan *tspan);
-  StatusOr<int> ConsumeTimeHour(TSpan *tspan);
-  StatusOr<int> ConsumeTimeMinute(TSpan *tspan);
-  StatusOr<int> ConsumeTimeSecond(TSpan *tspan);
-  StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeDateFullYear(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeDateMonth(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeDateMDay(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeTimeHour(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeTimeMinute(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<int> ConsumeTimeSecond(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<double> ConsumeTimeSecFrac(TSpan *tspan);
 
   // Consumes "+", "-", "/", "*", "%", etc. and returns the string version for
   // prefix notation.
-  StatusOr<std::string_view> ConsumeOpBinaryInfixFn(TSpan *tspan);
-  StatusOr<Expression::Operation> ConsumeOperationInfix(TSpan *tspan);
-  StatusOr<Expression::Operation> ConsumeOperationPrefix(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<std::string_view>
+  ConsumeOpBinaryInfixFn(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Expression::Operation>
+  ConsumeOperationInfix(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Expression::Operation>
+  ConsumeOperationPrefix(TSpan *tspan);
 
-  StatusOr<Expression::Operation> ConsumeOperation(TSpan *tspan);
+  ::google::protobuf::util::StatusOr<Expression::Operation>
+  ConsumeOperation(TSpan *tspan);
 };
 
 } // namespace formula

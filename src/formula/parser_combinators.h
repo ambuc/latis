@@ -37,11 +37,15 @@ namespace formula {
 //     AnyVariant :: [Prsr<A>, Prsr<B>, ...]
 //                -> Prsr<variant<A, B, ...>>
 template <typename... O> //
-static std::function<StatusOr<absl::variant<O...>>(TSpan *)>
-AnyVariant(std::function<StatusOr<O>(TSpan *)>... ls) {
-  return [&](TSpan * tspan) -> StatusOr<absl::variant<O...>> {
-    std::vector<std::function<StatusOr<absl::variant<O...>>(TSpan *)>> fns{
-        ls...};
+static std::function<
+    ::google::protobuf::util::StatusOr<absl::variant<O...>>(TSpan *)>
+AnyVariant(
+    std::function<::google::protobuf::util::StatusOr<O>(TSpan *)>... ls) {
+  return [&](TSpan *
+             tspan) -> ::google::protobuf::util::StatusOr<absl::variant<O...>> {
+    std::vector<std::function<
+        ::google::protobuf::util::StatusOr<absl::variant<O...>>(TSpan *)>>
+        fns{ls...};
     for (const auto fn : fns) {
       TSpan lcl = *tspan;
       if (const auto v = fn(&lcl); v.ok()) {
@@ -49,8 +53,9 @@ AnyVariant(std::function<StatusOr<O>(TSpan *)>... ls) {
         return v.ValueOrDie();
       }
     }
-    return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                  "no match in AnyVariant<>().");
+    return ::google::protobuf::util::Status(
+        ::google::protobuf::util::error::INVALID_ARGUMENT,
+        "no match in AnyVariant<>().");
   };
 }
 
@@ -66,7 +71,7 @@ AnyVariant(std::function<StatusOr<O>(TSpan *)>... ls) {
 //         -> Prsr<T>
 template <typename T> //
 static Prsr<T> Any(const std::vector<Prsr<T>> fns) {
-  return [&](TSpan *tspan) -> StatusOr<T> {
+  return [&](TSpan *tspan) -> ::google::protobuf::util::StatusOr<T> {
     for (const auto fn : fns) {
       TSpan lcl = *tspan;
       if (const auto v = fn(&lcl); v.ok()) {
@@ -74,8 +79,9 @@ static Prsr<T> Any(const std::vector<Prsr<T>> fns) {
         return v.ValueOrDie();
       }
     }
-    return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                  "no match in Any<>()");
+    return ::google::protobuf::util::Status(
+        ::google::protobuf::util::error::INVALID_ARGUMENT,
+        "no match in Any<>()");
   };
 }
 
@@ -115,14 +121,15 @@ template <typename T> //
 static std::function<Prsr<T>(const Prsr<T> &)>
 WithRestriction(std::function<bool(T)> r) {
   return [&r](const Prsr<T> &p) -> Prsr<T> {
-    return [&r, &p](TSpan *tspan) -> StatusOr<T> {
+    return [&r, &p](TSpan *tspan) -> ::google::protobuf::util::StatusOr<T> {
       TSpan lcl = *tspan;
       if (const auto v = p(&lcl); !v.ok()) {
         return v.status();
       } else {
         if (!r(v.ValueOrDie())) {
-          return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                        "Can't WithRestriction<>(): didn't pass restriction.");
+          return ::google::protobuf::util::Status(
+              ::google::protobuf::util::error::INVALID_ARGUMENT,
+              "Can't WithRestriction<>(): didn't pass restriction.");
         }
         *tspan = lcl;
         return v.ValueOrDie();
@@ -143,7 +150,7 @@ WithRestriction(std::function<bool(T)> r) {
 //               -> (TSpan* -> StatusOr<std::tuple<A, B, C>>)
 
 template <typename... Ts, std::size_t... I> //
-static StatusOr<std::tuple<Ts...>>
+static ::google::protobuf::util::StatusOr<std::tuple<Ts...>>
 InSequence_impl(TSpan *tspan, std::tuple<const Prsr<Ts> &...> fns_tuple,
                 std::index_sequence<I...>) {
   TSpan lcl = *tspan;
@@ -174,9 +181,11 @@ InSequence_impl(TSpan *tspan, std::tuple<const Prsr<Ts> &...> fns_tuple,
 }
 
 template <typename... Ts> //
-static std::function<StatusOr<std::tuple<Ts...>>(TSpan *)>
+static std::function<
+    ::google::protobuf::util::StatusOr<std::tuple<Ts...>>(TSpan *)>
 InSequence(const Prsr<Ts> &... fns) {
-  return [&](TSpan * tspan) -> StatusOr<std::tuple<Ts...>> {
+  return [&](TSpan *
+             tspan) -> ::google::protobuf::util::StatusOr<std::tuple<Ts...>> {
 
     TSpan lcl = *tspan;
 
@@ -204,7 +213,7 @@ template <typename A, typename B> //
 static std::function<Prsr<B>(const Prsr<A> &)>
 WithTransformation(std::function<B(A)> t) {
   return [&t](const Prsr<A> &p) -> Prsr<B> {
-    return [&t, &p](TSpan *tspan) -> StatusOr<B> {
+    return [&t, &p](TSpan *tspan) -> ::google::protobuf::util::StatusOr<B> {
       TSpan lcl = *tspan;
       const auto v = p(&lcl);
       if (!v.ok()) {
@@ -230,10 +239,12 @@ static std::function<
 WithLookup(const M &map) {
   return [&map](const Prsr<typename M::key_type> &p)
              -> Prsr<typename M::mapped_type> {
-    return [&map, &p ](TSpan * tspan) -> StatusOr<typename M::mapped_type> {
+    return [&map, &p ](TSpan * tspan)
+               -> ::google::protobuf::util::StatusOr<typename M::mapped_type> {
       TSpan lcl = *tspan;
 
-      const StatusOr<typename M::key_type> maybe_key = p(&lcl);
+      const ::google::protobuf::util::StatusOr<typename M::key_type> maybe_key =
+          p(&lcl);
       if (!maybe_key.ok()) {
         return maybe_key.status();
       }
@@ -242,8 +253,9 @@ WithLookup(const M &map) {
 
       const typename M::const_iterator it = map.find(key);
       if (it == map.end()) {
-        return Status(::google::protobuf::util::error::INVALID_ARGUMENT,
-                      "no lookup match");
+        return ::google::protobuf::util::Status(
+            ::google::protobuf::util::error::INVALID_ARGUMENT,
+            "no lookup match");
       }
 
       *tspan = lcl;
