@@ -54,8 +54,8 @@ public:
   void DisableVerboseLogging() { options_.should_log_verbosely = false; }
 
   // Consumers.
-
   StatusOr<int> ConsumeInt(TSpan *tspan);
+
   StatusOr<double> ConsumeDouble(TSpan *tspan);
   StatusOr<absl::variant<double, int>> ConsumeNumeric(TSpan *tspan);
 
