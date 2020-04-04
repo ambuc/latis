@@ -42,6 +42,7 @@ cc_library(
         "//src/formula:common_lib",
         "//src/formula:evaluator_lib",
         "//src/formula:formula_lib",
+        "//src/graph",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",

@@ -17,9 +17,9 @@
 #ifndef SRC_GRAPH_GRAPH_H_
 #define SRC_GRAPH_GRAPH_H_
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include <algorithm>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace latis {
@@ -40,6 +40,7 @@ public:
   bool AddEdge(T from, T to) {
     return !IsCycle(from, to) && edges_[from].insert(to).second;
   }
+  void RemoveEdge(T from, T to) { edges_[from].erase(to); }
 
   bool HasEdge(T from, T to) { return edges_[from].contains(to); }
 
@@ -78,7 +79,7 @@ private:
     }
   }
 
-  std::unordered_map<T, std::unordered_set<T>> edges_;
+  absl::flat_hash_map<T, absl::flat_hash_set<T>> edges_;
 };
 
 } // namespace graph

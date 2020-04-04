@@ -71,6 +71,13 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   std::tuple<Expression, Amount> ea;
   ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
 
+  // Add new edges.
+
+  // TODO(ambuc): FIXME, this is not right
+  for (const XY &ancestor : looked_up) {
+    graph_.AddEdge(ancestor, xy);
+  }
+
   // Construct cell.
   Cell c;
   *c.mutable_point_location() = xy.ToPointLocation();
@@ -80,6 +87,10 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   // Insert cell.
   UpdateEditTime();
   cells_[xy] = c;
+
+  for (const XY &descendant : graph_.GetDescendantsOf(xy)) {
+    Update(descendant);
+  }
 
   return std::get<1>(ea);
 }

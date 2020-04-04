@@ -23,6 +23,7 @@
 #include "src/display_utils.h"
 #include "src/formula/common.h"
 #include "src/formula/formula.h"
+#include "src/graph/graph.h"
 #include "src/xy.h"
 
 #include "absl/base/thread_annotations.h"
@@ -75,6 +76,7 @@ private:
   mutable absl::Mutex mu_;
 
   absl::flat_hash_map<XY, Cell> cells_ ABSL_GUARDED_BY(mu_);
+  graph::Graph<XY> graph_;
 
   std::vector<UpdatedCb> updated_callbacks_{};
 
