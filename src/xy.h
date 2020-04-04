@@ -55,6 +55,9 @@ public:
   static std::string IntegerToColumnLetter(int i);
 
   friend bool operator==(const XY &, const XY &);
+  friend bool operator<(const XY &, const XY &);
+
+  // Necessary for absl::flat_hash_*
   template <typename H> friend H AbslHashValue(H h, const XY &xy) {
     return H::combine(std::move(h), xy.x_, xy.y_);
   }
@@ -66,6 +69,10 @@ private:
 
 inline bool operator==(const XY &lhs, const XY &rhs) {
   return lhs.x_ == rhs.x_ && lhs.y_ == rhs.y_;
+}
+// Necessary for std::multimap
+inline bool operator<(const XY &lhs, const XY &rhs) {
+  return lhs.x_ < rhs.x_ && lhs.y_ < rhs.y_;
 }
 
 } // namespace latis

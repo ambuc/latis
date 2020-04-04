@@ -33,8 +33,8 @@
 namespace latis {
 namespace formula {
 
-::google::protobuf::util::StatusOr<Amount> Parse(std::string_view input,
-                                                 const LookupFn &lookup_fn) {
+::google::protobuf::util::StatusOr<std::tuple<Expression, Amount>>
+Parse(std::string_view input, const LookupFn &lookup_fn) {
   static Parser parser{};
 
   std::vector<Token> tokens;
@@ -44,7 +44,10 @@ namespace formula {
   Expression expr;
   ASSIGN_OR_RETURN_(expr, parser.ConsumeExpression(&tspan));
 
-  return Evaluator(lookup_fn).CrunchExpression(expr);
+  Amount amt;
+  ASSIGN_OR_RETURN_(amt, Evaluator(lookup_fn).CrunchExpression(expr));
+
+  return std::make_tuple(expr, amt);
 }
 
 } // namespace formula

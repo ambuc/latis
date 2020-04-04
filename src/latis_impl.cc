@@ -15,6 +15,7 @@
 #include "src/latis_impl.h"
 
 #include "src/display_utils.h"
+#include "src/formula/evaluator.h"
 
 #include "absl/memory/memory.h"
 
@@ -27,14 +28,7 @@ using ::google::protobuf::util::error::INVALID_ARGUMENT;
 Latis::Latis() : Latis(LatisMsg()) {}
 
 Latis::Latis(const LatisMsg &sheet)
-    : lookup_fn_([&](XY xy) -> absl::optional<Amount> {
-        if (const auto it = cells_.find(xy); it == cells_.end()) {
-          return absl::nullopt;
-        } else {
-          return it->second.amount();
-        }
-      }),
-      title_(sheet.metadata().has_title()
+    : title_(sheet.metadata().has_title()
                  ? absl::optional<std::string>(sheet.metadata().title())
                  : std::nullopt),
       author_(sheet.metadata().has_author()
@@ -55,22 +49,48 @@ Latis::Latis(const LatisMsg &sheet)
 
 StatusOr<Amount> Latis::Get(XY xy) {
   if (const auto it = cells_.find(xy); it != cells_.end()) {
-    return it->second.amount();
+    return it->second.formula().cached_amount();
   }
 
   return Status(INVALID_ARGUMENT, "");
 }
 
 Status Latis::Set(XY xy, std::string_view input) {
-  Amount a;
-  ASSIGN_OR_RETURN_(a, formula::Parse(input, lookup_fn_));
+  // Evaluate and store lookups.
+  std::vector<XY> looked_up{};
 
+  LookupFn lookup_fn = [&](XY xy) -> absl::optional<Amount> {
+    if (const auto maybe = Get(xy); maybe.ok()) {
+      looked_up.push_back(xy);
+      return maybe.ValueOrDie();
+    }
+    return absl::nullopt;
+  };
+
+  // Compute amount.
+  std::tuple<Expression, Amount> ea;
+  ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
+
+  // Insert edges.
+  // TODO must invalidate. FIXME
+  for (const XY &dependency : looked_up) {
+    dependents_.insert({dependency, xy});
+    dependencies_.insert({xy, dependency});
+  }
+
+  // Construct cell.
   Cell c;
   *c.mutable_point_location() = xy.ToPointLocation();
-  *c.mutable_amount() = a;
-  UpdateEditTime();
+  *c.mutable_formula()->mutable_expression() = std::get<0>(ea);
+  *c.mutable_formula()->mutable_cached_amount() = std::get<1>(ea);
 
+  // Insert cell.
+  UpdateEditTime();
   cells_[xy] = c;
+
+  // Update dependents.
+  UpdateDependents(xy);
+
   return OkStatus();
 }
 
@@ -91,6 +111,29 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
   }
 
   return OkStatus();
+}
+
+void Latis::UpdateDependents(XY xy) {
+  auto ret = dependents_.equal_range(xy);
+  for (std::multimap<XY, XY>::iterator it = ret.first; it != ret.second; ++it) {
+    Update(it->second);
+  }
+}
+
+void Latis::Update(XY xy) {
+  LookupFn lookup_fn = [&](XY xy) -> absl::optional<Amount> {
+    if (const auto maybe = Get(xy); maybe.ok()) {
+      return maybe.ValueOrDie();
+    }
+    return absl::nullopt;
+  };
+
+  if (const StatusOr<Amount> amt =
+          formula::Evaluator(lookup_fn).CrunchExpression(
+              cells_[xy].formula().expression());
+      amt.ok()) {
+    *cells_[xy].mutable_formula()->mutable_cached_amount() = amt.ValueOrDie();
+  }
 }
 
 void Latis::UpdateEditTime() {

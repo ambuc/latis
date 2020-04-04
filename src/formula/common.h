@@ -26,6 +26,10 @@
 #include "google/protobuf/stubs/statusor.h"
 
 namespace latis {
+
+// Used for looking up a coordinate.
+using LookupFn = std::function<absl::optional<Amount>(XY)>;
+
 namespace formula {
 
 // no default ctor
@@ -83,8 +87,6 @@ void PrintLnTSpan(TSpan *tspan) { std::cout << PrintTSpan(tspan) << std::endl; }
 
 template <typename T> //
 using Prsr = std::function<::google::protobuf::util::StatusOr<T>(TSpan *)>;
-
-using LookupFn = std::function<absl::optional<Amount>(XY)>;
 
 namespace functions {
 // abseil.io/tips/168

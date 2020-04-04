@@ -24,32 +24,36 @@ using ::testing::Eq;
 
 TEST(PrintCell, StringAmount) {
   Cell c;
-  c.mutable_amount()->set_str_amount("foo");
+  c.mutable_formula()->mutable_cached_amount()->set_str_amount("foo");
   EXPECT_THAT(PrintCell(c), Eq("foo"));
 }
 
 TEST(PrintCell, IntAmount) {
   Cell c;
-  c.mutable_amount()->set_int_amount(1234);
+  c.mutable_formula()->mutable_cached_amount()->set_int_amount(1234);
   EXPECT_THAT(PrintCell(c), Eq("1234"));
 }
 
 TEST(PrintCell, DoubleAmount) {
   Cell c;
-  c.mutable_amount()->set_double_amount(12.34567890);
+  c.mutable_formula()->mutable_cached_amount()->set_double_amount(12.34567890);
   EXPECT_THAT(PrintCell(c), Eq("12.35"));
 }
 
 TEST(PrintCell, TimestampAmount) {
   Cell c;
-  c.mutable_amount()->mutable_timestamp_amount()->set_seconds(0);
+  c.mutable_formula()
+      ->mutable_cached_amount()
+      ->mutable_timestamp_amount()
+      ->set_seconds(0);
   EXPECT_THAT(PrintCell(c), Eq("1970-01-01T00:00:00+00:00"));
 }
 
 TEST(PrintCell, MoneyAmount) {
   Cell c;
 
-  auto *money = c.mutable_amount()->mutable_money_amount();
+  auto *money =
+      c.mutable_formula()->mutable_cached_amount()->mutable_money_amount();
   money->set_currency(Money::USD);
 
   money->set_dollars(10);

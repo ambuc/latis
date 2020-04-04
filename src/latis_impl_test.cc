@@ -103,5 +103,26 @@ TEST(Latis, SetAndGet) {
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
 }
 
+TEST(Latis, SetAndGetAndChange) {
+  const XY A1 = XY::From("A1").ValueOrDie();
+  const XY B1 = XY::From("B1").ValueOrDie();
+  const XY C1 = XY::From("C1").ValueOrDie();
+
+  Latis latis;
+
+  EXPECT_OK(latis.Set(A1, "2"));
+  EXPECT_OK(latis.Set(B1, "2"));
+  EXPECT_OK(latis.Set(C1, "A1+B1"));
+  EXPECT_THAT(latis.Get(C1),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
+
+  // If we update a dependency,
+  EXPECT_OK(latis.Set(B1, "3"));
+  // The dependent is autoupdated and will return the correct value at next
+  // fetch.
+  EXPECT_THAT(latis.Get(C1),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 5"))));
+}
+
 } // namespace
 } // namespace latis

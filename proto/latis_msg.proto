@@ -85,10 +85,7 @@ message Formula {
 
 message Cell {
   optional PointLocation point_location = 1;
-  oneof cell_demux {
-    Amount amount = 2;
-    Formula formula = 3;
-  }
+  optional Formula formula = 2;
 }
 
 message Metadata {

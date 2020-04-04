@@ -40,6 +40,7 @@ cc_library(
         ":xy_lib",
         "//proto:latis_msg_cc_proto",
         "//src/formula:common_lib",
+        "//src/formula:evaluator_lib",
         "//src/formula:formula_lib",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",

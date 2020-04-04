@@ -27,6 +27,9 @@ std::string PrintAmount(const Amount &amount) {
   case Amount::kStrAmount: {
     return amount.str_amount();
   }
+  case Amount::kBoolAmount: {
+    return amount.bool_amount() ? "True" : "False";
+  }
   case Amount::kIntAmount: {
     return absl::StrFormat("%d", amount.int_amount());
   }
@@ -53,12 +56,7 @@ std::string PrintAmount(const Amount &amount) {
 }
 
 std::string PrintCell(const Cell &cell) {
-  if (cell.has_amount()) {
-    return PrintAmount(cell.amount());
-  } else if (cell.has_formula()) {
-    return "F?";
-  }
-  return "?";
+  return PrintAmount(cell.formula().cached_amount());
 }
 
 } // namespace latis
