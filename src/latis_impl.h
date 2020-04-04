@@ -44,7 +44,8 @@ public:
 
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
 
-  ::google::protobuf::util::Status Set(XY xy, std::string_view input) override;
+  ::google::protobuf::util::StatusOr<Amount>
+  Set(XY xy, std::string_view input) override;
 
   ::google::protobuf::util::Status WriteTo(LatisMsg *latis_msg) const override;
 
@@ -68,6 +69,7 @@ public:
   absl::Time EditedTime() const override { return edited_time_; }
 
 private:
+  void InvalidateCachesFor(XY xy);
   void UpdateChildrenOf(XY xy);
   void Update(XY xy);
   void UpdateEditTime();

@@ -55,7 +55,10 @@ StatusOr<Amount> Latis::Get(XY xy) {
   return Status(INVALID_ARGUMENT, "");
 }
 
-Status Latis::Set(XY xy, std::string_view input) {
+StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
+  // Invalidate caches.
+  InvalidateCachesFor(xy);
+
   // Evaluate and store lookups.
   std::vector<XY> looked_up{};
 
@@ -90,7 +93,7 @@ Status Latis::Set(XY xy, std::string_view input) {
   // Update children of..
   UpdateChildrenOf(xy);
 
-  return OkStatus();
+  return std::get<1>(ea);
 }
 
 Status Latis::WriteTo(LatisMsg *latis_msg) const {
@@ -110,6 +113,10 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
   }
 
   return OkStatus();
+}
+
+void Latis::InvalidateCachesFor(XY xy) {
+  // TODO update this.
 }
 
 void Latis::UpdateChildrenOf(XY xy) {

@@ -132,6 +132,19 @@ TEST(Latis, SetAndGetAndChange) {
   // fetch.
   EXPECT_THAT(latis.Get(C1),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 5"))));
+
+  // But what if we change C1 so it's no longer dependent on B1?
+  // We should be able to update B1 and NOT receive a cb on the update_cb
+  // channel.
+  EXPECT_CALL(update_cb, Call).Times(0);
+  EXPECT_OK(latis.Set(C1, "A1"));
+  EXPECT_OK(latis.Set(B1, "4"));
+
+  // Now if we do update A1, C1:=A1.
+  EXPECT_CALL(update_cb, Call).Times(1);
+  EXPECT_OK(latis.Set(A1, "1"));
+  EXPECT_THAT(latis.Get(C1),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 1"))));
 }
 
 } // namespace

@@ -33,8 +33,8 @@ class LatisInterface {
 public:
   virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) = 0;
 
-  virtual ::google::protobuf::util::Status Set(XY xy,
-                                               std::string_view input) = 0;
+  virtual ::google::protobuf::util::StatusOr<Amount>
+  Set(XY xy, std::string_view input) = 0;
 
   virtual ::google::protobuf::util::Status
   WriteTo(LatisMsg *latis_msg) const = 0;
