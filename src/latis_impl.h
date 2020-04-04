@@ -60,20 +60,24 @@ public:
   absl::Time EditedTime() const override { return edited_time_; }
 
 private:
-  void UpdateDependents(XY xy);
+  void UpdateChildrenOf(XY xy);
   void Update(XY xy);
   void UpdateEditTime();
+
+  // void PrintP2C();
+  // void PrintC2P();
 
   mutable absl::Mutex mu_;
 
   absl::flat_hash_map<XY, Cell> cells_ ABSL_GUARDED_BY(mu_);
 
-  // If
-  //   A := Fn(B, C)
-  // then |dependencies_| will contain (A, B), (A, C)
-  std::multimap<XY, XY> dependencies_ ABSL_GUARDED_BY(mu_);
-  // and |dependents_|   will contain (B, A), (C, A)
-  std::multimap<XY, XY> dependents_ ABSL_GUARDED_BY(mu_);
+  // If                       B   C
+  //                           \ /
+  //   A := Fn(B, C) ===>       A
+  // then |children_to_parents| will contain (A, [B, C])
+  std::multimap<XY, XY> children_to_parents_ ABSL_GUARDED_BY(mu_);
+  // and |parents_to_children|  will contain (B, A), (C, A)
+  std::multimap<XY, XY> parents_to_children_ ABSL_GUARDED_BY(mu_);
 
   // Metadata
   absl::optional<std::string> title_{std::nullopt};

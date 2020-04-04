@@ -72,10 +72,9 @@ Status Latis::Set(XY xy, std::string_view input) {
   ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
 
   // Insert edges.
-  // TODO must invalidate. FIXME
-  for (const XY &dependency : looked_up) {
-    dependents_.insert({dependency, xy});
-    dependencies_.insert({xy, dependency});
+  for (const XY &parent : looked_up) {
+    parents_to_children_.insert({parent, xy});
+    children_to_parents_.insert({xy, parent});
   }
 
   // Construct cell.
@@ -88,8 +87,8 @@ Status Latis::Set(XY xy, std::string_view input) {
   UpdateEditTime();
   cells_[xy] = c;
 
-  // Update dependents.
-  UpdateDependents(xy);
+  // Update children of..
+  UpdateChildrenOf(xy);
 
   return OkStatus();
 }
@@ -113,10 +112,12 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
   return OkStatus();
 }
 
-void Latis::UpdateDependents(XY xy) {
-  auto ret = dependents_.equal_range(xy);
-  for (std::multimap<XY, XY>::iterator it = ret.first; it != ret.second; ++it) {
-    Update(it->second);
+void Latis::UpdateChildrenOf(XY xy) {
+  auto ret = parents_to_children_.equal_range(xy);
+  for (auto it = ret.first; it != ret.second; ++it) {
+    if (it->first == xy) {
+      Update(it->second);
+    }
   }
 }
 
@@ -140,5 +141,31 @@ void Latis::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
 }
+
+// void Latis::PrintP2C() {
+//   if (parents_to_children_.empty()) {
+//     return;
+//   }
+//   std::cout << "Printing parents_to_children_:" << std::endl;
+//   for (auto it = parents_to_children_.begin(); it !=
+//   parents_to_children_.end();
+//        ++it) {
+//     std::cout << it->first.ToA1() << " => " << it->second.ToA1() <<
+//     std::endl;
+//   }
+// }
+//
+// void Latis::PrintC2P() {
+//   if (children_to_parents_.empty()) {
+//     return;
+//   }
+//   std::cout << "Printing children_to_parents_:" << std::endl;
+//   for (auto it = children_to_parents_.begin(); it !=
+//   children_to_parents_.end();
+//        ++it) {
+//     std::cout << it->first.ToA1() << " => " << it->second.ToA1() <<
+//     std::endl;
+//   }
+// }
 
 } // namespace latis
