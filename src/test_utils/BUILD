@@ -7,6 +7,7 @@ cc_library(
     testonly = 1,
     hdrs = ["test_utils.h"],
     deps = [
+        "//proto:latis_msg_cc_proto",
         "@com_google_googletest//:gtest_main",
     ],
 )
