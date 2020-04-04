@@ -99,13 +99,6 @@ Latis::CellObj::CellObj(XY xy, Amount amount) {
   *cell_.mutable_amount() = amount;
 }
 
-Latis::CellObj::CellObj(XY xy, Expression expression) {
-  *cell_.mutable_point_location() = xy.ToPointLocation();
-  *cell_.mutable_formula()->mutable_expression() = expression;
-  // TODO cache amount FIXME
-  // *cell_.mutable_formula().set_cached_amount() = amount;
-}
-
 ::google::protobuf::util::StatusOr<Latis::CellObj>
 Latis::CellObj::CellObj::From(XY xy, std::string_view input,
                               const formula::LookupFn &lookup_fn) {

@@ -73,9 +73,6 @@ private:
     // From amount.
     CellObj(XY xy, Amount amount);
 
-    // From expression.
-    CellObj(XY xy, Expression expression);
-
     // From string input (can fail).
     static ::google::protobuf::util::StatusOr<CellObj>
     From(XY xy, std::string_view input, const formula::LookupFn &lookup_fn);
