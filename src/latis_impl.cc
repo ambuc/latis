@@ -15,7 +15,6 @@
 #include "src/latis_impl.h"
 
 #include "src/display_utils.h"
-#include "src/metadata_impl.h"
 
 #include "absl/memory/memory.h"
 
@@ -25,21 +24,34 @@ using ::google::protobuf::util::Status;
 using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 
-Latis::Latis()
+Latis::Latis() : Latis(LatisMsg()) {}
+
+Latis::Latis(const LatisMsg &sheet)
     : lookup_fn_([&](XY xy) -> absl::optional<Amount> {
         if (const auto it = cells_.find(xy); it == cells_.end()) {
           return absl::nullopt;
         } else {
           return it->second.Get();
         }
-      }) {}
-
-// jLatis::Latis(const LatisMsg &sheet)
-// j    : metadata_(absl::make_unique<MetadataImpl>(sheet.metadata())) {
-// j  for (const auto &cell : sheet.cells()) {
-// j    cells_[XY::From(cell.point_location())] = CellObj(cell);
-// j  }
-// j}
+      }),
+      title_(sheet.metadata().has_title()
+                 ? absl::optional<std::string>(sheet.metadata().title())
+                 : std::nullopt),
+      author_(sheet.metadata().has_author()
+                  ? absl::optional<std::string>(sheet.metadata().author())
+                  : std::nullopt),
+      created_time_(
+          sheet.metadata().has_created_time()
+              ? absl::FromUnixSeconds(sheet.metadata().created_time().seconds())
+              : absl::Now()),
+      edited_time_(
+          sheet.metadata().has_edited_time()
+              ? absl::FromUnixSeconds(sheet.metadata().edited_time().seconds())
+              : absl::Now()) {
+  for (const auto &cell : sheet.cells()) {
+    cells_[XY::From(cell.point_location())] = CellObj(cell);
+  }
+}
 
 StatusOr<Amount> Latis::Get(XY xy) {
   if (const auto it = cells_.find(xy); it != cells_.end()) {
@@ -63,16 +75,23 @@ Status Latis::Set(XY xy, std::string_view input) {
   return OkStatus();
 }
 
-LatisMsg Latis::Write() const {
-  LatisMsg latis_msgb;
-
-  metadata_->WriteTo(&latis_msgb);
+Status Latis::WriteTo(LatisMsg *latis_msg) const {
+  if (title_.has_value()) {
+    latis_msg->mutable_metadata()->set_title(title_.value());
+  }
+  if (author_.has_value()) {
+    latis_msg->mutable_metadata()->set_author(author_.value());
+  }
+  latis_msg->mutable_metadata()->mutable_created_time()->set_seconds(
+      absl::ToUnixSeconds(created_time_));
+  latis_msg->mutable_metadata()->mutable_edited_time()->set_seconds(
+      absl::ToUnixSeconds(edited_time_));
 
   for (const auto &[pt, cell] : cells_) {
-    *latis_msgb.add_cells() = cell.Export();
+    *latis_msg->add_cells() = cell.Export();
   }
 
-  return latis_msgb;
+  return OkStatus();
 }
 
 Latis::CellObj::CellObj(XY xy, Amount amount) {
@@ -101,7 +120,7 @@ Amount Latis::CellObj::CellObj::Get() const {
 
 void Latis::UpdateEditTime() {
   absl::MutexLock l(&mu_);
-  metadata_->UpdateEditTime();
+  edited_time_ = absl::Now();
 }
 
 formula::LookupFn *Latis::GetLookupFn() {

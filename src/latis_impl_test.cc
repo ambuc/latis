@@ -29,6 +29,58 @@ using ::google::protobuf::util::StatusOr;
 using ::testing::Eq;
 using ::testing::Le;
 
+// metadata
+TEST(Metadata, TitleAndAuthor) {
+  Latis latis;
+  latis.SetTitle("t");
+  latis.SetAuthor("a");
+
+  LatisMsg latis_msg_output;
+  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+
+  EXPECT_THAT(latis_msg_output.metadata().title(), Eq("t"));
+  EXPECT_THAT(latis_msg_output.metadata().author(), Eq("a"));
+}
+
+TEST(Metadata, CreatedTimeIsSetDuringIngest) {
+  Latis latis;
+
+  LatisMsg latis_msg_output;
+  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+
+  EXPECT_THAT(latis_msg_output.metadata().created_time().seconds(),
+              Le(absl::ToUnixSeconds(absl::Now())));
+}
+
+TEST(Metadata, CreatedTimeIsUntouched) {
+  const int s = 12345;
+  LatisMsg latis_msg_input_with_creation_time;
+  latis_msg_input_with_creation_time.mutable_metadata()
+      ->mutable_created_time()
+      ->set_seconds(s);
+
+  Latis latis(latis_msg_input_with_creation_time);
+  EXPECT_THAT(absl::ToUnixSeconds(latis.CreatedTime()), Eq(s));
+
+  LatisMsg latis_msg_output;
+  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+
+  EXPECT_THAT(latis_msg_output.metadata().created_time().seconds(), Eq(s));
+}
+
+TEST(Metadata, EditedTimeIsEdited) {
+  LatisMsg latis_msg_input;
+
+  Latis latis(latis_msg_input);
+  EXPECT_THAT(latis.EditedTime(), Le(absl::Now()));
+
+  LatisMsg latis_msg_output;
+  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+
+  EXPECT_THAT(latis_msg_output.metadata().edited_time().seconds(),
+              Le(absl::ToUnixSeconds(absl::Now())));
+}
+
 TEST(Latis, SetAndGet) {
   const XY A1 = XY::From("A1").ValueOrDie();
   const XY B1 = XY::From("B1").ValueOrDie();

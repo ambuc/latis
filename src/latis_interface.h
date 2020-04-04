@@ -18,8 +18,12 @@
 #define SRC_LATIS_INTERFACE_H_
 
 #include "proto/latis_msg.pb.h"
-#include "src/metadata_interface.h"
 #include "src/xy.h"
+
+#include "absl/time/time.h"
+#include "google/protobuf/stubs/status.h"
+#include "google/protobuf/stubs/status_macros.h"
+#include "google/protobuf/stubs/statusor.h"
 
 namespace latis {
 
@@ -34,9 +38,15 @@ public:
   virtual ::google::protobuf::util::Status Set(XY xy,
                                                std::string_view input) = 0;
 
-  virtual LatisMsg Write() const = 0;
+  virtual ::google::protobuf::util::Status
+  WriteTo(LatisMsg *latis_msg) const = 0;
 
-  virtual MetadataInterface *Metadata() = 0;
+  virtual std::optional<std::string> Title() const = 0;
+  virtual std::optional<std::string> Author() const = 0;
+  virtual absl::Time CreatedTime() const = 0;
+  virtual absl::Time EditedTime() const = 0;
+  virtual void SetTitle(std::string title) = 0;
+  virtual void SetAuthor(std::string author) = 0;
 };
 
 } // namespace latis

@@ -23,19 +23,21 @@
 #include "src/display_utils.h"
 #include "src/formula/common.h"
 #include "src/formula/formula.h"
-#include "src/metadata_interface.h"
 #include "src/xy.h"
 
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 
 namespace latis {
 
 class Latis : public LatisInterface {
 public:
+  // Create new.
   Latis();
-  // Latis(const LatisMsg &sheet);
+  // Create from sheet.
+  Latis(const LatisMsg &sheet);
 
   // Getters
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
@@ -45,10 +47,20 @@ public:
   ::google::protobuf::util::Status Set(XY xy, std::string_view input) override;
 
   // Export
-  LatisMsg Write() const override;
+  ::google::protobuf::util::Status WriteTo(LatisMsg *latis_msg) const override;
 
-  // Kept structs
-  MetadataInterface *Metadata() override { return metadata_.get(); }
+  std::optional<std::string> Title() const override { return title_; }
+  std::optional<std::string> Author() const override { return author_; }
+  absl::Time CreatedTime() const override { return created_time_; }
+  absl::Time EditedTime() const override { return edited_time_; }
+  void SetTitle(std::string title) override {
+    UpdateEditTime();
+    title_ = title;
+  }
+  void SetAuthor(std::string author) override {
+    UpdateEditTime();
+    author_ = author;
+  }
 
 private:
   // Thread-compatible but not thread-safe.
@@ -75,16 +87,20 @@ private:
     Cell cell_;
   };
 
-  void UpdateEditTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void UpdateEditTime();
 
   formula::LookupFn *GetLookupFn();
 
   const formula::LookupFn lookup_fn_;
   mutable absl::Mutex mu_;
 
-  std::unique_ptr<MetadataInterface> metadata_ ABSL_GUARDED_BY(mu_);
   absl::flat_hash_map<XY, CellObj> cells_ ABSL_GUARDED_BY(mu_);
   std::multimap<XY, XY> edges_ ABSL_GUARDED_BY(mu_);
+  // Metadata
+  std::optional<std::string> title_{std::nullopt};
+  std::optional<std::string> author_{std::nullopt};
+  const absl::Time created_time_{absl::Now()};
+  absl::Time edited_time_{absl::Now()};
 };
 
 } // namespace latis

@@ -22,35 +22,9 @@ cc_test(
 )
 
 cc_library(
-    name = "metadata_interface",
-    hdrs = ["metadata_interface.h"],
-    deps = [
-        "//proto:latis_msg_cc_proto",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-cc_library(
-    name = "metadata_impl",
-    srcs = ["metadata_impl.cc"],
-    hdrs = ["metadata_impl.h"],
-    deps = [":metadata_interface"],
-)
-
-cc_test(
-    name = "metadata_impl_test",
-    srcs = ["metadata_impl_test.cc"],
-    deps = [
-        ":metadata_impl",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "latis_interface",
     hdrs = ["latis_interface.h"],
     deps = [
-        ":metadata_interface",
         "//proto:latis_msg_cc_proto",
         "@com_google_absl//absl/time",
     ],
@@ -63,7 +37,6 @@ cc_library(
     deps = [
         ":display_utils_lib",
         ":latis_interface",
-        ":metadata_impl",
         ":xy_lib",
         "//proto:latis_msg_cc_proto",
         "//src/formula:common_lib",
