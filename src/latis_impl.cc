@@ -56,9 +56,6 @@ StatusOr<Amount> Latis::Get(XY xy) {
 }
 
 StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
-  // Invalidate caches.
-  InvalidateCachesFor(xy);
-
   // Evaluate and store lookups.
   std::vector<XY> looked_up{};
 
@@ -74,12 +71,6 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   std::tuple<Expression, Amount> ea;
   ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
 
-  // Insert edges.
-  for (const XY &parent : looked_up) {
-    parents_to_children_.insert({parent, xy});
-    children_to_parents_.insert({xy, parent});
-  }
-
   // Construct cell.
   Cell c;
   *c.mutable_point_location() = xy.ToPointLocation();
@@ -89,9 +80,6 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   // Insert cell.
   UpdateEditTime();
   cells_[xy] = c;
-
-  // Update children of..
-  UpdateChildrenOf(xy);
 
   return std::get<1>(ea);
 }
@@ -113,19 +101,6 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
   }
 
   return OkStatus();
-}
-
-void Latis::InvalidateCachesFor(XY xy) {
-  // TODO update this.
-}
-
-void Latis::UpdateChildrenOf(XY xy) {
-  auto ret = parents_to_children_.equal_range(xy);
-  for (auto it = ret.first; it != ret.second; ++it) {
-    if (it->first == xy) {
-      Update(it->second);
-    }
-  }
 }
 
 void Latis::Update(XY xy) {
@@ -153,31 +128,5 @@ void Latis::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
 }
-
-// void Latis::PrintP2C() {
-//   if (parents_to_children_.empty()) {
-//     return;
-//   }
-//   std::cout << "Printing parents_to_children_:" << std::endl;
-//   for (auto it = parents_to_children_.begin(); it !=
-//   parents_to_children_.end();
-//        ++it) {
-//     std::cout << it->first.ToA1() << " => " << it->second.ToA1() <<
-//     std::endl;
-//   }
-// }
-//
-// void Latis::PrintC2P() {
-//   if (children_to_parents_.empty()) {
-//     return;
-//   }
-//   std::cout << "Printing children_to_parents_:" << std::endl;
-//   for (auto it = children_to_parents_.begin(); it !=
-//   children_to_parents_.end();
-//        ++it) {
-//     std::cout << it->first.ToA1() << " => " << it->second.ToA1() <<
-//     std::endl;
-//   }
-// }
 
 } // namespace latis
