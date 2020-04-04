@@ -31,7 +31,7 @@ Latis::Latis(const LatisMsg &sheet)
         if (const auto it = cells_.find(xy); it == cells_.end()) {
           return absl::nullopt;
         } else {
-          return it->second.Get();
+          return it->second.amount();
         }
       }),
       title_(sheet.metadata().has_title()
@@ -49,13 +49,13 @@ Latis::Latis(const LatisMsg &sheet)
               ? absl::FromUnixSeconds(sheet.metadata().edited_time().seconds())
               : absl::Now()) {
   for (const auto &cell : sheet.cells()) {
-    cells_[XY::From(cell.point_location())] = CellObj(cell);
+    cells_[XY::From(cell.point_location())] = cell;
   }
 }
 
 StatusOr<Amount> Latis::Get(XY xy) {
   if (const auto it = cells_.find(xy); it != cells_.end()) {
-    return it->second.Get();
+    return it->second.amount();
   }
 
   return Status(INVALID_ARGUMENT, "");
@@ -63,14 +63,20 @@ StatusOr<Amount> Latis::Get(XY xy) {
 
 std::string Latis::Print(XY xy) const {
   if (const auto &it = cells_.find(xy); it != cells_.end()) {
-    return it->second.Print();
+    return PrintCell(it->second);
   }
   return "";
 }
 
 Status Latis::Set(XY xy, std::string_view input) {
-  CellObj c;
-  ASSIGN_OR_RETURN_(c, CellObj::From(xy, input, lookup_fn_));
+  Amount a;
+  ASSIGN_OR_RETURN_(a, formula::Parse(input, lookup_fn_));
+
+  Cell c;
+  *c.mutable_point_location() = xy.ToPointLocation();
+  *c.mutable_amount() = a;
+  UpdateEditTime();
+
   cells_[xy] = c;
   return OkStatus();
 }
@@ -88,27 +94,10 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
       absl::ToUnixSeconds(edited_time_));
 
   for (const auto &[pt, cell] : cells_) {
-    *latis_msg->add_cells() = cell.Export();
+    *latis_msg->add_cells() = cell;
   }
 
   return OkStatus();
-}
-
-Latis::CellObj::CellObj(XY xy, Amount amount) {
-  *cell_.mutable_point_location() = xy.ToPointLocation();
-  *cell_.mutable_amount() = amount;
-}
-
-::google::protobuf::util::StatusOr<Latis::CellObj>
-Latis::CellObj::CellObj::From(XY xy, std::string_view input,
-                              const formula::LookupFn &lookup_fn) {
-  Amount a;
-  ASSIGN_OR_RETURN_(a, formula::Parse(input, lookup_fn));
-  return Latis::CellObj(xy, a);
-}
-
-Amount Latis::CellObj::CellObj::Get() const {
-  return cell_.has_amount() ? cell_.amount() : cell_.formula().cached_amount();
 }
 
 void Latis::UpdateEditTime() {

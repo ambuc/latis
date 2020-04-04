@@ -61,38 +61,12 @@ public:
   absl::Time EditedTime() const override { return edited_time_; }
 
 private:
-  // Thread-compatible but not thread-safe.
-  class CellObj {
-  public:
-    // New uninitialized.
-    CellObj() {}
-
-    // Copy constructor.
-    explicit CellObj(Cell cell) : cell_(cell) {}
-
-    // From amount.
-    CellObj(XY xy, Amount amount);
-
-    // From string input (can fail).
-    static ::google::protobuf::util::StatusOr<CellObj>
-    From(XY xy, std::string_view input, const formula::LookupFn &lookup_fn);
-
-    Amount Get() const;
-
-    Cell Export() const { return cell_; }
-
-    std::string Print() const { return PrintCell(cell_); }
-
-  private:
-    Cell cell_;
-  };
-
   void UpdateEditTime();
 
   const formula::LookupFn lookup_fn_;
   mutable absl::Mutex mu_;
 
-  absl::flat_hash_map<XY, CellObj> cells_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<XY, Cell> cells_ ABSL_GUARDED_BY(mu_);
   std::multimap<XY, XY> edges_ ABSL_GUARDED_BY(mu_);
 
   // Metadata
