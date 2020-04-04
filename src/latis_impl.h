@@ -36,46 +36,49 @@ class Latis : public LatisInterface {
 public:
   // Create new.
   Latis();
+
   // Create from sheet.
   Latis(const LatisMsg &sheet);
 
-  // Getters
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
   std::string Print(XY xy) const override;
 
-  // Setters
   ::google::protobuf::util::Status Set(XY xy, std::string_view input) override;
 
-  // Export
   ::google::protobuf::util::Status WriteTo(LatisMsg *latis_msg) const override;
 
-  std::optional<std::string> Title() const override { return title_; }
-  std::optional<std::string> Author() const override { return author_; }
-  absl::Time CreatedTime() const override { return created_time_; }
-  absl::Time EditedTime() const override { return edited_time_; }
+  absl::optional<std::string> Title() const override { return title_; }
   void SetTitle(std::string title) override {
     UpdateEditTime();
     title_ = title;
   }
+  absl::optional<std::string> Author() const override { return author_; }
   void SetAuthor(std::string author) override {
     UpdateEditTime();
     author_ = author;
   }
+  absl::Time CreatedTime() const override { return created_time_; }
+  absl::Time EditedTime() const override { return edited_time_; }
 
 private:
   // Thread-compatible but not thread-safe.
   class CellObj {
   public:
+    // New uninitialized.
     CellObj() {}
 
+    // Copy constructor.
     explicit CellObj(Cell cell) : cell_(cell) {}
 
+    // From amount.
     CellObj(XY xy, Amount amount);
 
+    // From expression.
     CellObj(XY xy, Expression expression);
 
+    // From string input (can fail).
     static ::google::protobuf::util::StatusOr<CellObj>
-    From(XY xy, std::string_view input, formula::LookupFn *lookup_fn);
+    From(XY xy, std::string_view input, const formula::LookupFn &lookup_fn);
 
     Amount Get() const;
 
@@ -89,16 +92,15 @@ private:
 
   void UpdateEditTime();
 
-  formula::LookupFn *GetLookupFn();
-
   const formula::LookupFn lookup_fn_;
   mutable absl::Mutex mu_;
 
   absl::flat_hash_map<XY, CellObj> cells_ ABSL_GUARDED_BY(mu_);
   std::multimap<XY, XY> edges_ ABSL_GUARDED_BY(mu_);
+
   // Metadata
-  std::optional<std::string> title_{std::nullopt};
-  std::optional<std::string> author_{std::nullopt};
+  absl::optional<std::string> title_{std::nullopt};
+  absl::optional<std::string> author_{std::nullopt};
   const absl::Time created_time_{absl::Now()};
   absl::Time edited_time_{absl::Now()};
 };

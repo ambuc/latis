@@ -34,16 +34,18 @@ using ::testing::WithParamInterface;
 
 class TestClassBase : public ::testing::Test {
 public:
-  TestClassBase() : evaluator_(mock_lookup_fn_.AsStdFunction()) {}
+  TestClassBase() {}
 
   void Run(std::string input, absl::optional<std::string> expected) {
+    auto std_function = mock_lookup_fn_.AsStdFunction();
+    Evaluator evaluator(std_function);
 
     std::vector<Token> tokens = Lex(input).ValueOrDie();
     TSpan tspan{tokens};
 
     Expression expr = parser_.ConsumeExpression(&tspan).ValueOrDie();
 
-    auto amt_or_status = evaluator_.CrunchExpression(expr);
+    auto amt_or_status = evaluator.CrunchExpression(expr);
 
     if (!amt_or_status.ok()) {
       std::cout << amt_or_status.status() << std::endl;
@@ -64,7 +66,6 @@ public:
 protected:
   MockFunction<absl::optional<Amount>(XY)> mock_lookup_fn_;
   Parser parser_;
-  Evaluator evaluator_;
 };
 
 class NoExpectations

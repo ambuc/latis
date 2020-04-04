@@ -34,7 +34,7 @@ namespace latis {
 namespace formula {
 
 ::google::protobuf::util::StatusOr<Amount> Parse(std::string_view input,
-                                                 LookupFn lookup_fn) {
+                                                 const LookupFn &lookup_fn) {
   static Parser parser{};
 
   std::vector<Token> tokens;

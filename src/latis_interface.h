@@ -41,12 +41,12 @@ public:
   virtual ::google::protobuf::util::Status
   WriteTo(LatisMsg *latis_msg) const = 0;
 
-  virtual std::optional<std::string> Title() const = 0;
-  virtual std::optional<std::string> Author() const = 0;
+  virtual absl::optional<std::string> Title() const = 0;
+  virtual void SetTitle(std::string title) = 0;
+  virtual absl::optional<std::string> Author() const = 0;
+  virtual void SetAuthor(std::string author) = 0;
   virtual absl::Time CreatedTime() const = 0;
   virtual absl::Time EditedTime() const = 0;
-  virtual void SetTitle(std::string title) = 0;
-  virtual void SetAuthor(std::string author) = 0;
 };
 
 } // namespace latis

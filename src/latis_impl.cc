@@ -70,7 +70,7 @@ std::string Latis::Print(XY xy) const {
 
 Status Latis::Set(XY xy, std::string_view input) {
   CellObj c;
-  ASSIGN_OR_RETURN_(c, CellObj::From(xy, input, GetLookupFn()));
+  ASSIGN_OR_RETURN_(c, CellObj::From(xy, input, lookup_fn_));
   cells_[xy] = c;
   return OkStatus();
 }
@@ -108,9 +108,9 @@ Latis::CellObj::CellObj(XY xy, Expression expression) {
 
 ::google::protobuf::util::StatusOr<Latis::CellObj>
 Latis::CellObj::CellObj::From(XY xy, std::string_view input,
-                              formula::LookupFn *lookup_fn) {
+                              const formula::LookupFn &lookup_fn) {
   Amount a;
-  ASSIGN_OR_RETURN_(a, formula::Parse(input, *lookup_fn));
+  ASSIGN_OR_RETURN_(a, formula::Parse(input, lookup_fn));
   return Latis::CellObj(xy, a);
 }
 
@@ -121,18 +121,6 @@ Amount Latis::CellObj::CellObj::Get() const {
 void Latis::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
-}
-
-formula::LookupFn *Latis::GetLookupFn() {
-  static formula::LookupFn fn = [&](XY xy) -> absl::optional<Amount> {
-    if (const auto it = cells_.find(xy); it == cells_.end()) {
-      return absl::nullopt;
-    } else {
-      return it->second.Get();
-    }
-  };
-
-  return &fn;
 }
 
 } // namespace latis

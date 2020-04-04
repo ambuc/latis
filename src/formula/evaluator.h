@@ -32,7 +32,8 @@ namespace formula {
 
 class Evaluator {
 public:
-  explicit Evaluator(LookupFn lookup_fn) : lookup_fn_(lookup_fn) {}
+  // Must not outlive the lookup_fn.
+  explicit Evaluator(const LookupFn &lookup_fn) : lookup_fn_(lookup_fn) {}
 
   ::google::protobuf::util::StatusOr<Amount>
   CrunchExpression(const Expression &expression);
@@ -44,7 +45,7 @@ public:
   CrunchOperation(const Expression::Operation &operation);
 
 private:
-  LookupFn lookup_fn_;
+  const LookupFn &lookup_fn_;
 };
 
 } // namespace formula
