@@ -28,6 +28,8 @@ using ::google::protobuf::TextFormat;
 using ::google::protobuf::util::StatusOr;
 using ::testing::Eq;
 using ::testing::Le;
+using ::testing::MockFunction;
+using ::testing::StrictMock;
 
 // metadata
 TEST(Metadata, TitleAndAuthor) {
@@ -104,17 +106,25 @@ TEST(Latis, SetAndGet) {
 }
 
 TEST(Latis, SetAndGetAndChange) {
+  // TODO(ambuc): Register updated callback and use to assert correct
+  // invalidation.
+  //
   const XY A1 = XY::From("A1").ValueOrDie();
   const XY B1 = XY::From("B1").ValueOrDie();
   const XY C1 = XY::From("C1").ValueOrDie();
 
+  StrictMock<MockFunction<void(const Cell &)>> update_cb;
+
   Latis latis;
+  latis.RegisterUpdateCallback(update_cb.AsStdFunction());
 
   EXPECT_OK(latis.Set(A1, "2"));
   EXPECT_OK(latis.Set(B1, "2"));
   EXPECT_OK(latis.Set(C1, "A1+B1"));
   EXPECT_THAT(latis.Get(C1),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
+
+  EXPECT_CALL(update_cb, Call).Times(1);
 
   // If we update a dependency,
   EXPECT_OK(latis.Set(B1, "3"));

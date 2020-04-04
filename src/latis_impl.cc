@@ -134,6 +134,11 @@ void Latis::Update(XY xy) {
               cells_[xy].formula().expression());
       amt.ok()) {
     *cells_[xy].mutable_formula()->mutable_cached_amount() = amt.ValueOrDie();
+
+    // Updated! Must callback.
+    for (auto &cb : updated_callbacks_) {
+      cb(cells_[xy]);
+    }
   }
 }
 

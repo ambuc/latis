@@ -32,6 +32,8 @@
 
 namespace latis {
 
+using UpdatedCb = std::function<void(const Cell &)>;
+
 class Latis : public LatisInterface {
 public:
   // Create new.
@@ -45,6 +47,12 @@ public:
   ::google::protobuf::util::Status Set(XY xy, std::string_view input) override;
 
   ::google::protobuf::util::Status WriteTo(LatisMsg *latis_msg) const override;
+
+  // NB: This only returns out-of-bound updates, i.e. cells _other_ than the
+  // cell just set.
+  void RegisterUpdateCallback(UpdatedCb cell_updated_cb) {
+    updated_callbacks_.push_back(cell_updated_cb);
+  }
 
   absl::optional<std::string> Title() const override { return title_; }
   void SetTitle(std::string title) override {
@@ -78,6 +86,8 @@ private:
   std::multimap<XY, XY> children_to_parents_ ABSL_GUARDED_BY(mu_);
   // and |parents_to_children|  will contain (B, A), (C, A)
   std::multimap<XY, XY> parents_to_children_ ABSL_GUARDED_BY(mu_);
+
+  std::vector<UpdatedCb> updated_callbacks_{};
 
   // Metadata
   absl::optional<std::string> title_{std::nullopt};
