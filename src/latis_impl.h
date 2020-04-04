@@ -41,7 +41,6 @@ public:
   Latis(const LatisMsg &sheet);
 
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
-  std::string Print(XY xy) const override;
 
   ::google::protobuf::util::Status Set(XY xy, std::string_view input) override;
 

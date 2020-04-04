@@ -33,8 +33,6 @@ class LatisInterface {
 public:
   virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) = 0;
 
-  virtual std::string Print(XY xy) const = 0;
-
   virtual ::google::protobuf::util::Status Set(XY xy,
                                                std::string_view input) = 0;
 

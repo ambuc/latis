@@ -61,13 +61,6 @@ StatusOr<Amount> Latis::Get(XY xy) {
   return Status(INVALID_ARGUMENT, "");
 }
 
-std::string Latis::Print(XY xy) const {
-  if (const auto &it = cells_.find(xy); it != cells_.end()) {
-    return PrintCell(it->second);
-  }
-  return "";
-}
-
 Status Latis::Set(XY xy, std::string_view input) {
   Amount a;
   ASSIGN_OR_RETURN_(a, formula::Parse(input, lookup_fn_));
