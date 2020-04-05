@@ -15,6 +15,12 @@ Your local `.bazelrc` should contain:
 build --cxxopt='-std=c++2a'
 ```
 
+For ncurses stuff on Debian/Ubuntu:
+
+```
+sudo apt-get install libncurses5-dev libncursesw5-dev
+```
+
 ### Submitting changes
 
 Use `addlicense` (https://github.com/google/addlicense) to ensure all 

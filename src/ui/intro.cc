@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/latis_impl.h"
 #include "src/ui/intro.h"
 
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
+#include <iostream>
+// #include <ncurses.h>
 
-int main(int argc, char *argv[]) {
-  absl::ParseCommandLine(argc, argv);
+namespace latis {
+namespace ui {
 
-  latis::ui::PlayIntro();
+void PlayIntro() {
+  initscr();
 
-  latis::Latis latis;
-
-  return 0;
+  std::cout << "Starting LATIS..." << std::endl;
 }
+
+} // namespace ui
+} // namespace latis
