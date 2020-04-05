@@ -79,9 +79,14 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   }
 
   // Add new edges pointing from ancestors to xy.
-  // Idempotent if already present.
-  for (const XY &ancestor : looked_up) {
-    graph_.AddEdge(ancestor, xy);
+  {
+    auto transaction = graph_.NewTransaction();
+    for (const XY &ancestor : looked_up) {
+      transaction->StageEdge(ancestor, xy);
+    }
+    if (!transaction->Confirm()) {
+      return Status(INVALID_ARGUMENT, "Would cause cycle.");
+    }
   }
 
   // Construct cell.

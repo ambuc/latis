@@ -121,6 +121,27 @@ TEST_F(GraphTest, GetDescendantsOfWithRemoval) {
   EXPECT_THAT(g_.GetDescendantsOf(0), ElementsAre(1, 4, 2, 3));
 }
 
+TEST_F(GraphTest, TransactionSucceeds) {
+  auto t = g_.NewTransaction();
+  t->StageEdge(4, 3);
+  t->StageEdge(4, 2);
+  EXPECT_TRUE(t->Confirm());
+
+  EXPECT_TRUE(g_.HasEdge(4, 3));
+  EXPECT_TRUE(g_.HasEdge(4, 2));
+}
+
+TEST_F(GraphTest, TransactionFails) {
+  {
+    auto t = g_.NewTransaction();
+    t->StageEdge(4, 3);
+    t->StageEdge(4, 0); // would cause cycle;
+    EXPECT_FALSE(t->Confirm());
+  }
+  EXPECT_FALSE(g_.HasEdge(4, 3));
+  EXPECT_FALSE(g_.HasEdge(4, 0));
+}
+
 } // namespace
 } // namespace graph
 } // namespace latis

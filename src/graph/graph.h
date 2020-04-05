@@ -19,6 +19,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/memory/memory.h"
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -70,13 +71,58 @@ public:
     return std::vector<T>(c2p_[node].begin(), c2p_[node].end());
   }
 
+  // Represents an in-progress transaction.
+  // RAII for potentially unwindable additions.
+  // If transaction.Confirm() is not called, these insertons will be undone at
+  // destruction..
+  //
+  // Example usage:
+  //   Graph g;
+  //   auto t = g.NewTransaction();
+  //   t->StageEdge(f1,t1);
+  //   t->StageEdge(f2,t2); ...
+  //   bool is_valid = t->Confirm();
+  //
+  class Transaction {
+  public:
+    Transaction(Graph *g) : g_(g) {}
+    ~Transaction() {
+      if (!is_valid_) {
+        for (const auto &[f, t] : inserted_) {
+          g_->RemoveEdge(f, t);
+        }
+      }
+    }
+    void StageEdge(T from, T to) {
+      if (!is_valid_) {
+        return;
+      }
+      if (g_->AddEdge(from, to)) {
+        inserted_.push_back({from, to});
+      } else {
+        is_valid_ = false;
+      }
+    }
+    bool Confirm() { return is_valid_; }
+
+  private:
+    Graph *g_;
+    std::vector<std::pair<T, T>> inserted_;
+    bool is_valid_{true};
+  };
+
+  std::unique_ptr<Transaction> NewTransaction() {
+    return absl::make_unique<Transaction>(this);
+  }
+
 private:
   // Returns true if a cycle is found.
   bool IsCycle(T cand, T node) {
-    return std::any_of(p2c_[node].begin(), p2c_[node].end(),
-                       [&](const T &child) {
-                         return (child == cand) || IsCycle(cand, child);
-                       });
+    return cand == node || std::any_of(p2c_[node].begin(), p2c_[node].end(),
+                                       [&](const T &child) {
+                                         return (child == cand) ||
+                                                IsCycle(cand, child);
+                                       });
   }
 
   void GetDescendantsOfInternal(T node, std::vector<T> *output) {

@@ -26,9 +26,12 @@ namespace {
 
 using ::google::protobuf::TextFormat;
 using ::google::protobuf::util::StatusOr;
+using ::testing::DoubleEq;
 using ::testing::Eq;
 using ::testing::Le;
 using ::testing::MockFunction;
+using ::testing::Not;
+using ::testing::Property;
 using ::testing::StrictMock;
 
 // metadata
@@ -91,6 +94,7 @@ protected:
   const XY A1 = XY::From("A1").ValueOrDie();
   const XY B2 = XY::From("B2").ValueOrDie();
   const XY C3 = XY::From("C3").ValueOrDie();
+  const XY D4 = XY::From("D4").ValueOrDie();
   Latis latis_;
   StrictMock<MockFunction<void(const Cell &)>> update_cb_;
 };
@@ -98,6 +102,17 @@ protected:
 TEST_F(LatisTest, Set) {
   EXPECT_THAT(latis_.Set(A1, "2.0"),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("double_amount: 2.0"))));
+}
+
+TEST_F(LatisTest, NoCycle) {
+  latis_.Set(A1, "1.0");
+  EXPECT_THAT(latis_.Set(A1, "A1"), Not(IsOk()));
+}
+
+TEST_F(LatisTest, NoCycleLonger) {
+  latis_.Set(A1, "1.0");
+  latis_.Set(B2, "A1");
+  EXPECT_THAT(latis_.Set(A1, "B2"), Not(IsOk()));
 }
 
 TEST_F(LatisTest, SetAndGet) {
@@ -152,6 +167,23 @@ TEST_F(LatisTest, BreakDependency) {
   latis_.Set(A1, "1");
   ASSERT_THAT(latis_.Get(C3),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 1"))));
+}
+
+TEST_F(LatisTest, DependencyTwoHops) {
+  latis_.Set(A1, "1.1");
+  latis_.Set(B2, "2.2");
+  EXPECT_THAT(latis_.Set(C3, "A1+B2"),
+              IsOkAndHolds(Property(&Amount::double_amount, DoubleEq(3.3))));
+  EXPECT_THAT(latis_.Set(D4, "C3*2"),
+              IsOkAndHolds(Property(&Amount::double_amount, DoubleEq(6.6))));
+
+  // Two updates, one for C3 and one for D4.
+  EXPECT_CALL(update_cb_, Call).Times(2);
+  latis_.Set(A1, "1.2");
+  EXPECT_THAT(latis_.Get(C3),
+              IsOkAndHolds(Property(&Amount::double_amount, DoubleEq(3.4))));
+  EXPECT_THAT(latis_.Get(D4),
+              IsOkAndHolds(Property(&Amount::double_amount, DoubleEq(6.8))));
 }
 
 } // namespace
