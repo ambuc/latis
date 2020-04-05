@@ -31,7 +31,7 @@ namespace latis {
 // graphics or display or anything, it just has a few methods. Thread-safe.
 class LatisInterface {
 public:
-  virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) = 0;
+  virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) const = 0;
 
   virtual ::google::protobuf::util::StatusOr<Amount>
   Set(XY xy, std::string_view input) = 0;

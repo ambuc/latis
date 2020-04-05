@@ -33,7 +33,7 @@
 
 namespace latis {
 
-using UpdatedCb = std::function<void(const Cell &)>;
+using HasChangedCb = std::function<void(const Cell &)>;
 
 class Latis : public LatisInterface {
 public:
@@ -43,7 +43,7 @@ public:
   // Create from sheet.
   Latis(const LatisMsg &sheet);
 
-  ::google::protobuf::util::StatusOr<Amount> Get(XY xy) override;
+  ::google::protobuf::util::StatusOr<Amount> Get(XY xy) const override;
 
   ::google::protobuf::util::StatusOr<Amount>
   Set(XY xy, std::string_view input) override;
@@ -54,8 +54,8 @@ public:
 
   // NB: This only returns out-of-bound updates, i.e. cells _other_ than the
   // cell just set.
-  void RegisterUpdateCallback(UpdatedCb cell_updated_cb) {
-    updated_callbacks_.push_back(cell_updated_cb);
+  void RegisterCallback(HasChangedCb has_changed_cb) {
+    callbacks_.push_back(has_changed_cb);
   }
 
   absl::optional<std::string> Title() const override { return title_; }
@@ -80,7 +80,7 @@ private:
   absl::flat_hash_map<XY, Cell> cells_ ABSL_GUARDED_BY(mu_);
   graph::Graph<XY> graph_;
 
-  std::vector<UpdatedCb> updated_callbacks_{};
+  std::vector<HasChangedCb> callbacks_{};
 
   // Metadata
   absl::optional<std::string> title_{std::nullopt};

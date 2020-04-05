@@ -88,7 +88,7 @@ TEST(Metadata, EditedTimeIsEdited) {
 
 class LatisTest : public ::testing::Test {
 public:
-  void SetUp() { latis_.RegisterUpdateCallback(update_cb_.AsStdFunction()); }
+  void SetUp() { latis_.RegisterCallback(update_cb_.AsStdFunction()); }
 
 protected:
   const XY A1 = XY::From("A1").ValueOrDie();

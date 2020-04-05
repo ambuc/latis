@@ -47,22 +47,24 @@ Latis::Latis(const LatisMsg &sheet)
   }
 }
 
-StatusOr<Amount> Latis::Get(XY xy) {
-  if (const auto it = cells_.find(xy); it != cells_.end()) {
-    auto *formula = &it->second.formula();
-    if (formula->has_error_msg()) {
-      return Status(INVALID_ARGUMENT, formula->error_msg());
-    }
-    return formula->cached_amount();
+StatusOr<Amount> Latis::Get(XY xy) const {
+  const auto it = cells_.find(xy);
+  if (it == cells_.end()) {
+    return Status(INVALID_ARGUMENT,
+                  absl::StrFormat("No cell at %s", xy.ToA1()));
   }
-
-  return Status(INVALID_ARGUMENT, "");
+  const auto &formula = it->second.formula();
+  if (formula.has_error_msg()) {
+    return Status(INVALID_ARGUMENT, formula.error_msg());
+  }
+  return formula.cached_amount();
 }
 
 StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   // Evaluate and store lookups.
   absl::flat_hash_set<XY> looked_up{};
 
+  // Getter with logging cb.
   LookupFn lookup_fn = [&](XY xy) -> absl::optional<Amount> {
     if (const auto maybe = Get(xy); maybe.ok()) {
       looked_up.insert(xy);
@@ -72,8 +74,8 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   };
 
   // Compute amount.
-  std::tuple<Expression, Amount> ea;
-  ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
+  std::tuple<Expression, Amount> expression_and_amount;
+  ASSIGN_OR_RETURN_(expression_and_amount, formula::Parse(input, lookup_fn));
 
   // Remove old edges from old ancestors to xy.
   for (const XY &parent : graph_.GetParentsOf(xy)) {
@@ -89,33 +91,36 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
       transaction->StageEdge(ancestor, xy);
     }
     if (!transaction->Confirm()) {
-      return Status(INVALID_ARGUMENT, "Would cause cycle.");
+      return Status(INVALID_ARGUMENT,
+                    absl::StrFormat("Can't insert %s, it would cause a cycle.",
+                                    xy.ToA1()));
     }
+    // Complete transaction.
   }
 
-  // Construct cell.
-  Cell c;
-  *c.mutable_point_location() = xy.ToPointLocation();
-  *c.mutable_formula()->mutable_expression() = std::get<0>(ea);
-  *c.mutable_formula()->mutable_cached_amount() = std::get<1>(ea);
-
-  // Insert cell.
-  UpdateEditTime();
-  cells_[xy] = c;
+  // Construct new cell in-place.
+  Cell *c = &cells_[xy];
+  *c->mutable_point_location() = xy.ToPointLocation();
+  *c->mutable_formula()->mutable_expression() =
+      std::get<0>(expression_and_amount);
+  *c->mutable_formula()->mutable_cached_amount() =
+      std::get<1>(expression_and_amount);
 
   for (const XY &descendant : graph_.GetDescendantsOf(xy)) {
     Update(descendant);
   }
 
-  return std::get<1>(ea);
+  UpdateEditTime();
+
+  return std::get<1>(expression_and_amount);
 }
 
 void Latis::Clear(XY xy) {
   cells_.erase(xy);
-  auto affected_descendants = graph_.Delete(xy);
-  for (const XY &descendant : affected_descendants) {
+  for (const XY &descendant : graph_.Delete(xy)) {
     Update(descendant);
   }
+  UpdateEditTime();
 }
 
 Status Latis::WriteTo(LatisMsg *latis_msg) const {
@@ -145,19 +150,23 @@ void Latis::Update(XY xy) {
     return absl::nullopt;
   };
 
-  if (const StatusOr<Amount> amt =
-          formula::Evaluator(lookup_fn).CrunchExpression(
-              cells_[xy].formula().expression());
+  Cell *cell = &cells_[xy];
+  Formula *formula = cell->mutable_formula();
+
+  if (const auto amt =
+          formula::Evaluator(lookup_fn).CrunchExpression(formula->expression());
       amt.ok()) {
-    *cells_[xy].mutable_formula()->mutable_cached_amount() = amt.ValueOrDie();
+    *formula->mutable_cached_amount() = amt.ValueOrDie();
   } else {
-    cells_[xy].mutable_formula()->clear_cached_amount();
-    *cells_[xy].mutable_formula()->mutable_error_msg() = "Can't eval.";
+    formula->clear_cached_amount();
+    *formula->mutable_error_msg() =
+        absl::StrFormat("Can't eval: %s", amt.status().error_message());
   }
-  // Updated! Must callback.
-  for (auto &cb : updated_callbacks_) {
-    cb(cells_[xy]);
+
+  for (auto &cb : callbacks_) {
+    cb(*cell);
   }
+  UpdateEditTime();
 }
 
 void Latis::UpdateEditTime() {
