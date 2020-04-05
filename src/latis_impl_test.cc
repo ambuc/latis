@@ -169,6 +169,18 @@ TEST_F(LatisTest, BreakDependency) {
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 1"))));
 }
 
+TEST_F(LatisTest, BreakDependencyNA) {
+  EXPECT_CALL(update_cb_, Call).Times(0);
+
+  latis_.Set(A1, "2");
+  EXPECT_THAT(latis_.Set(B2, "A1"),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 2"))));
+
+  EXPECT_CALL(update_cb_, Call).Times(1);
+  latis_.Clear(A1);
+  EXPECT_THAT(latis_.Get(B2), Not(IsOk()));
+}
+
 TEST_F(LatisTest, DependencyTwoHops) {
   latis_.Set(A1, "1.1");
   latis_.Set(B2, "2.2");

@@ -80,7 +80,11 @@ message Expression {
 
 message Formula {
   optional Expression expression = 1;
-  optional Amount cached_amount = 2;
+
+  oneof formula_demux {
+    Amount cached_amount = 2;
+    string error_msg = 3;
+  }
 }
 
 message Cell {

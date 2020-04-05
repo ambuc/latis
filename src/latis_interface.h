@@ -36,6 +36,8 @@ public:
   virtual ::google::protobuf::util::StatusOr<Amount>
   Set(XY xy, std::string_view input) = 0;
 
+  virtual void Clear(XY xy) = 0;
+
   virtual ::google::protobuf::util::Status
   WriteTo(LatisMsg *latis_msg) const = 0;
 

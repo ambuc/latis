@@ -48,6 +48,8 @@ public:
   ::google::protobuf::util::StatusOr<Amount>
   Set(XY xy, std::string_view input) override;
 
+  void Clear(XY xy) override;
+
   ::google::protobuf::util::Status WriteTo(LatisMsg *latis_msg) const override;
 
   // NB: This only returns out-of-bound updates, i.e. cells _other_ than the

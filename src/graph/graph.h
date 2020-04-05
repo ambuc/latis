@@ -71,6 +71,24 @@ public:
     return std::vector<T>(c2p_[node].begin(), c2p_[node].end());
   }
 
+  std::vector<T> GetChildrenOf(T node) {
+    return std::vector<T>(p2c_[node].begin(), p2c_[node].end());
+  }
+
+  // Deletes a node and returns a vector of affected descendants.
+  std::vector<T> Delete(T node) {
+    auto descendants = GetDescendantsOf(node);
+    auto parents = GetParentsOf(node);
+    auto children = GetChildrenOf(node);
+    for (const T &p : parents) {
+      RemoveEdge(p, node);
+    }
+    for (const T &c : children) {
+      RemoveEdge(node, c);
+    }
+    return descendants;
+  }
+
   // Represents an in-progress transaction.
   // RAII for potentially unwindable additions.
   // If transaction.Confirm() is not called, these insertons will be undone at

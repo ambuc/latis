@@ -49,7 +49,11 @@ Latis::Latis(const LatisMsg &sheet)
 
 StatusOr<Amount> Latis::Get(XY xy) {
   if (const auto it = cells_.find(xy); it != cells_.end()) {
-    return it->second.formula().cached_amount();
+    auto *formula = &it->second.formula();
+    if (formula->has_error_msg()) {
+      return Status(INVALID_ARGUMENT, formula->error_msg());
+    }
+    return formula->cached_amount();
   }
 
   return Status(INVALID_ARGUMENT, "");
@@ -106,6 +110,14 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   return std::get<1>(ea);
 }
 
+void Latis::Clear(XY xy) {
+  cells_.erase(xy);
+  auto affected_descendants = graph_.Delete(xy);
+  for (const XY &descendant : affected_descendants) {
+    Update(descendant);
+  }
+}
+
 Status Latis::WriteTo(LatisMsg *latis_msg) const {
   if (title_.has_value()) {
     latis_msg->mutable_metadata()->set_title(title_.value());
@@ -138,11 +150,13 @@ void Latis::Update(XY xy) {
               cells_[xy].formula().expression());
       amt.ok()) {
     *cells_[xy].mutable_formula()->mutable_cached_amount() = amt.ValueOrDie();
-
-    // Updated! Must callback.
-    for (auto &cb : updated_callbacks_) {
-      cb(cells_[xy]);
-    }
+  } else {
+    cells_[xy].mutable_formula()->clear_cached_amount();
+    *cells_[xy].mutable_formula()->mutable_error_msg() = "Can't eval.";
+  }
+  // Updated! Must callback.
+  for (auto &cb : updated_callbacks_) {
+    cb(cells_[xy]);
   }
 }
 
