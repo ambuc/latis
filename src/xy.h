@@ -56,6 +56,7 @@ public:
 
   friend bool operator==(const XY &, const XY &);
   friend bool operator<(const XY &, const XY &);
+  friend std::ostream &operator<<(std::ostream &os, const XY &);
 
   // Necessary for absl::flat_hash_*
   template <typename H> friend H AbslHashValue(H h, const XY &xy) {
@@ -73,6 +74,11 @@ inline bool operator==(const XY &lhs, const XY &rhs) {
 // Necessary for std::multimap
 inline bool operator<(const XY &lhs, const XY &rhs) {
   return lhs.x_ < rhs.x_ && lhs.y_ < rhs.y_;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const XY &xy) {
+  os << xy.ToA1();
+  return os;
 }
 
 } // namespace latis

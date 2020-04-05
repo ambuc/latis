@@ -76,7 +76,7 @@ TEST(Graph, RemovalOfParent) {
   g.AddEdge(0, 1);
   EXPECT_TRUE(g.HasEdge(0, 1));
 
-  g.Remove(0);
+  g.RemoveEdge(0, 1);
   EXPECT_FALSE(g.HasEdge(0, 1));
 }
 
@@ -86,7 +86,7 @@ TEST(Graph, RemovalOfChild) {
   g.AddEdge(0, 1);
   EXPECT_TRUE(g.HasEdge(0, 1));
 
-  g.Remove(1);
+  g.RemoveEdge(0, 1);
   EXPECT_FALSE(g.HasEdge(0, 1));
 }
 
@@ -111,7 +111,8 @@ TEST(Graph, GetDescendantsOfWithRemoval) {
   //      |
   //      v
   //      4
-  g.Remove(2);
+  g.RemoveEdge(1, 2);
+  g.RemoveEdge(2, 3);
   EXPECT_THAT(g.GetDescendantsOf(0), ElementsAre(1, 4));
 
   // 0--> 1

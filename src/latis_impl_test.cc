@@ -84,11 +84,15 @@ TEST(Metadata, EditedTimeIsEdited) {
 }
 
 class LatisTest : public ::testing::Test {
+public:
+  void SetUp() { latis_.RegisterUpdateCallback(update_cb_.AsStdFunction()); }
+
 protected:
   const XY A1 = XY::From("A1").ValueOrDie();
-  const XY B1 = XY::From("B1").ValueOrDie();
-  const XY C1 = XY::From("C1").ValueOrDie();
+  const XY B2 = XY::From("B2").ValueOrDie();
+  const XY C3 = XY::From("C3").ValueOrDie();
   Latis latis_;
+  StrictMock<MockFunction<void(const Cell &)>> update_cb_;
 };
 
 TEST_F(LatisTest, Set) {
@@ -104,43 +108,49 @@ TEST_F(LatisTest, SetAndGet) {
       latis_.Set(A1, "\"string\""),
       IsOkAndHolds(EqualsProto(ToProto<Amount>("str_amount: \"string\""))));
 
-  EXPECT_THAT(latis_.Set(A1, "2"), IsOk());
-  EXPECT_THAT(latis_.Set(B1, "2"), IsOk());
-  EXPECT_THAT(latis_.Set(C1, "A1+B1"),
+  latis_.Set(A1, "2");
+  latis_.Set(B2, "2");
+  EXPECT_THAT(latis_.Set(C3, "A1+B2"),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
 }
 
-TEST_F(LatisTest, SetAndGetAndChange) {
-  StrictMock<MockFunction<void(const Cell &)>> update_cb;
-  EXPECT_CALL(update_cb, Call).Times(0);
+TEST_F(LatisTest, ChangeUnderlyingValue) {
+  EXPECT_CALL(update_cb_, Call).Times(0);
 
-  latis_.RegisterUpdateCallback(update_cb.AsStdFunction());
-
-  EXPECT_THAT(latis_.Set(A1, "2"), IsOk());
-  EXPECT_THAT(latis_.Set(B1, "2"), IsOk());
-  EXPECT_THAT(latis_.Set(C1, "A1+B1"),
+  latis_.Set(A1, "2");
+  latis_.Set(B2, "2");
+  EXPECT_THAT(latis_.Set(C3, "A1+B2"),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
 
-  EXPECT_CALL(update_cb, Call).Times(1);
+  EXPECT_CALL(update_cb_, Call).Times(1);
 
   // If we update a dependency,
-  EXPECT_THAT(latis_.Set(B1, "3"), IsOk());
+  latis_.Set(B2, "3");
   // The dependent is autoupdated and will return the correct value at next
   // fetch.
-  EXPECT_THAT(latis_.Get(C1),
+  ASSERT_THAT(latis_.Get(C3),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 5"))));
+}
 
-  // But what if we change C1 so it's no longer dependent on B1?
-  // We should be able to update B1 and NOT receive a cb on the update_cb
+TEST_F(LatisTest, BreakDependency) {
+  EXPECT_CALL(update_cb_, Call).Times(0);
+
+  latis_.Set(A1, "2");
+  latis_.Set(B2, "2");
+  EXPECT_THAT(latis_.Set(C3, "A1+B2"),
+              IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 4"))));
+
+  // But what if we change C3 so it's no longer dependent on B2?
+  // We should be able to update B2 and NOT receive a cb on the update_cb_
   // channel.
-  EXPECT_CALL(update_cb, Call).Times(0);
-  EXPECT_THAT(latis_.Set(C1, "A1"), IsOk());
-  EXPECT_THAT(latis_.Set(B1, "4"), IsOk());
+  EXPECT_CALL(update_cb_, Call).Times(0);
+  latis_.Set(C3, "A1");
+  latis_.Set(B2, "4");
 
-  // Now if we do update A1, C1:=A1.
-  EXPECT_CALL(update_cb, Call).Times(1);
-  EXPECT_THAT(latis_.Set(A1, "1"), IsOk());
-  EXPECT_THAT(latis_.Get(C1),
+  // Now if we do update A1, C3:=A1.
+  EXPECT_CALL(update_cb_, Call).Times(1);
+  latis_.Set(A1, "1");
+  ASSERT_THAT(latis_.Get(C3),
               IsOkAndHolds(EqualsProto(ToProto<Amount>("int_amount: 1"))));
 }
 

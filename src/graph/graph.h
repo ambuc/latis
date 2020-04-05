@@ -20,6 +20,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 namespace latis {
@@ -38,8 +39,10 @@ public:
   // If an edge creates a cycle, this method will return false and not perform
   // the insertion. Otherwise, will return true.
   bool AddEdge(T from, T to) {
-    return !IsCycle(from, to) && edges_[from].insert(to).second;
+    bool result = !IsCycle(from, to) && edges_[from].insert(to).second;
+    return result;
   }
+
   void RemoveEdge(T from, T to) { edges_[from].erase(to); }
 
   bool HasEdge(T from, T to) { return edges_[from].contains(to); }
@@ -52,12 +55,15 @@ public:
     return vec;
   }
 
-  // Removes a node and all edges starting from, or ending at, that node.
-  void Remove(T node) {
-    edges_.erase(node);
-    for (auto &[k, v] : edges_) {
-      v.erase(node);
+  // Returns a vector of nodes which are direct parents of some input node.
+  std::vector<T> GetParentsOf(T node) {
+    std::vector<T> vec{};
+    for (const auto &[k, vs] : edges_) {
+      if (vs.contains(node)) {
+        vec.push_back(k);
+      }
     }
+    return vec;
   }
 
 private:
@@ -78,6 +84,18 @@ private:
       GetDescendantsOfInternal(child, output);
     }
   }
+
+  // void Print() {
+  //   std::cout << "map: ";
+  //   for (const auto &[k, vs] : edges_) {
+  //     std::cout << k << ": [";
+  //     for (const auto &v : vs) {
+  //       std::cout << v << ",";
+  //     }
+  //     std::cout << "]; ";
+  //   }
+  //   std::cout << std::endl;
+  // }
 
   absl::flat_hash_map<T, absl::flat_hash_set<T>> edges_;
 };

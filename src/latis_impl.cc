@@ -57,11 +57,11 @@ StatusOr<Amount> Latis::Get(XY xy) {
 
 StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   // Evaluate and store lookups.
-  std::vector<XY> looked_up{};
+  absl::flat_hash_set<XY> looked_up{};
 
   LookupFn lookup_fn = [&](XY xy) -> absl::optional<Amount> {
     if (const auto maybe = Get(xy); maybe.ok()) {
-      looked_up.push_back(xy);
+      looked_up.insert(xy);
       return maybe.ValueOrDie();
     }
     return absl::nullopt;
@@ -71,9 +71,15 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   std::tuple<Expression, Amount> ea;
   ASSIGN_OR_RETURN_(ea, formula::Parse(input, lookup_fn));
 
-  // Add new edges.
+  // Remove old edges from old ancestors to xy.
+  for (const XY &parent : graph_.GetParentsOf(xy)) {
+    if (!looked_up.contains(parent)) {
+      graph_.RemoveEdge(parent, xy);
+    }
+  }
 
-  // TODO(ambuc): FIXME, this is not right
+  // Add new edges pointing from ancestors to xy.
+  // Idempotent if already present.
   for (const XY &ancestor : looked_up) {
     graph_.AddEdge(ancestor, xy);
   }
