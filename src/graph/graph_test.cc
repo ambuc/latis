@@ -22,8 +22,10 @@ namespace latis {
 namespace graph {
 namespace {
 
+using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::Pointwise;
 using ::testing::UnorderedElementsAre;
 
 TEST(Graph, AddAndHas) {
@@ -46,82 +48,72 @@ TEST(Graph, DetectsCycle) {
   EXPECT_FALSE(g.HasEdge(2, 0));
 }
 
-TEST(Graph, GetDescendantsOf) {
+TEST(Graph, Removal) {
   Graph<int> g;
 
-  // 0--> 1--> 2--> 3
-  //      |
-  //      v
-  //      4
-  EXPECT_TRUE(g.AddEdge(0, 1));
-  EXPECT_TRUE(g.AddEdge(1, 2));
-  EXPECT_TRUE(g.AddEdge(2, 3));
-  EXPECT_TRUE(g.AddEdge(1, 4));
+  g.AddEdge(0, 1);
+  EXPECT_TRUE(g.HasEdge(0, 1));
 
-  EXPECT_THAT(g.GetDescendantsOf(2), UnorderedElementsAre(3));
-  EXPECT_THAT(g.GetDescendantsOf(1), UnorderedElementsAre(2, 3, 4));
+  g.RemoveEdge(0, 1);
+  EXPECT_FALSE(g.HasEdge(0, 1));
+}
+
+class GraphTest : public ::testing::Test {
+public:
+  void SetUp() {
+    // 0--> 1--> 2--> 3
+    //      |
+    //      v
+    //      4
+    g_.AddEdge(0, 1);
+    g_.AddEdge(1, 2);
+    g_.AddEdge(2, 3);
+    g_.AddEdge(1, 4);
+  }
+
+protected:
+  Graph<int> g_;
+};
+
+TEST_F(GraphTest, GetDescendantsOf) {
+  EXPECT_THAT(g_.GetDescendantsOf(2), UnorderedElementsAre(3));
+  EXPECT_THAT(g_.GetDescendantsOf(1), UnorderedElementsAre(2, 3, 4));
 
   // But we also care about toposort order. So GetDescendantsOf(1) must be
   // either [2,4,3] or [4,2,3], but either way 3 must be last.
-  EXPECT_THAT(g.GetDescendantsOf(1).back(), Eq(3));
+  EXPECT_THAT(g_.GetDescendantsOf(1).back(), Eq(3));
 
   // By the same token:
-  EXPECT_THAT(g.GetDescendantsOf(0).front(), Eq(1));
-  EXPECT_THAT(g.GetDescendantsOf(0).back(), Eq(3));
+  EXPECT_THAT(g_.GetDescendantsOf(0).front(), Eq(1));
+  EXPECT_THAT(g_.GetDescendantsOf(0).back(), Eq(3));
 }
 
-TEST(Graph, RemovalOfParent) {
-  Graph<int> g;
-
-  g.AddEdge(0, 1);
-  EXPECT_TRUE(g.HasEdge(0, 1));
-
-  g.RemoveEdge(0, 1);
-  EXPECT_FALSE(g.HasEdge(0, 1));
+TEST_F(GraphTest, GetParentsOf) {
+  EXPECT_THAT(g_.GetParentsOf(1), UnorderedElementsAre(0));
+  EXPECT_THAT(g_.GetParentsOf(2), UnorderedElementsAre(1));
+  EXPECT_THAT(g_.GetParentsOf(3), UnorderedElementsAre(2));
+  EXPECT_THAT(g_.GetParentsOf(4), UnorderedElementsAre(1));
 }
 
-TEST(Graph, RemovalOfChild) {
-  Graph<int> g;
-
-  g.AddEdge(0, 1);
-  EXPECT_TRUE(g.HasEdge(0, 1));
-
-  g.RemoveEdge(0, 1);
-  EXPECT_FALSE(g.HasEdge(0, 1));
-}
-
-TEST(Graph, GetDescendantsOfWithRemoval) {
-  Graph<int> g;
-  // 0--> 1--> 2--> 3
-  //      |
-  //      v
-  //      4
-  g.AddEdge(0, 1);
-  g.AddEdge(1, 2);
-  g.AddEdge(2, 3);
-  g.AddEdge(1, 4);
-
-  {
-    auto desc_0 = g.GetDescendantsOf(0);
-    EXPECT_EQ(desc_0.front(), 1);
-    EXPECT_EQ(desc_0.back(), 3);
-  }
+TEST_F(GraphTest, GetDescendantsOfWithRemoval) {
+  EXPECT_EQ(g_.GetDescendantsOf(0).front(), 1);
+  EXPECT_EQ(g_.GetDescendantsOf(0).back(), 3);
 
   // 0--> 1         3
   //      |
   //      v
   //      4
-  g.RemoveEdge(1, 2);
-  g.RemoveEdge(2, 3);
-  EXPECT_THAT(g.GetDescendantsOf(0), ElementsAre(1, 4));
+  g_.RemoveEdge(1, 2);
+  g_.RemoveEdge(2, 3);
+  EXPECT_THAT(g_.GetDescendantsOf(0), ElementsAre(1, 4));
 
   // 0--> 1
   //      |
   //      v
   //      4--> 2--> 3
-  g.AddEdge(4, 2);
-  g.AddEdge(2, 3);
-  EXPECT_THAT(g.GetDescendantsOf(0), ElementsAre(1, 4, 2, 3));
+  g_.AddEdge(4, 2);
+  g_.AddEdge(2, 3);
+  EXPECT_THAT(g_.GetDescendantsOf(0), ElementsAre(1, 4, 2, 3));
 }
 
 } // namespace
