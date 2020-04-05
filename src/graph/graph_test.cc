@@ -25,6 +25,7 @@ namespace {
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::IsEmpty;
 using ::testing::Pointwise;
 using ::testing::UnorderedElementsAre;
 
@@ -53,9 +54,13 @@ TEST(Graph, Removal) {
 
   g.AddEdge(0, 1);
   EXPECT_TRUE(g.HasEdge(0, 1));
+  EXPECT_THAT(g.GetDescendantsOf(0), UnorderedElementsAre(1));
+  EXPECT_THAT(g.GetParentsOf(1), UnorderedElementsAre(0));
 
   g.RemoveEdge(0, 1);
   EXPECT_FALSE(g.HasEdge(0, 1));
+  EXPECT_THAT(g.GetDescendantsOf(0), IsEmpty());
+  EXPECT_THAT(g.GetParentsOf(1), IsEmpty());
 }
 
 class GraphTest : public ::testing::Test {

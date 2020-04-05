@@ -39,13 +39,23 @@ public:
   // If an edge creates a cycle, this method will return false and not perform
   // the insertion. Otherwise, will return true.
   bool AddEdge(T from, T to) {
-    bool result = !IsCycle(from, to) && edges_[from].insert(to).second;
-    return result;
+    if (IsCycle(from, to)) {
+      return false;
+    }
+    p2c_[from].insert(to);
+    c2p_[to].insert(from);
+    return true;
   }
 
-  void RemoveEdge(T from, T to) { edges_[from].erase(to); }
+  // The inverse of AddEdge, except there is no checking of whether the edge
+  // existed before.
+  void RemoveEdge(T from, T to) {
+    p2c_[from].erase(to);
+    c2p_[to].erase(from);
+  }
 
-  bool HasEdge(T from, T to) { return edges_[from].contains(to); }
+  // Possibly useful.
+  bool HasEdge(T from, T to) { return p2c_[from].contains(to); }
 
   // Returns a vector of nodes descending from some input node.
   // The returned vector will be in topological order.
@@ -55,49 +65,31 @@ public:
     return vec;
   }
 
-  // Returns a vector of nodes which are direct parents of some input node.
+  // Returns a vector of nodes which are _direct_ parents of some input node.
   std::vector<T> GetParentsOf(T node) {
-    std::vector<T> vec{};
-    for (const auto &[k, vs] : edges_) {
-      if (vs.contains(node)) {
-        vec.push_back(k);
-      }
-    }
-    return vec;
+    return std::vector<T>(c2p_[node].begin(), c2p_[node].end());
   }
 
 private:
   // Returns true if a cycle is found.
   bool IsCycle(T cand, T node) {
-    auto it = edges_[node];
-    return std::any_of(it.begin(), it.end(),
-                       [this, &cand](const T &child) -> bool {
+    return std::any_of(p2c_[node].begin(), p2c_[node].end(),
+                       [&](const T &child) {
                          return (child == cand) || IsCycle(cand, child);
                        });
   }
 
   void GetDescendantsOfInternal(T node, std::vector<T> *output) {
-    for (const T &child : edges_[node]) {
+    for (const T &child : p2c_[node]) {
       output->push_back(child);
     }
-    for (const T &child : edges_[node]) {
+    for (const T &child : p2c_[node]) {
       GetDescendantsOfInternal(child, output);
     }
   }
 
-  // void Print() {
-  //   std::cout << "map: ";
-  //   for (const auto &[k, vs] : edges_) {
-  //     std::cout << k << ": [";
-  //     for (const auto &v : vs) {
-  //       std::cout << v << ",";
-  //     }
-  //     std::cout << "]; ";
-  //   }
-  //   std::cout << std::endl;
-  // }
-
-  absl::flat_hash_map<T, absl::flat_hash_set<T>> edges_;
+  absl::flat_hash_map<T, absl::flat_hash_set<T>> p2c_;
+  absl::flat_hash_map<T, absl::flat_hash_set<T>> c2p_;
 };
 
 } // namespace graph
