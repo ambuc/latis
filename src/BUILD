@@ -43,6 +43,7 @@ cc_library(
         "//src/formula:evaluator_lib",
         "//src/formula:formula_lib",
         "//src/graph",
+        "//src/utils:status_macros",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
@@ -61,6 +62,16 @@ cc_test(
         "//src/test_utils:test_utils_lib",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "latis",
+    srcs = ["main.cc"],
+    deps = [
+        ":latis_impl",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
     ],
 )
 

@@ -156,7 +156,8 @@ InSequence_impl(TSpan *tspan, std::tuple<const Prsr<Ts> &...> fns_tuple,
   TSpan lcl = *tspan;
   std::tuple<Ts...> resultant;
 
-  auto loop_status = OkStatus();
+  auto loop_status =
+      ::google::protobuf::util::Status(::google::protobuf::util::error::OK, "");
 
   std::apply(
       [&loop_status, &resultant, &lcl](Prsr<Ts> const &... fn) {

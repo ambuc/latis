@@ -70,20 +70,12 @@ struct Token {
   std::string_view value;
 };
 
-bool operator==(const Token &lhs, const Token &rhs) {
-  return (lhs.type == rhs.type) && (lhs.value == rhs.value);
-}
+bool operator==(const Token &lhs, const Token &rhs);
 
 using TSpan = absl::Span<const Token>;
 
-std::string PrintTSpan(TSpan *tspan) {
-  std::string resultant;
-  for (const auto token : *tspan) {
-    resultant.append(token.value);
-  }
-  return resultant;
-}
-void PrintLnTSpan(TSpan *tspan) { std::cout << PrintTSpan(tspan) << std::endl; }
+std::string PrintTSpan(TSpan *tspan);
+void PrintLnTSpan(TSpan *tspan);
 
 template <typename T> //
 using Prsr = std::function<::google::protobuf::util::StatusOr<T>(TSpan *)>;

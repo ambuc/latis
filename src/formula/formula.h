@@ -19,36 +19,16 @@
 
 #include "proto/latis_msg.pb.h"
 #include "src/formula/common.h"
-#include "src/formula/evaluator.h"
-#include "src/formula/lexer.h"
-#include "src/formula/parser.h"
-#include "src/utils/status_macros.h"
-#include "src/xy.h"
 
-#include "absl/types/optional.h"
-#include "google/protobuf/stubs/status.h"
-#include "google/protobuf/stubs/status_macros.h"
+#include "absl/strings/str_format.h"
 #include "google/protobuf/stubs/statusor.h"
 
 namespace latis {
 namespace formula {
 
+// One-stop shop for lex, parse, and evaluate.
 ::google::protobuf::util::StatusOr<std::tuple<Expression, Amount>>
-Parse(std::string_view input, const LookupFn &lookup_fn) {
-  static Parser parser{};
-
-  std::vector<Token> tokens;
-  ASSIGN_OR_RETURN_(tokens, Lex(input));
-  TSpan tspan{tokens};
-
-  Expression expr;
-  ASSIGN_OR_RETURN_(expr, parser.ConsumeExpression(&tspan));
-
-  Amount amt;
-  ASSIGN_OR_RETURN_(amt, Evaluator(lookup_fn).CrunchExpression(expr));
-
-  return std::make_tuple(expr, amt);
-}
+Parse(std::string_view input, const LookupFn &lookup_fn);
 
 } // namespace formula
 } // namespace latis

@@ -4,6 +4,7 @@ package(default_visibility = ["//src:__subpackages__"])
 
 cc_library(
     name = "common_lib",
+    srcs = ["common.cc"],
     hdrs = ["common.h"],
     deps = [
         "//src:xy_lib",
@@ -43,6 +44,7 @@ cc_test(
 
 cc_library(
     name = "formula_lib",
+    srcs = ["formula.cc"],
     hdrs = ["formula.h"],
     deps = [
         ":evaluator_lib",
@@ -50,6 +52,7 @@ cc_library(
         ":parser_lib",
         "//proto:latis_msg_cc_proto",
         "//src/utils:status_macros",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:optional",
     ],
 )

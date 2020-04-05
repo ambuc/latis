@@ -16,6 +16,7 @@
 
 #include "src/display_utils.h"
 #include "src/formula/evaluator.h"
+#include "src/utils/status_macros.h"
 
 #include "absl/memory/memory.h"
 
@@ -24,6 +25,7 @@ namespace latis {
 using ::google::protobuf::util::Status;
 using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
+using ::google::protobuf::util::error::OK;
 
 Latis::Latis() : Latis(LatisMsg()) {}
 
@@ -139,7 +141,7 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
     *latis_msg->add_cells() = cell;
   }
 
-  return OkStatus();
+  return Status(OK, "");
 }
 
 void Latis::Update(XY xy) {

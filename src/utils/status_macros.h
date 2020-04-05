@@ -55,11 +55,6 @@ DoAssignOrReturn_(T &lhs, ::google::protobuf::util::StatusOr<T> result) {
     }                                                                          \
   })
 
-::google::protobuf::util::Status OkStatus() {
-  return ::google::protobuf::util::Status(::google::protobuf::util::error::OK,
-                                          "");
-}
-
 } // namespace latis
 
 #endif // SRC_UTILS_STATUS_MACROS_H_

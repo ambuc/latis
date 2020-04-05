@@ -63,7 +63,7 @@ Status CheckSameCurrency(const Money &lhs, const Money &rhs) {
   if (lhs.currency() != rhs.currency()) {
     return Status(INVALID_ARGUMENT, "different currencies.");
   }
-  return OkStatus();
+  return Status(OK, "");
 }
 
 // Amount conversions
