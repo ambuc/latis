@@ -26,18 +26,18 @@
 
 namespace latis {
 
-struct AmountFormatOptions {
-  absl::ParsedFormat<'d'> int_format_options{"%2d"};
-  absl::ParsedFormat<'f'> double_format_options{"%5.2f"};
+struct FmtOptions {
+  int width = 5;
+  int double_precision = 3;
 };
 
-std::string PrintCell(const Cell &cell, const AmountFormatOptions &afo);
+std::string PrintCell(const Cell &cell, const FmtOptions &afo);
 std::string PrintCell(const Cell &cell) {
-  return PrintCell(cell, AmountFormatOptions());
+  return PrintCell(cell, FmtOptions());
 }
-std::string PrintAmount(const Amount &amount, const AmountFormatOptions &afo);
+std::string PrintAmount(const Amount &amount, const FmtOptions &afo);
 std::string PrintAmount(const Amount &amount) {
-  return PrintAmount(amount, AmountFormatOptions());
+  return PrintAmount(amount, FmtOptions());
 }
 
 // Short-lived class to assist with stdout grid printing. Must not outlive its
@@ -51,7 +51,6 @@ std::string PrintAmount(const Amount &amount) {
 class GridView {
 public:
   struct Options {
-    // Size
     int height = 0;
     int width = 0;
 
@@ -59,13 +58,13 @@ public:
     int offset_y = 0;
 
     // Formatting
-    int floating_point_precision = 2;
+    int double_precision = 2;
   };
 
   explicit GridView(Options options)
       : height_(options.height), width_(options.width),
         offset_x_(options.offset_x), offset_y_(options.offset_y),
-        floating_point_precision_(options.floating_point_precision),
+        double_precision_(options.double_precision),
         // initialized vector of vectors
         cells_(height_, std::vector<const Cell *>(width_, nullptr)),
         strings_(height_, std::vector<absl::optional<std::string>>(
@@ -74,7 +73,7 @@ public:
 
   void Write(XY xy, const Cell *cell_ptr);
 
-  friend std::ostream &operator<<(std::ostream &os, const GridView &gv);
+  friend void operator<<(std::ostream &os, const GridView &gv);
 
 private:
   void PutHline(std::ostream &os) const;
@@ -83,14 +82,14 @@ private:
   const int width_;
   const int offset_x_;
   const int offset_y_;
-  const int floating_point_precision_;
+  const int double_precision_;
 
   std::vector<std::vector<const Cell *>> cells_;                  // y then x
   std::vector<std::vector<absl::optional<std::string>>> strings_; // y then x
   std::vector<int> widths_;
 };
 
-std::ostream &operator<<(std::ostream &os, const GridView &gv);
+void operator<<(std::ostream &os, const GridView &gv);
 
 } // namespace latis
 

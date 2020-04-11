@@ -19,52 +19,66 @@
 
 namespace latis {
 
-std::string PrintAmount(const Amount &amount, const AmountFormatOptions &afo) {
+std::string PrintAmount(const Amount &amount, const FmtOptions &afo) {
   switch (amount.amount_demux_case()) {
   case Amount::AMOUNT_DEMUX_NOT_SET: {
-    return "?";
+    return absl::StrFormat("%*s", afo.width, "?");
   }
   case Amount::kStrAmount: {
-    return amount.str_amount();
+    return absl::StrFormat("%*s", afo.width,
+                           absl::StrFormat("'%s'", amount.str_amount()));
   }
   case Amount::kBoolAmount: {
-    return amount.bool_amount() ? "True" : "False";
+    return absl::StrFormat("%*s", afo.width,
+                           amount.bool_amount() ? "True" : "False");
   }
   case Amount::kIntAmount: {
-    return absl::StrFormat(afo.int_format_options, amount.int_amount());
+    return absl::StrFormat("%*d", afo.width, amount.int_amount());
   }
   case Amount::kDoubleAmount: {
-    return absl::StrFormat(afo.double_format_options, amount.double_amount());
+    return absl::StrFormat("%*.*f", afo.width, afo.double_precision,
+                           amount.double_amount());
   }
   case Amount::kTimestampAmount: {
-    return absl::FormatTime(
-        absl::FromUnixSeconds(amount.timestamp_amount().seconds()));
+    return absl::StrFormat("%*s", afo.width,
+                           absl::FormatTime(absl::FromUnixSeconds(
+                               amount.timestamp_amount().seconds())));
   }
   case Amount::kMoneyAmount: {
     switch (amount.money_amount().currency()) {
     case Money::USD: {
-      return absl::StrFormat("$%d.%02d", amount.money_amount().dollars(),
-                             amount.money_amount().cents());
+      return absl::StrFormat("%*s", afo.width,
+                             absl::StrFormat("$%d.%02d",
+                                             amount.money_amount().dollars(),
+                                             amount.money_amount().cents()));
     }
     default: {
-      return "?$";
+      return absl::StrFormat("%*s", afo.width, "?");
     }
     }
   }
   }
-  return "?";
+  return absl::StrFormat("%*s", afo.width, "?");
 }
 
-std::string PrintCell(const Cell &cell, const AmountFormatOptions &afo) {
+std::string PrintCell(const Cell &cell, const FmtOptions &afo) {
   return PrintAmount(cell.formula().cached_amount(), afo);
 }
 
 void GridView::Write(XY xy, const Cell *cell_ptr) {
   int y = xy.Y() - offset_y_;
   int x = xy.X() - offset_x_;
-  cells_[y][x] = cell_ptr;
-  strings_[y][x] = PrintCell(*cell_ptr);
-  widths_[x] = std::max(widths_[x], int(strings_[y][x].value_or("").length()));
+  if (0 <= y && y < height_ && 0 <= x && x < width_) {
+    cells_[y][x] = cell_ptr;
+    // TODO(ambuc): We PrintCell() 2x per cell. There's an optimization here
+    // where we store the unpadded strings and then pad them at print time.
+    int w = PrintCell(*cell_ptr, FmtOptions({
+                                     .width = -1,
+                                     .double_precision = double_precision_,
+                                 }))
+                .length();
+    widths_[x] = std::max(widths_[x], w);
+  }
 }
 
 void GridView::PutHline(std::ostream &os) const {
@@ -80,26 +94,37 @@ void GridView::PutHline(std::ostream &os) const {
   os << "\n";
 }
 
-std::ostream &operator<<(std::ostream &os, const GridView &gv) {
+void operator<<(std::ostream &os, const GridView &gv) {
   if (gv.height_ == 0 && gv.width_ == 0) {
-    return os;
+    return;
   }
 
   gv.PutHline(os);
 
   // For each row:
-  for (int y = 0; y < gv.strings_.size(); ++y) {
-    for (int x = 0; x < gv.strings_[y].size(); ++x) {
+  for (size_t y = 0; y < gv.cells_.size(); ++y) {
+    for (size_t x = 0; x < gv.cells_[y].size(); ++x) {
       if (x == 0) {
         os << "|";
       }
-      os << " " << gv.strings_[y][x].value_or("") << " |";
+      if (gv.cells_[y][x] == nullptr) {
+        for (int i = 0; i < gv.widths_[x] + 2; ++i) {
+          os << " ";
+        }
+        os << "|";
+      } else {
+        os << " "
+           << PrintCell(*gv.cells_[y][x],
+                        {.width = gv.widths_[x],
+                         .double_precision = gv.double_precision_})
+           << " |";
+      }
     }
     os << "\n";
     gv.PutHline(os);
   }
 
-  return os;
+  return;
 }
 
 } // namespace latis

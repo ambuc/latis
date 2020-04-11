@@ -31,19 +31,19 @@ using ::testing::Eq;
 TEST(PrintCell, StringAmount) {
   Cell c;
   c.mutable_formula()->mutable_cached_amount()->set_str_amount("foo");
-  EXPECT_THAT(PrintCell(c), Eq("foo"));
+  EXPECT_THAT(PrintCell(c), Eq("'foo'"));
 }
 
 TEST(PrintCell, IntAmount) {
   Cell c;
   c.mutable_formula()->mutable_cached_amount()->set_int_amount(1234);
-  EXPECT_THAT(PrintCell(c), Eq("1234"));
+  EXPECT_THAT(PrintCell(c, {.width = 4}), Eq("1234"));
 }
 
 TEST(PrintCell, DoubleAmount) {
   Cell c;
   c.mutable_formula()->mutable_cached_amount()->set_double_amount(12.34567890);
-  EXPECT_THAT(PrintCell(c), Eq("12.35"));
+  EXPECT_THAT(PrintCell(c, {.width = 5, .double_precision = 2}), Eq("12.35"));
 }
 
 TEST(PrintCell, TimestampAmount) {
@@ -73,37 +73,130 @@ TEST(PrintCell, MoneyAmount) {
   EXPECT_THAT(PrintCell(c), Eq("$0.00"));
 }
 
-TEST(GridView, ConstructAndPrint) {
-  absl::flat_hash_map<XY, Cell> xy_cells{};
-  xy_cells[XY(0, 0)] = ToProto<Cell>(R"pb(
-      point_location: { row: 0 col: 0 } formula: { cached_amount: { int_amount: 5 } }
-  )pb");
-  xy_cells[XY(0, 1)] = ToProto<Cell>(R"pb(
-      point_location: { row: 1 col: 0 } formula: { cached_amount: { int_amount: 10 } }
-  )pb");
-  xy_cells[XY(1, 0)] = ToProto<Cell>(R"pb(
-      point_location: { row: 0 col: 1 } formula: { cached_amount: { double_amount: 5.0 } }
-  )pb");
-  xy_cells[XY(1, 1)] = ToProto<Cell>(R"pb(
-      point_location: { row: 1 col: 1 } formula: { cached_amount: { double_amount: 10.0 } }
-  )pb");
+class GridViewTest : public ::testing::Test {
+public:
+  //      0     1      2                3                 4
+  //   +----+--------+   +---------------------------+--------+
+  // 0 |  5 |   5.00 |   |                     "foo" | $10.10 |
+  //   +----+--------+   +---------------------------+--------+
+  // 1 | 10 |  10.00 |   | 1970-01-01T00:00:00+00:00 |   TRUE |
+  //   +----+--------+   +---------------------------+--------+
+  // 2 |    | 100.00 |   | 1970-01-01T00:00:00+00:00 |   TRUE |
+  //   +----+--------+   +---------------------------+--------+
+  const std::vector<Cell> cell_protos_{
+      ToProto<Cell>(
+          R"(point_location: { row: 0 col: 0 } formula: { cached_amount: { int_amount: 5 } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 1 col: 0 } formula: { cached_amount: { int_amount: 10 } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 0 col: 1 } formula: { cached_amount: { double_amount: 5.0 } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 1 col: 1 } formula: { cached_amount: { double_amount: 10.0 } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 2 col: 1 } formula: { cached_amount: { double_amount: 100.0 } })"),
+      //
+      ToProto<Cell>(
+          R"(point_location: { row: 0 col: 3 } formula: { cached_amount: { str_amount: "foo" } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 0 col: 4 } formula: { cached_amount: { 
+               money_amount: { currency: USD dollars: 10 cents: 10 }
+             } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 1 col: 3 } formula: { cached_amount: { 
+               timestamp_amount: { seconds: 1451675045 }
+             } })"),
+      ToProto<Cell>(
+          R"(point_location: { row: 1 col: 4 } formula: { cached_amount: { bool_amount: true } })"),
+  };
 
-  auto gv = GridView({.height = 2, .width = 2, .offset_x = 0, .offset_y = 0});
+  std::string ToStr(GridView gv) {
+    for (const auto &p : cell_protos_) {
+      gv.Write(XY::From(p.point_location()), &p);
+    }
 
-  for (const auto &[xy, cell] : xy_cells) {
-    gv.Write(xy, &cell);
+    std::ostringstream out;
+    out << gv;
+    return out.str();
   }
+};
 
-  std::ostringstream out;
-  out << gv;
-  EXPECT_THAT(out.str(), Eq(R"(+----+-------+
-|  5 |  5.00 |
-+----+-------+
-| 10 | 10.00 |
-+----+-------+
-)"));
+TEST_F(GridViewTest, ConstructAndPrintAll) {
+  auto gv = GridView({.height = 2, .width = 2, .double_precision = 2});
+  EXPECT_THAT(ToStr(gv), Eq("+----+-------+\n"
+                            "|  5 |  5.00 |\n"
+                            "+----+-------+\n"
+                            "| 10 | 10.00 |\n"
+                            "+----+-------+\n"));
+}
 
-  std::cout << out.str() << std::endl;
+TEST_F(GridViewTest, ConstructAndPrintSome1) {
+  auto gv = GridView({.height = 2, .width = 1});
+  EXPECT_THAT(ToStr(gv), Eq("+----+\n"
+                            "|  5 |\n"
+                            "+----+\n"
+                            "| 10 |\n"
+                            "+----+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSome2) {
+  auto gv = GridView({.height = 1, .width = 2});
+  EXPECT_THAT(ToStr(gv), Eq("+---+------+\n"
+                            "| 5 | 5.00 |\n"
+                            "+---+------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSome3) {
+  auto gv = GridView({.height = 2, .width = 1, .offset_x = 1});
+  EXPECT_THAT(ToStr(gv), Eq("+-------+\n"
+                            "|  5.00 |\n"
+                            "+-------+\n"
+                            "| 10.00 |\n"
+                            "+-------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSome4) {
+  auto gv = GridView({.height = 1, .width = 2, .offset_y = 1});
+  EXPECT_THAT(ToStr(gv), Eq("+----+-------+\n"
+                            "| 10 | 10.00 |\n"
+                            "+----+-------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSome5) {
+  auto gv = GridView({.height = 3, .width = 2, .double_precision = 2});
+  EXPECT_THAT(ToStr(gv), Eq("+----+--------+\n"
+                            "|  5 |   5.00 |\n"
+                            "+----+--------+\n"
+                            "| 10 |  10.00 |\n"
+                            "+----+--------+\n"
+                            "|    | 100.00 |\n"
+                            "+----+--------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSecondSetAll) {
+  auto gv = GridView({.height = 2, .width = 2, .offset_x = 3});
+  EXPECT_THAT(ToStr(gv), Eq("+---------------------------+--------+\n"
+                            "|                     'foo' | $10.10 |\n"
+                            "+---------------------------+--------+\n"
+                            "| 2016-01-01T19:04:05+00:00 |   True |\n"
+                            "+---------------------------+--------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSecondSetSome1) {
+  auto gv = GridView({.height = 2, .width = 1, .offset_x = 3});
+  EXPECT_THAT(ToStr(gv), Eq("+---------------------------+\n"
+                            "|                     'foo' |\n"
+                            "+---------------------------+\n"
+                            "| 2016-01-01T19:04:05+00:00 |\n"
+                            "+---------------------------+\n"));
+}
+
+TEST_F(GridViewTest, ConstructAndPrintSecondSetSome2) {
+  auto gv = GridView({.height = 2, .width = 1, .offset_x = 4});
+  EXPECT_THAT(ToStr(gv), Eq("+--------+\n"
+                            "| $10.10 |\n"
+                            "+--------+\n"
+                            "|   True |\n"
+                            "+--------+\n"));
 }
 
 //
