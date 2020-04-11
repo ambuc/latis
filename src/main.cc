@@ -13,15 +13,12 @@
 // limitations under the License.
 
 #include "src/latis_impl.h"
-#include "src/ui/intro.h"
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
-
-  latis::ui::PlayIntro();
 
   latis::Latis latis;
 

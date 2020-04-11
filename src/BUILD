@@ -70,7 +70,6 @@ cc_binary(
     srcs = ["main.cc"],
     deps = [
         ":latis_impl",
-        "//src/ui:intro",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
     ],
