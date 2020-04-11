@@ -48,6 +48,8 @@ public:
   PointLocation ToPointLocation() const;
   std::string ToA1() const;
   std::string ToColumnLetter() const;
+  int X() const { return x_; }
+  int Y() const { return y_; }
 
   // utils
   static ::google::protobuf::util::StatusOr<int>

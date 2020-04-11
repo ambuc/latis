@@ -14,6 +14,12 @@
 
 #include "src/display_utils.h"
 
+#include <iostream>
+
+#include "src/test_utils/test_utils.h"
+
+#include "absl/container/flat_hash_map.h"
+#include "src/xy.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -66,6 +72,53 @@ TEST(PrintCell, MoneyAmount) {
   money->set_cents(0);
   EXPECT_THAT(PrintCell(c), Eq("$0.00"));
 }
+
+TEST(GridView, ConstructAndPrint) {
+  absl::flat_hash_map<XY, Cell> xy_cells{};
+  xy_cells[XY(0, 0)] = ToProto<Cell>(R"pb(
+      point_location: { row: 0 col: 0 } formula: { cached_amount: { int_amount: 5 } }
+  )pb");
+  xy_cells[XY(0, 1)] = ToProto<Cell>(R"pb(
+      point_location: { row: 1 col: 0 } formula: { cached_amount: { int_amount: 10 } }
+  )pb");
+  xy_cells[XY(1, 0)] = ToProto<Cell>(R"pb(
+      point_location: { row: 0 col: 1 } formula: { cached_amount: { double_amount: 5.0 } }
+  )pb");
+  xy_cells[XY(1, 1)] = ToProto<Cell>(R"pb(
+      point_location: { row: 1 col: 1 } formula: { cached_amount: { double_amount: 10.0 } }
+  )pb");
+
+  auto gv = GridView({.height = 2, .width = 2, .offset_x = 0, .offset_y = 0});
+
+  for (const auto &[xy, cell] : xy_cells) {
+    gv.Write(xy, &cell);
+  }
+
+  std::ostringstream out;
+  out << gv;
+  EXPECT_THAT(out.str(), Eq(R"(+----+-------+
+|  5 |  5.00 |
++----+-------+
+| 10 | 10.00 |
++----+-------+
+)"));
+
+  std::cout << out.str() << std::endl;
+}
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 } // namespace
 } // namespace latis

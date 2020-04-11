@@ -19,7 +19,7 @@
 
 namespace latis {
 
-std::string PrintAmount(const Amount &amount) {
+std::string PrintAmount(const Amount &amount, const AmountFormatOptions &afo) {
   switch (amount.amount_demux_case()) {
   case Amount::AMOUNT_DEMUX_NOT_SET: {
     return "?";
@@ -31,10 +31,10 @@ std::string PrintAmount(const Amount &amount) {
     return amount.bool_amount() ? "True" : "False";
   }
   case Amount::kIntAmount: {
-    return absl::StrFormat("%d", amount.int_amount());
+    return absl::StrFormat(afo.int_format_options, amount.int_amount());
   }
   case Amount::kDoubleAmount: {
-    return absl::StrFormat("%.2f", amount.double_amount());
+    return absl::StrFormat(afo.double_format_options, amount.double_amount());
   }
   case Amount::kTimestampAmount: {
     return absl::FormatTime(
@@ -55,8 +55,51 @@ std::string PrintAmount(const Amount &amount) {
   return "?";
 }
 
-std::string PrintCell(const Cell &cell) {
-  return PrintAmount(cell.formula().cached_amount());
+std::string PrintCell(const Cell &cell, const AmountFormatOptions &afo) {
+  return PrintAmount(cell.formula().cached_amount(), afo);
+}
+
+void GridView::Write(XY xy, const Cell *cell_ptr) {
+  int y = xy.Y() - offset_y_;
+  int x = xy.X() - offset_x_;
+  cells_[y][x] = cell_ptr;
+  strings_[y][x] = PrintCell(*cell_ptr);
+  widths_[x] = std::max(widths_[x], int(strings_[y][x].value_or("").length()));
+}
+
+void GridView::PutHline(std::ostream &os) const {
+  for (int x = 0; x < width_; ++x) {
+    if (x == 0) {
+      os << '+';
+    }
+    for (int i = 0; i < widths_[x] + 2; ++i) {
+      os << "-";
+    }
+    os << '+';
+  }
+  os << "\n";
+}
+
+std::ostream &operator<<(std::ostream &os, const GridView &gv) {
+  if (gv.height_ == 0 && gv.width_ == 0) {
+    return os;
+  }
+
+  gv.PutHline(os);
+
+  // For each row:
+  for (int y = 0; y < gv.strings_.size(); ++y) {
+    for (int x = 0; x < gv.strings_[y].size(); ++x) {
+      if (x == 0) {
+        os << "|";
+      }
+      os << " " << gv.strings_[y][x].value_or("") << " |";
+    }
+    os << "\n";
+    gv.PutHline(os);
+  }
+
+  return os;
 }
 
 } // namespace latis
