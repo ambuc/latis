@@ -103,8 +103,9 @@ public:
   friend void operator<<(std::ostream &os, const GridView &gv);
 
 private:
-  void HorizontalSeparator(std::ostream &os, std::string left, std::string fill,
-                           std::string middle, std::string right) const;
+  void HorizontalSeparator(std::string left, std::string fill,
+                           std::string middle, std::string right,
+                           std::ostream &os) const;
   void HorizontalSeparatorFirst(std::ostream &os) const;
   void HorizontalSeparatorMiddle(std::ostream &os) const;
   void HorizontalSeparatorLast(std::ostream &os) const;
