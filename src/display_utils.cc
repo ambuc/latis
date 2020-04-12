@@ -20,9 +20,122 @@
 namespace latis {
 
 namespace {
+
+std::string GetAsciiBorder(internal::BorderPiece piece) {
+  switch (piece) {
+  case (internal::BorderPiece::kVerticalInner):
+    return "|";
+  case (internal::BorderPiece::kVerticalOuter):
+    return "|";
+  case (internal::BorderPiece::kHorizontalInner):
+    return "-";
+  case (internal::BorderPiece::kHorizontalOuter):
+    return "-";
+  case (internal::BorderPiece::kNorthEdge):
+    return "+";
+  case (internal::BorderPiece::kEastEdge):
+    return "+";
+  case (internal::BorderPiece::kSouthEdge):
+    return "+";
+  case (internal::BorderPiece::kWestEdge):
+    return "+";
+  case (internal::BorderPiece::kNWCorner):
+    return "+";
+  case (internal::BorderPiece::kNECorner):
+    return "+";
+  case (internal::BorderPiece::kSWCorner):
+    return "+";
+  case (internal::BorderPiece::kSECorner):
+    return "+";
+  case (internal::BorderPiece::kCrossroads):
+    return "+";
+  default:
+    return "?";
+  }
+};
+std::string GetBoxDrawingBorder(internal::BorderPiece piece) {
+  switch (piece) {
+  case (internal::BorderPiece::kVerticalInner):
+    return "│";
+  case (internal::BorderPiece::kVerticalOuter):
+    return "│";
+  case (internal::BorderPiece::kHorizontalInner):
+    return "─";
+  case (internal::BorderPiece::kHorizontalOuter):
+    return "─";
+  case (internal::BorderPiece::kNorthEdge):
+    return "┬";
+  case (internal::BorderPiece::kEastEdge):
+    return "┤";
+  case (internal::BorderPiece::kSouthEdge):
+    return "┴";
+  case (internal::BorderPiece::kWestEdge):
+    return "├";
+  case (internal::BorderPiece::kNWCorner):
+    return "┌";
+  case (internal::BorderPiece::kNECorner):
+    return "┐";
+  case (internal::BorderPiece::kSWCorner):
+    return "└";
+  case (internal::BorderPiece::kSECorner):
+    return "┘";
+  case (internal::BorderPiece::kCrossroads):
+    return "┼";
+  default:
+    return "?";
+  }
+};
+std::string GetFancyBoxDrawingBorder(internal::BorderPiece piece) {
+  switch (piece) {
+  case (internal::BorderPiece::kVerticalInner):
+    return "│";
+  case (internal::BorderPiece::kVerticalOuter):
+    return "║";
+  case (internal::BorderPiece::kHorizontalInner):
+    return "─";
+  case (internal::BorderPiece::kHorizontalOuter):
+    return "═";
+  case (internal::BorderPiece::kNorthEdge):
+    return "╤";
+  case (internal::BorderPiece::kEastEdge):
+    return "╢";
+  case (internal::BorderPiece::kSouthEdge):
+    return "╧";
+  case (internal::BorderPiece::kWestEdge):
+    return "╟";
+  case (internal::BorderPiece::kNWCorner):
+    return "╔";
+  case (internal::BorderPiece::kNECorner):
+    return "╗";
+  case (internal::BorderPiece::kSWCorner):
+    return "╚";
+  case (internal::BorderPiece::kSECorner):
+    return "╝";
+  case (internal::BorderPiece::kCrossroads):
+    return "┼";
+  default:
+    return "?";
+  }
+};
+
+std::string GetBorder(internal::BorderStyle style,
+                      internal::BorderPiece piece) {
+  switch (style) {
+  case (internal::BorderStyle::kAscii):
+    return GetAsciiBorder(piece);
+  case (internal::BorderStyle::kBoxDrawing):
+    return GetBoxDrawingBorder(piece);
+  case (internal::BorderStyle::kFancyBoxDrawing):
+    return GetFancyBoxDrawingBorder(piece);
+  default:
+    return " ";
+  }
+}
+
 std::string Pad(absl::string_view input, int n) {
   return absl::StrFormat("%*s", n, input);
 }
+
 } // namespace
 
 std::string PrintAmount(const Amount &amount, const FmtOptions &afo) {
@@ -82,15 +195,41 @@ void GridView::Write(XY xy, const Cell *cell_ptr) {
   }
 }
 
-void GridView::PutHline(std::ostream &os) const {
+void GridView::PutTopHline(std::ostream &os) const {
+  return PutHline(
+      os, GetBorder(border_style_, internal::BorderPiece::kNWCorner),
+      GetBorder(border_style_, internal::BorderPiece::kHorizontalOuter),
+      GetBorder(border_style_, internal::BorderPiece::kNorthEdge),
+      GetBorder(border_style_, internal::BorderPiece::kNECorner));
+}
+void GridView::PutMiddleHline(std::ostream &os) const {
+  return PutHline(
+      os, GetBorder(border_style_, internal::BorderPiece::kWestEdge),
+      GetBorder(border_style_, internal::BorderPiece::kHorizontalInner),
+      GetBorder(border_style_, internal::BorderPiece::kCrossroads),
+      GetBorder(border_style_, internal::BorderPiece::kEastEdge));
+}
+void GridView::PutBottomHline(std::ostream &os) const {
+  return PutHline(
+      os, GetBorder(border_style_, internal::BorderPiece::kSWCorner),
+      GetBorder(border_style_, internal::BorderPiece::kHorizontalOuter),
+      GetBorder(border_style_, internal::BorderPiece::kSouthEdge),
+      GetBorder(border_style_, internal::BorderPiece::kSECorner));
+}
+void GridView::PutHline(std::ostream &os, std::string left, std::string fill,
+                        std::string middle, std::string right) const {
   for (size_t x = 0; x < width_; ++x) {
     if (x == 0) {
-      os << '+';
+      os << left;
     }
-    // :)
-    os.fill('-');
-    os.width(widths_[x] + 3);
-    os << '+';
+    for (size_t i = 0; i < widths_[x] + 2; ++i) {
+      os << fill;
+    }
+    if (x != width_ - 1) {
+      os << middle;
+    } else {
+      os << right;
+    }
   }
   os << "\n";
 }
@@ -98,12 +237,13 @@ void GridView::PutHline(std::ostream &os) const {
 void operator<<(std::ostream &os, const GridView &gv) {
   for (size_t y = 0; y < gv.height_; ++y) {
     if (y == 0) {
-      gv.PutHline(os);
+      gv.PutTopHline(os);
     }
     for (size_t x = 0; x < gv.width_; ++x) {
       const auto xy = XY(x, y);
       if (x == 0) {
-        os << "|";
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalOuter);
       }
       os << " "
          << Pad(
@@ -116,10 +256,22 @@ void operator<<(std::ostream &os, const GridView &gv) {
                   }
                 }(),
                 gv.widths_[x])
-         << " |";
+         << " ";
+      if (x == gv.width_ - 1) {
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalOuter);
+      } else {
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalInner);
+      }
     }
     os << "\n";
-    gv.PutHline(os);
+
+    if (y != gv.height_ - 1) {
+      gv.PutMiddleHline(os);
+    } else {
+      gv.PutBottomHline(os);
+    }
   }
 
   return;

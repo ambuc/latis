@@ -27,6 +27,28 @@
 
 namespace latis {
 
+namespace internal {
+
+enum BorderPiece {
+  kVerticalInner,   // │ , │
+  kVerticalOuter,   // │ , ║
+  kHorizontalInner, // ─ , ─
+  kHorizontalOuter, // ─ , ═
+  kNorthEdge,       // ┬ , ╤
+  kEastEdge,        // ├ , ╢
+  kSouthEdge,       // ┴ , ╧
+  kWestEdge,        // ┤ , ╟
+  kNWCorner,        // ┐ , ╗
+  kNECorner,        // ┌ , ╔
+  kSWCorner,        // └ , ╚
+  kSECorner,        // ┘ , ╝
+  kCrossroads,      // ┼ , ┼
+};
+
+enum BorderStyle { kAbsent, kAscii, kBoxDrawing, kFancyBoxDrawing };
+
+} // namespace internal
+
 struct FmtOptions {
   int width = 5;
   int double_precision = 3;
@@ -56,26 +78,33 @@ public:
 
     // Formatting
     int double_precision = 2;
+
+    internal::BorderStyle border_style = internal::kAscii;
   };
 
   explicit GridView(Options options)
       : height_(options.height), width_(options.width),
         offset_x_(options.offset_x), offset_y_(options.offset_y),
         fmt_options_({.double_precision = options.double_precision}),
-        widths_(width_, 0) {}
+        border_style_(options.border_style), widths_(width_, 0) {}
 
   void Write(XY xy, const Cell *cell_ptr);
 
   friend void operator<<(std::ostream &os, const GridView &gv);
 
 private:
-  void PutHline(std::ostream &os) const;
+  void PutHline(std::ostream &os, std::string left, std::string fill,
+                std::string middle, std::string right) const;
+  void PutTopHline(std::ostream &os) const;
+  void PutMiddleHline(std::ostream &os) const;
+  void PutBottomHline(std::ostream &os) const;
 
   const size_t height_;
   const size_t width_;
   const int offset_x_;
   const int offset_y_;
   const FmtOptions fmt_options_;
+  const internal::BorderStyle border_style_;
 
   absl::flat_hash_map<XY, std::string> strings_;
   std::vector<size_t> widths_;
