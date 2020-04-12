@@ -21,42 +21,34 @@ namespace latis {
 
 namespace {
 
-std::string GetAsciiBorder(internal::BorderPiece piece) {
-  static std::string sample = R"(++-+)"  // 00 01 02 03
-                              R"(++-+)"  // 04 05 06 07
-                              R"(||..)"  // 08 09 10 11
-                              R"(++.+)"; // 12 13 14 15
-  static int char_width = 1;
-  return sample.substr(char_width * int(piece), char_width);
-};
-std::string GetBoxDrawingBorder(internal::BorderPiece piece) {
-  static std::string sample = R"(┌┬─┐)"  // 00 01 02 03
-                              R"(├┼─┤)"  // 04 05 06 07
-                              R"(││░░)"  // 08 09 10 11
-                              R"(└┴░┘)"; // 12 13 14 15
-  static int char_width = 3;
-  return sample.substr(char_width * int(piece), char_width);
-};
-std::string GetFancyBoxDrawingBorder(internal::BorderPiece piece) {
-  static std::string sample = R"(╔╤═╗)"  // 00 01 02 03
-                              R"(╟┼─╢)"  // 04 05 06 07
-                              R"(║│▒▒)"  // 08 09 10 11
-                              R"(╚╧▒╝)"; // 12 13 14 15
-  static int char_width = 3;
-  return sample.substr(char_width * int(piece), char_width);
-};
-
 std::string GetBorder(internal::BorderStyle style,
                       internal::BorderPiece piece) {
   switch (style) {
-  case (internal::BorderStyle::kAscii):
-    return GetAsciiBorder(piece);
-  case (internal::BorderStyle::kBoxDrawing):
-    return GetBoxDrawingBorder(piece);
-  case (internal::BorderStyle::kFancyBoxDrawing):
-    return GetFancyBoxDrawingBorder(piece);
+  case (internal::BorderStyle::kAscii): {
+    static std::string sample = R"(++-+)"  // 00 01 02 03
+                                R"(++-+)"  // 04 05 06 07
+                                R"(||..)"  // 08 09 10 11
+                                R"(++.+)"; // 12 13 14 15
+    return sample.substr(int(piece), 1);
+  }
+  case (internal::BorderStyle::kBoxDrawing): {
+    static std::string sample = R"(┌┬─┐)"  // 00 01 02 03
+                                R"(├┼─┤)"  // 04 05 06 07
+                                R"(││░░)"  // 08 09 10 11
+                                R"(└┴░┘)"; // 12 13 14 15
+    static int char_width = 3;
+    return sample.substr(char_width * int(piece), char_width);
+  }
+  case (internal::BorderStyle::kFancyBoxDrawing): {
+    static std::string sample = R"(╔╤═╗)"  // 00 01 02 03
+                                R"(╟┼─╢)"  // 04 05 06 07
+                                R"(║│▒▒)"  // 08 09 10 11
+                                R"(╚╧▒╝)"; // 12 13 14 15
+    static int char_width = 3;
+    return sample.substr(char_width * int(piece), char_width);
+  }
   default:
-    return R"(?)";
+    return "?";
   }
 }
 
@@ -148,15 +140,15 @@ void GridView::PutHline(std::ostream &os, std::string left, std::string fill,
                         std::string middle, std::string right) const {
   for (size_t x = 0; x < width_; ++x) {
     if (x == 0) {
-      os << left.c_str();
+      os << left;
     }
     for (size_t i = 0; i < widths_[x] + 2; ++i) {
-      os << fill.c_str();
+      os << fill;
     }
     if (x != width_ - 1) {
-      os << middle.c_str();
+      os << middle;
     } else {
-      os << right.c_str();
+      os << right;
     }
   }
   os << "\n";
@@ -170,8 +162,8 @@ void operator<<(std::ostream &os, const GridView &gv) {
     for (size_t x = 0; x < gv.width_; ++x) {
       const auto xy = XY(x, y);
       if (x == 0) {
-        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalOuter)
-                  .c_str();
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalOuter);
       }
       os << " "
          << Pad(
@@ -186,11 +178,11 @@ void operator<<(std::ostream &os, const GridView &gv) {
                 gv.widths_[x])
          << " ";
       if (x == gv.width_ - 1) {
-        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalOuter)
-                  .c_str();
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalOuter);
       } else {
-        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalInner)
-                  .c_str();
+        os << GetBorder(gv.border_style_,
+                        internal::BorderPiece::kVerticalInner);
       }
     }
     os << "\n";
