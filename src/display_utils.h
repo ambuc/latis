@@ -22,6 +22,7 @@
 
 #include <iostream>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_format.h"
 
 namespace latis {
@@ -32,13 +33,9 @@ struct FmtOptions {
 };
 
 std::string PrintCell(const Cell &cell, const FmtOptions &afo);
-std::string PrintCell(const Cell &cell) {
-  return PrintCell(cell, FmtOptions());
-}
+std::string PrintCell(const Cell &cell);
 std::string PrintAmount(const Amount &amount, const FmtOptions &afo);
-std::string PrintAmount(const Amount &amount) {
-  return PrintAmount(amount, FmtOptions());
-}
+std::string PrintAmount(const Amount &amount);
 
 // Short-lived class to assist with stdout grid printing. Must not outlive its
 // pointees.
@@ -66,9 +63,6 @@ public:
         offset_x_(options.offset_x), offset_y_(options.offset_y),
         double_precision_(options.double_precision),
         // initialized vector of vectors
-        cells_(height_, std::vector<const Cell *>(width_, nullptr)),
-        strings_(height_, std::vector<absl::optional<std::string>>(
-                              width_, absl::nullopt)),
         widths_(width_, 0) {}
 
   void Write(XY xy, const Cell *cell_ptr);
@@ -78,15 +72,14 @@ public:
 private:
   void PutHline(std::ostream &os) const;
 
-  const int height_;
-  const int width_;
+  const size_t height_;
+  const size_t width_;
   const int offset_x_;
   const int offset_y_;
   const int double_precision_;
 
-  std::vector<std::vector<const Cell *>> cells_;                  // y then x
-  std::vector<std::vector<absl::optional<std::string>>> strings_; // y then x
-  std::vector<int> widths_;
+  absl::flat_hash_map<XY, std::string> strings_;
+  std::vector<size_t> widths_;
 };
 
 void operator<<(std::ostream &os, const GridView &gv);
