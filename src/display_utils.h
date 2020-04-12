@@ -61,8 +61,7 @@ public:
   explicit GridView(Options options)
       : height_(options.height), width_(options.width),
         offset_x_(options.offset_x), offset_y_(options.offset_y),
-        double_precision_(options.double_precision),
-        // initialized vector of vectors
+        fmt_options_({.double_precision = options.double_precision}),
         widths_(width_, 0) {}
 
   void Write(XY xy, const Cell *cell_ptr);
@@ -76,7 +75,7 @@ private:
   const size_t width_;
   const int offset_x_;
   const int offset_y_;
-  const int double_precision_;
+  const FmtOptions fmt_options_;
 
   absl::flat_hash_map<XY, std::string> strings_;
   std::vector<size_t> widths_;

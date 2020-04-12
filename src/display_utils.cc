@@ -75,10 +75,10 @@ std::string PrintCell(const Cell &cell) {
 void GridView::Write(XY xy, const Cell *cell_ptr) {
   size_t y = xy.Y() - offset_y_;
   size_t x = xy.X() - offset_x_;
+  const auto local_xy = XY(x, y);
   if (0 <= y && y < height_ && 0 <= x && x < width_) {
-    strings_[XY(x, y)] = PrintCell(
-        *cell_ptr, FmtOptions({.double_precision = double_precision_}));
-    widths_[x] = std::max(widths_[x], strings_[XY(x, y)].length());
+    strings_[local_xy] = PrintCell(*cell_ptr, fmt_options_);
+    widths_[x] = std::max(widths_[x], strings_[local_xy].length());
   }
 }
 
@@ -96,16 +96,12 @@ void GridView::PutHline(std::ostream &os) const {
 }
 
 void operator<<(std::ostream &os, const GridView &gv) {
-  if (gv.height_ == 0 && gv.width_ == 0) {
-    return;
-  }
-
-  gv.PutHline(os);
-
-  // For each row:
   for (size_t y = 0; y < gv.height_; ++y) {
+    if (y == 0) {
+      gv.PutHline(os);
+    }
     for (size_t x = 0; x < gv.width_; ++x) {
-      auto xy = XY(x, y);
+      const auto xy = XY(x, y);
       if (x == 0) {
         os << "|";
       }
