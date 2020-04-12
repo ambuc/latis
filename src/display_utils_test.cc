@@ -121,7 +121,12 @@ public:
 };
 
 TEST_F(GridViewTest, ConstructAndPrintAll) {
-  auto gv = GridView({.height = 2, .width = 2, .double_precision = 2});
+  auto gv = GridView({
+      .height = 2,
+      .width = 2,
+      .double_precision = 2,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+----+-------+\n"
                             "|  5 |  5.00 |\n"
                             "+----+-------+\n"
@@ -130,7 +135,11 @@ TEST_F(GridViewTest, ConstructAndPrintAll) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSome1) {
-  auto gv = GridView({.height = 2, .width = 1});
+  auto gv = GridView({
+      .height = 2,
+      .width = 1,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+----+\n"
                             "|  5 |\n"
                             "+----+\n"
@@ -139,14 +148,23 @@ TEST_F(GridViewTest, ConstructAndPrintSome1) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSome2) {
-  auto gv = GridView({.height = 1, .width = 2});
+  auto gv = GridView({
+      .height = 1,
+      .width = 2,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+---+------+\n"
                             "| 5 | 5.00 |\n"
                             "+---+------+\n"));
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSome3) {
-  auto gv = GridView({.height = 2, .width = 1, .offset_x = 1});
+  auto gv = GridView({
+      .height = 2,
+      .width = 1,
+      .offset_x = 1,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+-------+\n"
                             "|  5.00 |\n"
                             "+-------+\n"
@@ -155,14 +173,24 @@ TEST_F(GridViewTest, ConstructAndPrintSome3) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSome4) {
-  auto gv = GridView({.height = 1, .width = 2, .offset_y = 1});
+  auto gv = GridView({
+      .height = 1,
+      .width = 2,
+      .offset_y = 1,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+----+-------+\n"
                             "| 10 | 10.00 |\n"
                             "+----+-------+\n"));
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSome5) {
-  auto gv = GridView({.height = 3, .width = 2, .double_precision = 2});
+  auto gv = GridView({
+      .height = 3,
+      .width = 2,
+      .double_precision = 2,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+----+--------+\n"
                             "|  5 |   5.00 |\n"
                             "+----+--------+\n"
@@ -173,7 +201,12 @@ TEST_F(GridViewTest, ConstructAndPrintSome5) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSecondSetAll) {
-  auto gv = GridView({.height = 2, .width = 2, .offset_x = 3});
+  auto gv = GridView({
+      .height = 2,
+      .width = 2,
+      .offset_x = 3,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+---------------------------+--------+\n"
                             "|                     'foo' | $10.10 |\n"
                             "+---------------------------+--------+\n"
@@ -182,7 +215,12 @@ TEST_F(GridViewTest, ConstructAndPrintSecondSetAll) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSecondSetSome1) {
-  auto gv = GridView({.height = 2, .width = 1, .offset_x = 3});
+  auto gv = GridView({
+      .height = 2,
+      .width = 1,
+      .offset_x = 3,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+---------------------------+\n"
                             "|                     'foo' |\n"
                             "+---------------------------+\n"
@@ -191,7 +229,12 @@ TEST_F(GridViewTest, ConstructAndPrintSecondSetSome1) {
 }
 
 TEST_F(GridViewTest, ConstructAndPrintSecondSetSome2) {
-  auto gv = GridView({.height = 2, .width = 1, .offset_x = 4});
+  auto gv = GridView({
+      .height = 2,
+      .width = 1,
+      .offset_x = 4,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("+--------+\n"
                             "| $10.10 |\n"
                             "+--------+\n"
@@ -199,11 +242,14 @@ TEST_F(GridViewTest, ConstructAndPrintSecondSetSome2) {
                             "+--------+\n"));
 }
 
-TEST_F(GridViewTest, ConstructAndPrintAllBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 2,
-                      .double_precision = 2,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
+TEST_F(GridViewTest, BoxDrawing) {
+  auto gv = GridView({
+      .height = 2,
+      .width = 2,
+      .double_precision = 2,
+      .border_style = internal::BorderStyle::kBoxDrawing,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("┌────┬───────┐\n"
                             "│  5 │  5.00 │\n"
                             "├────┼───────┤\n"
@@ -211,103 +257,14 @@ TEST_F(GridViewTest, ConstructAndPrintAllBoxDrawing) {
                             "└────┴───────┘\n"));
 }
 
-TEST_F(GridViewTest, ConstructAndPrintSome1BoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌────┐\n"
-                            "│  5 │\n"
-                            "├────┤\n"
-                            "│ 10 │\n"
-                            "└────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome2BoxDrawing) {
-  auto gv = GridView({.height = 1,
-                      .width = 2,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌───┬──────┐\n"
-                            "│ 5 │ 5.00 │\n"
-                            "└───┴──────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome3BoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 1,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌───────┐\n"
-                            "│  5.00 │\n"
-                            "├───────┤\n"
-                            "│ 10.00 │\n"
-                            "└───────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome4BoxDrawing) {
-  auto gv = GridView({.height = 1,
-                      .width = 2,
-                      .offset_y = 1,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌────┬───────┐\n"
-                            "│ 10 │ 10.00 │\n"
-                            "└────┴───────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome5BoxDrawing) {
-  auto gv = GridView({.height = 3,
-                      .width = 2,
-                      .double_precision = 2,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌────┬────────┐\n"
-                            "│  5 │   5.00 │\n"
-                            "├────┼────────┤\n"
-                            "│ 10 │  10.00 │\n"
-                            "├────┼────────┤\n"
-                            "│    │ 100.00 │\n"
-                            "└────┴────────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetAllBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 2,
-                      .offset_x = 3,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌───────────────────────────┬────────┐\n"
-                            "│                     'foo' │ $10.10 │\n"
-                            "├───────────────────────────┼────────┤\n"
-                            "│ 2016-01-01T19:04:05+00:00 │   True │\n"
-                            "└───────────────────────────┴────────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetSome1BoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 3,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌───────────────────────────┐\n"
-                            "│                     'foo' │\n"
-                            "├───────────────────────────┤\n"
-                            "│ 2016-01-01T19:04:05+00:00 │\n"
-                            "└───────────────────────────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetSome2BoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 4,
-                      .border_style = internal::BorderStyle::kBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("┌────────┐\n"
-                            "│ $10.10 │\n"
-                            "├────────┤\n"
-                            "│   True │\n"
-                            "└────────┘\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintAllFancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 2,
-                      .double_precision = 2,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
+TEST_F(GridViewTest, FancyBoxDrawing) {
+  auto gv = GridView({
+      .height = 2,
+      .width = 2,
+      .double_precision = 2,
+      .border_style = internal::BorderStyle::kFancyBoxDrawing,
+      .show_coordinates = false,
+  });
   EXPECT_THAT(ToStr(gv), Eq("╔════╤═══════╗\n"
                             "║  5 │  5.00 ║\n"
                             "╟────┼───────╢\n"
@@ -315,96 +272,20 @@ TEST_F(GridViewTest, ConstructAndPrintAllFancyBoxDrawing) {
                             "╚════╧═══════╝\n"));
 }
 
-TEST_F(GridViewTest, ConstructAndPrintSome1FancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔════╗\n"
-                            "║  5 ║\n"
-                            "╟────╢\n"
-                            "║ 10 ║\n"
-                            "╚════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome2FancyBoxDrawing) {
-  auto gv = GridView({.height = 1,
-                      .width = 2,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔═══╤══════╗\n"
-                            "║ 5 │ 5.00 ║\n"
-                            "╚═══╧══════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome3FancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 1,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔═══════╗\n"
-                            "║  5.00 ║\n"
-                            "╟───────╢\n"
-                            "║ 10.00 ║\n"
-                            "╚═══════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome4FancyBoxDrawing) {
-  auto gv = GridView({.height = 1,
-                      .width = 2,
-                      .offset_y = 1,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔════╤═══════╗\n"
-                            "║ 10 │ 10.00 ║\n"
-                            "╚════╧═══════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSome5FancyBoxDrawing) {
-  auto gv = GridView({.height = 3,
-                      .width = 2,
-                      .double_precision = 2,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔════╤════════╗\n"
-                            "║  5 │   5.00 ║\n"
-                            "╟────┼────────╢\n"
-                            "║ 10 │  10.00 ║\n"
-                            "╟────┼────────╢\n"
-                            "║    │ 100.00 ║\n"
-                            "╚════╧════════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetAllFancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 2,
-                      .offset_x = 3,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔═══════════════════════════╤════════╗\n"
-                            "║                     'foo' │ $10.10 ║\n"
-                            "╟───────────────────────────┼────────╢\n"
-                            "║ 2016-01-01T19:04:05+00:00 │   True ║\n"
-                            "╚═══════════════════════════╧════════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetSome1FancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 3,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔═══════════════════════════╗\n"
-                            "║                     'foo' ║\n"
-                            "╟───────────────────────────╢\n"
-                            "║ 2016-01-01T19:04:05+00:00 ║\n"
-                            "╚═══════════════════════════╝\n"));
-}
-
-TEST_F(GridViewTest, ConstructAndPrintSecondSetSome2FancyBoxDrawing) {
-  auto gv = GridView({.height = 2,
-                      .width = 1,
-                      .offset_x = 4,
-                      .border_style = internal::BorderStyle::kFancyBoxDrawing});
-  EXPECT_THAT(ToStr(gv), Eq("╔════════╗\n"
-                            "║ $10.10 ║\n"
-                            "╟────────╢\n"
-                            "║   True ║\n"
-                            "╚════════╝\n"));
+TEST_F(GridViewTest, FancyBoxDrawingWithCoordinates) {
+  auto gv = GridView({
+      .height = 2,
+      .width = 2,
+      .double_precision = 2,
+      .border_style = internal::BorderStyle::kFancyBoxDrawing,
+      .show_coordinates = true,
+  });
+  EXPECT_THAT(ToStr(gv), Eq("      A       B  \n"
+                            "   ╔════╤═══════╗\n"
+                            " 1 ║  5 │  5.00 ║\n"
+                            "   ╟────┼───────╢\n"
+                            " 2 ║ 10 │ 10.00 ║\n"
+                            "   ╚════╧═══════╝\n"));
 }
 
 } // namespace

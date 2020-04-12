@@ -55,6 +55,11 @@ std::string GetBorder(internal::BorderStyle style,
 std::string Pad(absl::string_view input, int n) {
   return absl::StrFormat("%*s", n, input);
 }
+void Empty(std::ostream &os, int n) {
+  for (int i = 0; i < n; ++i) {
+    os << " ";
+  }
+}
 
 } // namespace
 
@@ -115,29 +120,30 @@ void GridView::Write(XY xy, const Cell *cell_ptr) {
   }
 }
 
-void GridView::PutTopHline(std::ostream &os) const {
-  return PutHline(
+void GridView::HorizontalSeparatorFirst(std::ostream &os) const {
+  return HorizontalSeparator(
       os, GetBorder(border_style_, internal::BorderPiece::kNWCorner),
       GetBorder(border_style_, internal::BorderPiece::kHorizontalOuter),
       GetBorder(border_style_, internal::BorderPiece::kNorthEdge),
       GetBorder(border_style_, internal::BorderPiece::kNECorner));
 }
-void GridView::PutMiddleHline(std::ostream &os) const {
-  return PutHline(
+void GridView::HorizontalSeparatorMiddle(std::ostream &os) const {
+  return HorizontalSeparator(
       os, GetBorder(border_style_, internal::BorderPiece::kWestEdge),
       GetBorder(border_style_, internal::BorderPiece::kHorizontalInner),
       GetBorder(border_style_, internal::BorderPiece::kCrossroads),
       GetBorder(border_style_, internal::BorderPiece::kEastEdge));
 }
-void GridView::PutBottomHline(std::ostream &os) const {
-  return PutHline(
+void GridView::HorizontalSeparatorLast(std::ostream &os) const {
+  return HorizontalSeparator(
       os, GetBorder(border_style_, internal::BorderPiece::kSWCorner),
       GetBorder(border_style_, internal::BorderPiece::kHorizontalOuter),
       GetBorder(border_style_, internal::BorderPiece::kSouthEdge),
       GetBorder(border_style_, internal::BorderPiece::kSECorner));
 }
-void GridView::PutHline(std::ostream &os, std::string left, std::string fill,
-                        std::string middle, std::string right) const {
+void GridView::HorizontalSeparator(std::ostream &os, std::string left,
+                                   std::string fill, std::string middle,
+                                   std::string right) const {
   for (size_t x = 0; x < width_; ++x) {
     if (x == 0) {
       os << left;
@@ -155,11 +161,26 @@ void GridView::PutHline(std::ostream &os, std::string left, std::string fill,
 }
 
 void operator<<(std::ostream &os, const GridView &gv) {
+  size_t row_col_length = std::to_string(gv.height_ - 1).length();
+  if (gv.show_coordinates_) {
+    Empty(os, row_col_length + 2);
+    os << " "; // +
+    for (size_t x = 0; x < gv.width_; ++x) {
+      os << " " << Pad(XY::IntegerToColumnLetter(x), gv.widths_[x]) << "  ";
+    }
+    os << "\n";
+  }
   for (size_t y = 0; y < gv.height_; ++y) {
     if (y == 0) {
-      gv.PutTopHline(os);
+      if (gv.show_coordinates_) {
+        Empty(os, row_col_length + 2);
+      }
+      gv.HorizontalSeparatorFirst(os);
     }
     for (size_t x = 0; x < gv.width_; ++x) {
+      if (gv.show_coordinates_ && x == 0) {
+        os << " " << Pad(std::to_string(y + 1), row_col_length) << " ";
+      }
       const auto xy = XY(x, y);
       if (x == 0) {
         os << GetBorder(gv.border_style_,
@@ -187,10 +208,13 @@ void operator<<(std::ostream &os, const GridView &gv) {
     }
     os << "\n";
 
+    if (gv.show_coordinates_) {
+      Empty(os, row_col_length + 2);
+    }
     if (y != gv.height_ - 1) {
-      gv.PutMiddleHline(os);
+      gv.HorizontalSeparatorMiddle(os);
     } else {
-      gv.PutBottomHline(os);
+      gv.HorizontalSeparatorLast(os);
     }
   }
 
