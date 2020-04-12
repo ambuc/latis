@@ -53,8 +53,8 @@ std::string GetBorder(internal::BorderStyle style,
   }
 }
 
-void LeftPad(absl::string_view input, int n, std::ostream &os) {
-  os << absl::StrFormat("%*s", n, input);
+std::string LeftPad(absl::string_view input, int n) {
+  return absl::StrFormat("%*s", n, input);
 }
 
 // Left/right pad as RAII.
@@ -93,10 +93,22 @@ private:
   Cb last_;
 };
 
-void WriteEmpty(int n, std::ostream &os) {
+class OnItsOwnLine {
+public:
+  explicit OnItsOwnLine(std::ostream &os) : os_(os);
+  ~OnItsOwnLine() { os_ << "\n"; }
+
+private:
+  std::ostream &os_;
+}
+
+std::string
+WriteEmpty(int n) {
+  std::string ret;
   for (int i = 0; i < n; ++i) {
-    os << " ";
+    ret.append(" ");
   }
+  return ret;
 }
 
 } // namespace
@@ -182,31 +194,28 @@ void GridView::HorizontalSeparatorLast(std::ostream &os) const {
 void GridView::HorizontalSeparator(std::string left, std::string fill,
                                    std::string middle, std::string right,
                                    std::ostream &os) const {
-  {
-    auto cbs = Bookends(
-        width_, [&] { os << left; }, [&] { os << middle; },
-        [&] { os << right; });
+  auto o = OnItsOwnLine(os);
+  auto cbs = Bookends(
+      width_, [&] { os << left; }, [&] { os << middle; }, [&] { os << right; });
 
-    for (size_t x = 0; x < width_; ++x) {
-      cbs.Call(x);
-      for (size_t i = 0; i < widths_[x] + 2; ++i) {
-        os << fill;
-      }
+  for (size_t x = 0; x < width_; ++x) {
+    cbs.Call(x);
+    for (size_t i = 0; i < widths_[x] + 2; ++i) {
+      os << fill;
     }
   }
-  os << "\n";
 }
 
 void operator<<(std::ostream &os, const GridView &gv) {
   size_t row_col_length = std::to_string(gv.height_ - 1).length();
   if (gv.show_coordinates_) {
-    WriteEmpty(row_col_length + 2, os);
+    os << WriteEmpty(row_col_length + 2);
     {
       auto cbs = Bookends(gv.width_, [&] { os << " "; });
       for (size_t x = 0; x < gv.width_; ++x) {
         cbs.Call(x);
         auto p = PadAround(os);
-        LeftPad(XY::IntegerToColumnLetter(x), gv.widths_[x], os);
+        os << LeftPad(XY::IntegerToColumnLetter(x), gv.widths_[x]);
       }
     }
     os << "\n";
@@ -215,19 +224,19 @@ void operator<<(std::ostream &os, const GridView &gv) {
       gv.height_,
       [&] {
         if (gv.show_coordinates_) {
-          WriteEmpty(row_col_length + 2, os);
+          os << WriteEmpty(row_col_length + 2);
         }
         gv.HorizontalSeparatorFirst(os);
       },
       [&] {
         if (gv.show_coordinates_) {
-          WriteEmpty(row_col_length + 2, os);
+          os << WriteEmpty(row_col_length + 2);
         }
         gv.HorizontalSeparatorMiddle(os);
       },
       [&] {
         if (gv.show_coordinates_) {
-          WriteEmpty(row_col_length + 2, os);
+          os << WriteEmpty(row_col_length + 2);
         }
         gv.HorizontalSeparatorLast(os);
       });
@@ -235,7 +244,7 @@ void operator<<(std::ostream &os, const GridView &gv) {
     cbs_horizontal.Call(y);
     if (gv.show_coordinates_) {
       auto p = PadAround(os);
-      LeftPad(std::to_string(y + 1), row_col_length, os);
+      os << LeftPad(std::to_string(y + 1), row_col_length);
     }
     {
       auto cbs_vertical = Bookends(
@@ -256,7 +265,7 @@ void operator<<(std::ostream &os, const GridView &gv) {
         cbs_vertical.Call(x);
         const auto xy = XY(x, y);
         auto p = PadAround(os);
-        LeftPad(
+        os << LeftPad(
             [&gv, &xy]() -> std::string {
               if (const auto it = gv.strings_.find(xy);
                   it != gv.strings_.end()) {
@@ -265,7 +274,7 @@ void operator<<(std::ostream &os, const GridView &gv) {
                 return "";
               }
             }(),
-            gv.widths_[x], os);
+            gv.widths_[x]);
       }
     }
     os << "\n";
