@@ -22,100 +22,28 @@ namespace latis {
 namespace {
 
 std::string GetAsciiBorder(internal::BorderPiece piece) {
-  switch (piece) {
-  case (internal::BorderPiece::kVerticalInner):
-    return "|";
-  case (internal::BorderPiece::kVerticalOuter):
-    return "|";
-  case (internal::BorderPiece::kHorizontalInner):
-    return "-";
-  case (internal::BorderPiece::kHorizontalOuter):
-    return "-";
-  case (internal::BorderPiece::kNorthEdge):
-    return "+";
-  case (internal::BorderPiece::kEastEdge):
-    return "+";
-  case (internal::BorderPiece::kSouthEdge):
-    return "+";
-  case (internal::BorderPiece::kWestEdge):
-    return "+";
-  case (internal::BorderPiece::kNWCorner):
-    return "+";
-  case (internal::BorderPiece::kNECorner):
-    return "+";
-  case (internal::BorderPiece::kSWCorner):
-    return "+";
-  case (internal::BorderPiece::kSECorner):
-    return "+";
-  case (internal::BorderPiece::kCrossroads):
-    return "+";
-  default:
-    return "?";
-  }
+  static std::string sample = R"(++-+)"  // 00 01 02 03
+                              R"(++-+)"  // 04 05 06 07
+                              R"(||..)"  // 08 09 10 11
+                              R"(++.+)"; // 12 13 14 15
+  static int char_width = 1;
+  return sample.substr(char_width * int(piece), char_width);
 };
 std::string GetBoxDrawingBorder(internal::BorderPiece piece) {
-  switch (piece) {
-  case (internal::BorderPiece::kVerticalInner):
-    return "│";
-  case (internal::BorderPiece::kVerticalOuter):
-    return "│";
-  case (internal::BorderPiece::kHorizontalInner):
-    return "─";
-  case (internal::BorderPiece::kHorizontalOuter):
-    return "─";
-  case (internal::BorderPiece::kNorthEdge):
-    return "┬";
-  case (internal::BorderPiece::kEastEdge):
-    return "┤";
-  case (internal::BorderPiece::kSouthEdge):
-    return "┴";
-  case (internal::BorderPiece::kWestEdge):
-    return "├";
-  case (internal::BorderPiece::kNWCorner):
-    return "┌";
-  case (internal::BorderPiece::kNECorner):
-    return "┐";
-  case (internal::BorderPiece::kSWCorner):
-    return "└";
-  case (internal::BorderPiece::kSECorner):
-    return "┘";
-  case (internal::BorderPiece::kCrossroads):
-    return "┼";
-  default:
-    return "?";
-  }
+  static std::string sample = R"(┌┬─┐)"  // 00 01 02 03
+                              R"(├┼─┤)"  // 04 05 06 07
+                              R"(││░░)"  // 08 09 10 11
+                              R"(└┴░┘)"; // 12 13 14 15
+  static int char_width = 3;
+  return sample.substr(char_width * int(piece), char_width);
 };
 std::string GetFancyBoxDrawingBorder(internal::BorderPiece piece) {
-  switch (piece) {
-  case (internal::BorderPiece::kVerticalInner):
-    return "│";
-  case (internal::BorderPiece::kVerticalOuter):
-    return "║";
-  case (internal::BorderPiece::kHorizontalInner):
-    return "─";
-  case (internal::BorderPiece::kHorizontalOuter):
-    return "═";
-  case (internal::BorderPiece::kNorthEdge):
-    return "╤";
-  case (internal::BorderPiece::kEastEdge):
-    return "╢";
-  case (internal::BorderPiece::kSouthEdge):
-    return "╧";
-  case (internal::BorderPiece::kWestEdge):
-    return "╟";
-  case (internal::BorderPiece::kNWCorner):
-    return "╔";
-  case (internal::BorderPiece::kNECorner):
-    return "╗";
-  case (internal::BorderPiece::kSWCorner):
-    return "╚";
-  case (internal::BorderPiece::kSECorner):
-    return "╝";
-  case (internal::BorderPiece::kCrossroads):
-    return "┼";
-  default:
-    return "?";
-  }
+  static std::string sample = R"(╔╤═╗)"  // 00 01 02 03
+                              R"(╟┼─╢)"  // 04 05 06 07
+                              R"(║│▒▒)"  // 08 09 10 11
+                              R"(╚╧▒╝)"; // 12 13 14 15
+  static int char_width = 3;
+  return sample.substr(char_width * int(piece), char_width);
 };
 
 std::string GetBorder(internal::BorderStyle style,
@@ -128,7 +56,7 @@ std::string GetBorder(internal::BorderStyle style,
   case (internal::BorderStyle::kFancyBoxDrawing):
     return GetFancyBoxDrawingBorder(piece);
   default:
-    return " ";
+    return R"(?)";
   }
 }
 
@@ -220,15 +148,15 @@ void GridView::PutHline(std::ostream &os, std::string left, std::string fill,
                         std::string middle, std::string right) const {
   for (size_t x = 0; x < width_; ++x) {
     if (x == 0) {
-      os << left;
+      os << left.c_str();
     }
     for (size_t i = 0; i < widths_[x] + 2; ++i) {
-      os << fill;
+      os << fill.c_str();
     }
     if (x != width_ - 1) {
-      os << middle;
+      os << middle.c_str();
     } else {
-      os << right;
+      os << right.c_str();
     }
   }
   os << "\n";
@@ -242,8 +170,8 @@ void operator<<(std::ostream &os, const GridView &gv) {
     for (size_t x = 0; x < gv.width_; ++x) {
       const auto xy = XY(x, y);
       if (x == 0) {
-        os << GetBorder(gv.border_style_,
-                        internal::BorderPiece::kVerticalOuter);
+        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalOuter)
+                  .c_str();
       }
       os << " "
          << Pad(
@@ -258,11 +186,11 @@ void operator<<(std::ostream &os, const GridView &gv) {
                 gv.widths_[x])
          << " ";
       if (x == gv.width_ - 1) {
-        os << GetBorder(gv.border_style_,
-                        internal::BorderPiece::kVerticalOuter);
+        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalOuter)
+                  .c_str();
       } else {
-        os << GetBorder(gv.border_style_,
-                        internal::BorderPiece::kVerticalInner);
+        os << GetBorder(gv.border_style_, internal::BorderPiece::kVerticalInner)
+                  .c_str();
       }
     }
     os << "\n";

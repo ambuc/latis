@@ -29,20 +29,27 @@ namespace latis {
 
 namespace internal {
 
+// ┌┬─┐ // 00 01 02 03
+// ├┼─┤ // 04 05 06 07
+// ││.. // 08 09
+// └┴.┘ // 12 13    15
 enum BorderPiece {
-  kVerticalInner,   // │ , │
-  kVerticalOuter,   // │ , ║
-  kHorizontalInner, // ─ , ─
-  kHorizontalOuter, // ─ , ═
-  kNorthEdge,       // ┬ , ╤
-  kEastEdge,        // ├ , ╢
-  kSouthEdge,       // ┴ , ╧
-  kWestEdge,        // ┤ , ╟
-  kNWCorner,        // ┐ , ╗
-  kNECorner,        // ┌ , ╔
-  kSWCorner,        // └ , ╚
-  kSECorner,        // ┘ , ╝
-  kCrossroads,      // ┼ , ┼
+  kNWCorner = 0,
+  kNorthEdge = 1,
+  kHorizontalOuter = 2,
+  kNECorner = 3,
+  kWestEdge = 4,
+  kCrossroads = 5,
+  kHorizontalInner = 6,
+  kEastEdge = 7,
+  kVerticalOuter = 8,
+  kVerticalInner = 9,
+  kNULL00 = 10,
+  kNULL01 = 11,
+  kSWCorner = 12,
+  kSouthEdge = 13,
+  kNULL02 = 14,
+  kSECorner = 15,
 };
 
 enum BorderStyle { kAbsent, kAscii, kBoxDrawing, kFancyBoxDrawing };
