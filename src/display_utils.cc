@@ -78,7 +78,8 @@ public:
   Bookends(int length, Cb cb)
       : length_(length), first_(cb), middle_(cb), last_(cb) {}
   ~Bookends() { last_(); }
-  void Call(int n) {
+
+  void Print(int n) {
     if (n == 0) {
       first_();
     } else {
@@ -95,15 +96,14 @@ private:
 
 class OnItsOwnLine {
 public:
-  explicit OnItsOwnLine(std::ostream &os) : os_(os);
+  explicit OnItsOwnLine(std::ostream &os) : os_(os) {}
   ~OnItsOwnLine() { os_ << "\n"; }
 
 private:
   std::ostream &os_;
-}
+};
 
-std::string
-WriteEmpty(int n) {
+std::string WriteEmpty(int n) {
   std::string ret;
   for (int i = 0; i < n; ++i) {
     ret.append(" ");
@@ -194,12 +194,12 @@ void GridView::HorizontalSeparatorLast(std::ostream &os) const {
 void GridView::HorizontalSeparator(std::string left, std::string fill,
                                    std::string middle, std::string right,
                                    std::ostream &os) const {
-  auto o = OnItsOwnLine(os);
-  auto cbs = Bookends(
+  auto line = OnItsOwnLine(os);
+  auto horizontal_separator_chars = Bookends(
       width_, [&] { os << left; }, [&] { os << middle; }, [&] { os << right; });
 
   for (size_t x = 0; x < width_; ++x) {
-    cbs.Call(x);
+    horizontal_separator_chars.Print(x);
     for (size_t i = 0; i < widths_[x] + 2; ++i) {
       os << fill;
     }
@@ -209,18 +209,16 @@ void GridView::HorizontalSeparator(std::string left, std::string fill,
 void operator<<(std::ostream &os, const GridView &gv) {
   size_t row_col_length = std::to_string(gv.height_ - 1).length();
   if (gv.show_coordinates_) {
+    auto line = OnItsOwnLine(os);
     os << WriteEmpty(row_col_length + 2);
-    {
-      auto cbs = Bookends(gv.width_, [&] { os << " "; });
-      for (size_t x = 0; x < gv.width_; ++x) {
-        cbs.Call(x);
-        auto p = PadAround(os);
-        os << LeftPad(XY::IntegerToColumnLetter(x), gv.widths_[x]);
-      }
+    auto horizontal_separators = Bookends(gv.width_, [&] { os << " "; });
+    for (size_t x = 0; x < gv.width_; ++x) {
+      horizontal_separators.Print(x);
+      auto p = PadAround(os);
+      os << LeftPad(XY::IntegerToColumnLetter(x), gv.widths_[x]);
     }
-    os << "\n";
   }
-  auto cbs_horizontal = Bookends(
+  auto horizontal_separators = Bookends(
       gv.height_,
       [&] {
         if (gv.show_coordinates_) {
@@ -241,43 +239,40 @@ void operator<<(std::ostream &os, const GridView &gv) {
         gv.HorizontalSeparatorLast(os);
       });
   for (size_t y = 0; y < gv.height_; ++y) {
-    cbs_horizontal.Call(y);
+    auto line = OnItsOwnLine(os);
+    horizontal_separators.Print(y);
     if (gv.show_coordinates_) {
       auto p = PadAround(os);
       os << LeftPad(std::to_string(y + 1), row_col_length);
     }
-    {
-      auto cbs_vertical = Bookends(
-          gv.width_,
-          [&] {
-            os << GetBorder(gv.border_style_,
-                            internal::BorderPiece::kVerticalOuter);
-          },
-          [&] {
-            os << GetBorder(gv.border_style_,
-                            internal::BorderPiece::kVerticalInner);
-          },
-          [&] {
-            os << GetBorder(gv.border_style_,
-                            internal::BorderPiece::kVerticalOuter);
-          });
-      for (size_t x = 0; x < gv.width_; ++x) {
-        cbs_vertical.Call(x);
-        const auto xy = XY(x, y);
-        auto p = PadAround(os);
-        os << LeftPad(
-            [&gv, &xy]() -> std::string {
-              if (const auto it = gv.strings_.find(xy);
-                  it != gv.strings_.end()) {
-                return it->second;
-              } else {
-                return "";
-              }
-            }(),
-            gv.widths_[x]);
-      }
+    auto vertical_separators = Bookends(
+        gv.width_,
+        [&] {
+          os << GetBorder(gv.border_style_,
+                          internal::BorderPiece::kVerticalOuter);
+        },
+        [&] {
+          os << GetBorder(gv.border_style_,
+                          internal::BorderPiece::kVerticalInner);
+        },
+        [&] {
+          os << GetBorder(gv.border_style_,
+                          internal::BorderPiece::kVerticalOuter);
+        });
+    for (size_t x = 0; x < gv.width_; ++x) {
+      vertical_separators.Print(x);
+      const auto xy = XY(x, y);
+      auto p = PadAround(os);
+      os << LeftPad(
+          [&gv, &xy]() -> std::string {
+            if (const auto it = gv.strings_.find(xy); it != gv.strings_.end()) {
+              return it->second;
+            } else {
+              return "";
+            }
+          }(),
+          gv.widths_[x]);
     }
-    os << "\n";
   }
 
   return;
