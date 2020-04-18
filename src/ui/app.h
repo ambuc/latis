@@ -16,20 +16,33 @@
 #ifndef SRC_UI_APP_H_
 #define SRC_UI_APP_H_
 
+#include <ncurses.h>
+
 namespace latis {
 namespace ui {
 
+class Window {
+public:
+  Window(int nlines, int ncols, int begin_y, int begin_x);
+  ~Window();
+  operator WINDOW *() { return ptr_; }
+
+private:
+  const int nlines_, ncols_, begin_y_, begin_x_;
+  WINDOW *ptr_;
+};
+
 class App {
 public:
-  struct Options {
+  struct Opts {
     bool enable_window_dimensions = false;
   };
 
-  App() : App(Options()) {}
-  explicit App(Options options);
+  App() : App(Opts()) {}
+  explicit App(Opts opts);
 
 private:
-  Options options_;
+  Opts opts_;
 };
 
 } // namespace ui

@@ -14,6 +14,7 @@
 
 #include "src/ui/app.h"
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
@@ -23,7 +24,25 @@
 namespace latis {
 namespace ui {
 
-App::App(Options options) : options_(options) {
+// WINDOW
+
+Window::Window(int nlines, int ncols, int begin_y, int begin_x)
+    : nlines_(nlines), ncols_(ncols), begin_y_(begin_y), begin_x_(begin_x),
+      ptr_(newwin(nlines_, ncols_, begin_y_, begin_x_)) {
+  wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
+  mvwhline(ptr_, 2, 0, '=', ncols_);
+  if (true) {
+    std::string dimensions = absl::StrFormat("%dx%d", nlines_, ncols_);
+    mvwprintw(ptr_, 0, 0, dimensions.c_str());
+  }
+  wrefresh(ptr_);
+}
+
+Window::~Window() { delwin(ptr_); }
+
+// APP
+
+App::App(Opts opts) : opts_(opts) {
   setlocale(LC_ALL, "");
 
   initscr();
@@ -33,20 +52,27 @@ App::App(Options options) : options_(options) {
 
   refresh();
 
-  if (WINDOW *w = newwin(/*nlines=*/10, /*ncols=*/20, /*begin_y=*/0,
-                         /*begin_x=*/0);
-      w != nullptr) {
-    box(w, 0, 0);
-    wborder(w, '|', '|', '-', '-', '+', '+', '+', '+');
-    mvwprintw(w, 1, 2, "foo");
-    if (options_.enable_window_dimensions) {
-      int row, col;
-      getmaxyx(stdscr, row, col);
-      std::string dimensions = absl::StrFormat("%dx%d", row, col);
-      mvwprintw(w, 0, 0, dimensions.c_str());
+  {
+    auto w = absl::make_unique<Window>(10, 20, 0, 0);
+    mvwprintw(*w, 1, 2, "foo");
+    wrefresh(*w);
+
+    int ch;
+    while ((ch = getch()) != 'q') {
+      switch (ch) {
+      case 'p': {
+        mvwprintw(*w, 1, 0, "BAR");
+        wrefresh(*w);
+        break;
+      }
+      default: {
+        // do nothing
+      }
+      }
     }
-    wrefresh(w);
   }
+  clrtobot();
+  refresh();
 }
 
 } // namespace ui
