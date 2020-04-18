@@ -74,8 +74,10 @@ cc_test(
 cc_binary(
     name = "latis",
     srcs = ["main.cc"],
+    linkopts = ["-lncurses"],
     deps = [
         ":latis_impl",
+        "//src/ui:app_lib",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
     ],

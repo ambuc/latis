@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/latis_impl.h"
+#include "src/ui/app.h"
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -21,6 +22,10 @@ int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   latis::Latis latis;
+
+  latis::ui::App app({.enable_window_dimensions = true});
+
+  absl::SleepFor(absl::Minutes(1));
 
   return 0;
 }
