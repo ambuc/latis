@@ -16,6 +16,7 @@
 #ifndef SRC_UI_APP_H_
 #define SRC_UI_APP_H_
 
+#include "absl/container/flat_hash_map.h"
 #include <ncurses.h>
 
 namespace latis {
@@ -23,12 +24,20 @@ namespace ui {
 
 class Window {
 public:
-  Window(int nlines, int ncols, int begin_y, int begin_x);
+  struct Opts {
+    bool border = false;
+    bool dimensions = false;
+  };
+  Window(int nlines, int ncols, int begin_y, int begin_x, Opts opts);
+  Window(int nlines, int ncols, int begin_y, int begin_x)
+      : Window(nlines, ncols, begin_y, begin_x, Opts()){};
   ~Window();
   operator WINDOW *() { return ptr_; }
+  void Put(absl::string_view input);
 
 private:
   const int nlines_, ncols_, begin_y_, begin_x_;
+  const Opts opts_;
   WINDOW *ptr_;
 };
 
@@ -40,9 +49,14 @@ public:
 
   App() : App(Opts()) {}
   explicit App(Opts opts);
+  ~App();
+
+  void InsertWindow(std::string title, std::unique_ptr<Window> w);
+  Window *GetWindow(std::string title);
 
 private:
   Opts opts_;
+  absl::flat_hash_map<std::string, std::unique_ptr<Window>> windows_;
 };
 
 } // namespace ui

@@ -33,8 +33,6 @@
 
 namespace latis {
 
-using HasChangedCb = std::function<void(const Cell &)>;
-
 class Latis : public LatisInterface {
 public:
   // Create new.
@@ -54,7 +52,7 @@ public:
 
   // NB: This only returns out-of-bound updates, i.e. cells _other_ than the
   // cell just set.
-  void RegisterCallback(HasChangedCb has_changed_cb) {
+  void RegisterCallback(HasChangedCb has_changed_cb) override {
     callbacks_.push_back(has_changed_cb);
   }
 

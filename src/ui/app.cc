@@ -24,23 +24,28 @@
 namespace latis {
 namespace ui {
 
-// WINDOW
-
-Window::Window(int nlines, int ncols, int begin_y, int begin_x)
+Window::Window(int nlines, int ncols, int begin_y, int begin_x, Opts opts)
     : nlines_(nlines), ncols_(ncols), begin_y_(begin_y), begin_x_(begin_x),
-      ptr_(newwin(nlines_, ncols_, begin_y_, begin_x_)) {
-  wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
-  mvwhline(ptr_, 2, 0, '=', ncols_);
-  if (true) {
+      opts_(opts), ptr_(newwin(nlines_, ncols_, begin_y_, begin_x_)) {
+  if (opts_.border) {
+    wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
+  }
+  if (opts_.dimensions) {
     std::string dimensions = absl::StrFormat("%dx%d", nlines_, ncols_);
     mvwprintw(ptr_, 0, 0, dimensions.c_str());
   }
   wrefresh(ptr_);
 }
 
-Window::~Window() { delwin(ptr_); }
+void Window::Put(absl::string_view input) {
+  mvwprintw(ptr_, 1, 2, std::string(input).c_str());
+  wrefresh(ptr_);
+}
 
-// APP
+Window::~Window() {
+  delwin(ptr_);
+  refresh();
+}
 
 App::App(Opts opts) : opts_(opts) {
   setlocale(LC_ALL, "");
@@ -51,28 +56,19 @@ App::App(Opts opts) : opts_(opts) {
   clear();
 
   refresh();
+}
 
-  {
-    auto w = absl::make_unique<Window>(10, 20, 0, 0);
-    mvwprintw(*w, 1, 2, "foo");
-    wrefresh(*w);
+App::~App() { clear(); }
 
-    int ch;
-    while ((ch = getch()) != 'q') {
-      switch (ch) {
-      case 'p': {
-        mvwprintw(*w, 1, 0, "BAR");
-        wrefresh(*w);
-        break;
-      }
-      default: {
-        // do nothing
-      }
-      }
-    }
+void App::InsertWindow(std::string title, std::unique_ptr<Window> w) {
+  windows_[title] = std::move(w);
+}
+Window *App::GetWindow(std::string title) {
+  auto it = windows_.find(title);
+  if (it == windows_.end()) {
+    return nullptr;
   }
-  clrtobot();
-  refresh();
+  return it->second.get();
 }
 
 } // namespace ui

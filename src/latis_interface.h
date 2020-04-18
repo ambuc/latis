@@ -27,6 +27,8 @@
 
 namespace latis {
 
+using HasChangedCb = std::function<void(const Cell &)>;
+
 // LatisInterface is the spreadsheet engine. It doesn't know anything about
 // graphics or display or anything, it just has a few methods. Thread-safe.
 class LatisInterface {
@@ -40,6 +42,8 @@ public:
 
   virtual ::google::protobuf::util::Status
   WriteTo(LatisMsg *latis_msg) const = 0;
+
+  virtual void RegisterCallback(HasChangedCb has_changed_cb) = 0;
 
   virtual absl::optional<std::string> Title() const = 0;
   virtual void SetTitle(std::string title) = 0;

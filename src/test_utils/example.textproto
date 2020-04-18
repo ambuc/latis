@@ -1,0 +1,60 @@
+metadata {
+  title: "Example"
+  author: "ambuc"
+}
+cells { 
+  point_location: { row: 0 col: 0 } 
+  formula: { 
+    cached_amount: { int_amount: 5 }
+  }
+} 
+cells { 
+  point_location: { row: 1 col: 0 } 
+  formula: { 
+    cached_amount: { int_amount: 10 }
+  }
+}
+cells { 
+  point_location: { row: 0 col: 1 } 
+  formula: { 
+    cached_amount: { double_amount: 5.0 }
+  }
+} 
+cells {
+  point_location: { row: 1 col: 1 } 
+  formula: { 
+    cached_amount: { double_amount: 10.0 }
+  }
+}
+cells { 
+  point_location: { row: 2 col: 1 }
+  formula: { 
+    cached_amount: { double_amount: 100.0 }
+  }
+}
+cells {
+  point_location: { row: 0 col: 3 } 
+  formula: { 
+    cached_amount: { str_amount: "foo" }
+  }
+}
+cells { 
+  point_location: { row: 1 col: 2 }
+  formula: { 
+    cached_amount: {
+      money_amount: { currency: USD dollars: 10 cents: 10 } 
+    }
+  }
+}
+cells { 
+  point_location: { row: 1 col: 3 } 
+  formula: { 
+    cached_amount: { timestamp_amount: { seconds: 1451675045 } }
+  }
+}
+cells { 
+  point_location: { row: 1 col: 4 } 
+  formula: { 
+    cached_amount: { bool_amount: true }
+  }
+}
