@@ -22,6 +22,13 @@
 namespace latis {
 namespace ui {
 
+// general-purpose ui options.
+struct Opts {
+  bool show_dimensions = false;
+  bool show_borders = false;
+  bool show_debug_textbox = false;
+};
+
 struct Dimensions {
   int nlines;
   int ncols;

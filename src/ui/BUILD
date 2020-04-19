@@ -20,6 +20,7 @@ cc_library(
 cc_library(
     name = "common",
     hdrs = ["common.h"],
+    visibility = ["//src:__subpackages__"],
 )
 
 cc_library(
@@ -29,7 +30,6 @@ cc_library(
     linkopts = [
         "-lncursesw",
     ],
-    visibility = ["//src:__subpackages__"],
     deps = [
         ":common",
         ":window_lib",

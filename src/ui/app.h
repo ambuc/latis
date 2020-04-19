@@ -33,8 +33,7 @@ public:
 
   std::shared_ptr<Textbox>
   AddTextbox(absl::string_view title, Dimensions dimensions,
-             std::function<void(absl::string_view)> recv_cb,
-             Widget::Options options);
+             std::function<void(absl::string_view)> recv_cb, Opts opts);
 
   std::shared_ptr<Widget> Get(absl::string_view title);
 

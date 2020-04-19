@@ -60,7 +60,7 @@ Window::~Window() {
 }
 
 void Window::PrintPermanentComponents() {
-  if (opts_.border) {
+  if (opts_.show_borders) {
     wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
   }
   if (opts_.show_dimensions) {

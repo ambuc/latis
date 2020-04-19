@@ -47,10 +47,9 @@ App::~App() { endwin(); }
 
 std::shared_ptr<Textbox>
 App::AddTextbox(absl::string_view title, Dimensions dimensions,
-                std::function<void(absl::string_view)> recv_cb,
-                Widget::Options options) {
+                std::function<void(absl::string_view)> recv_cb, Opts opts) {
   auto textbox =
-      std::make_shared<Textbox>(dimensions, std::move(recv_cb), options);
+      std::make_shared<Textbox>(dimensions, std::move(recv_cb), opts);
   widgets_[title] = textbox;
   return textbox;
 }

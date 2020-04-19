@@ -21,13 +21,9 @@ namespace latis {
 namespace ui {
 
 Textbox::Textbox(Dimensions dimensions,
-                 std::function<void(absl::string_view)> recv_cb,
-                 Widget::Options options)
-    : options_(options), recv_cb_(std::move(recv_cb)),
-      window_(absl::make_unique<Window>(
-          dimensions, Window::Opts{
-                          .show_dimensions = options_.debug_mode,
-                      })) {}
+                 std::function<void(absl::string_view)> recv_cb, Opts opts)
+    : opts_(opts), recv_cb_(std::move(recv_cb)),
+      window_(absl::make_unique<Window>(dimensions, opts)) {}
 
 void Textbox::Update(absl::string_view s) {
   window_->Print(1, 2, s);

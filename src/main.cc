@@ -28,7 +28,9 @@ int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   latis::LatisApp latis_app({
-      .debug = absl::GetFlag(FLAGS_debug_mode),
+      .show_dimensions = absl::GetFlag(FLAGS_debug_mode),
+      .show_borders = absl::GetFlag(FLAGS_debug_mode),
+      .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
   });
 
   // If --textproto_input is set, read a file and load it in.

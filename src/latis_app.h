@@ -19,26 +19,21 @@
 #include "proto/latis_msg.pb.h"
 #include "src/ssheet_impl.h"
 #include "src/ui/app.h"
-#include "src/ui/widget.h"
+#include "src/ui/common.h"
 
 namespace latis {
 
 class LatisApp {
 public:
-  struct Options {
-    bool debug = false;
-  };
-
-  LatisApp() : LatisApp(Options()) {}
-  explicit LatisApp(Options options);
+  LatisApp() : LatisApp(ui::Opts()) {}
+  explicit LatisApp(ui::Opts opts);
   void Load(LatisMsg msg);
   void ReadEvalPrintLoop();
 
 private:
   void WireUp();
 
-  const Options options_;
-  const ui::Widget::Options widget_options_;
+  const ui::Opts opts_;
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 };

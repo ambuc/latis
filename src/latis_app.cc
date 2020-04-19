@@ -21,11 +21,9 @@
 
 namespace latis {
 
-LatisApp::LatisApp(Options options)
-    : options_(options), widget_options_(ui::Widget::Options{
-                             .debug_mode = options_.debug,
-                         }),
-      ssheet_(absl::make_unique<SSheet>()), app_(absl::make_unique<ui::App>()) {
+LatisApp::LatisApp(ui::Opts opts)
+    : opts_(opts), ssheet_(absl::make_unique<SSheet>()),
+      app_(absl::make_unique<ui::App>()) {
   WireUp();
 }
 
@@ -47,25 +45,21 @@ void LatisApp::ReadEvalPrintLoop() {
 void LatisApp::WireUp() {
   app_->AddTextbox(
           "title", {3, 40, 0, 0},
-          [this](absl::string_view s) { ssheet_->SetTitle(s); },
-          widget_options_)
+          [this](absl::string_view s) { ssheet_->SetTitle(s); }, opts_)
       ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("n/a")));
 
   app_->AddTextbox(
           "author", {3, 40, 0, 39},
-          [this](absl::string_view s) { ssheet_->SetAuthor(s); },
-          widget_options_)
+          [this](absl::string_view s) { ssheet_->SetAuthor(s); }, opts_)
       ->Update(
           absl::StrFormat("Author: %s", ssheet_->Author().value_or("n/a")));
 
   app_->AddTextbox(
-          "date_created", {3, 40, 2, 0}, [](absl::string_view) {},
-          widget_options_)
+          "date_created", {3, 40, 2, 0}, [](absl::string_view) {}, opts_)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
   app_->AddTextbox(
-          "date_edited", {3, 40, 2, 39}, [](absl::string_view) {},
-          widget_options_)
+          "date_edited", {3, 40, 2, 39}, [](absl::string_view) {}, opts_)
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
@@ -75,12 +69,11 @@ void LatisApp::WireUp() {
   });
 
   // Maybe instantiate debug textbox.
-  if (options_.debug) {
+  if (opts_.show_debug_textbox) {
     int y, x;
     getmaxyx(stdscr, y, x);
     app_->AddTextbox(
-            "debug", {3, x, y - 3, 0}, [](absl::string_view) {},
-            widget_options_)
+            "debug", {3, x, y - 3, 0}, [](absl::string_view) {}, opts_)
         ->Update("DEBUG_MODE_ENABLED");
   }
 }
