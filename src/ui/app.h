@@ -53,6 +53,10 @@ public:
 
   void Remove(absl::string_view title);
 
+  // bubbling events up/down
+  void BubbleCh(int ch);
+  void BubbleEvent(const MEVENT &event);
+
 private:
   absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
 };

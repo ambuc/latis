@@ -28,6 +28,8 @@ namespace ui {
 class Widget {
 public:
   virtual ~Widget() = default;
+  virtual void BubbleCh(int ch) = 0;
+  virtual void BubbleEvent(const MEVENT &event) = 0;
 };
 
 class Textbox : public Widget {
@@ -37,6 +39,8 @@ public:
   ~Textbox() override {}
   void Update(absl::string_view s);
   void Clear();
+  void BubbleCh(int ch) override;
+  void BubbleEvent(const MEVENT &event) override;
 
 private:
   const std::function<void(absl::string_view)> recv_cb_;

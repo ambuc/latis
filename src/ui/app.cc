@@ -30,7 +30,7 @@ App::App() {
 
   initscr();
 
-  // raw();
+  raw();
   nodelay(stdscr, true); // non-blocking call.
 
   keypad(stdscr, true); // enable mouse.
@@ -67,6 +67,18 @@ std::shared_ptr<Widget> App::Get(absl::string_view title) {
 }
 
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
+
+void App::BubbleCh(int ch) {
+  for (auto &[_, w] : widgets_) {
+    w->BubbleCh(ch);
+  }
+}
+
+void App::BubbleEvent(const MEVENT &event) {
+  for (auto &[_, w] : widgets_) {
+    w->BubbleEvent(event);
+  }
+}
 
 } // namespace ui
 } // namespace latis

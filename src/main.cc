@@ -21,6 +21,8 @@
 #include "absl/flags/parse.h"
 
 ABSL_FLAG(std::string, textproto_input, "", "Path to input textproto");
+ABSL_FLAG(bool, debug_mode, false,
+          "If true, prints debug stuff at the bottom.");
 
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
@@ -34,26 +36,33 @@ int main(int argc, char *argv[]) {
   app.AddTextbox("title", {3, 40, 0, 0})
       ->Update(absl::StrFormat("Title: %s", latis_obj.Title().value_or("")));
 
-  app.AddTextbox("author", {3, 40, 0, 39})
+  app.AddTextbox("author", {3, 40, 0, 40})
       ->Update(absl::StrFormat("Author: %s", latis_obj.Author().value_or("")));
 
-  app.AddTextbox("date_created", {3, 40, 2, 0})
+  app.AddTextbox("date_created", {3, 40, 3, 0})
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(latis_obj.CreatedTime())));
-  app.AddTextbox("date_edited", {3, 40, 2, 39})
+  app.AddTextbox("date_edited", {3, 40, 3, 40})
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(latis_obj.EditedTime())));
 
-  // this is it
+  if (absl::GetFlag(FLAGS_debug_mode)) {
+    int y, x;
+    getmaxyx(stdscr, y, x);
+    app.AddTextbox("debug", {3, x, y - 3, 0})->Update("DEBUG_MODE_ENABLED");
+  }
+
+  // read-eval-print loop
   while (true) {
     MEVENT event;
-    if (int ch = getch(); ch == KEY_MOUSE && getmouse(&event) == OK) {
-      app.Get<latis::ui::Textbox>("title")->Update(absl::StrFormat(
-          "%d,%d,%d,%d", event.bstate, event.x, event.y, event.z));
+    if (int ch = getch(); getmouse(&event) == OK) {
+      app.BubbleEvent(event);
+    } else {
+      app.BubbleCh(ch);
     }
   }
 
-  absl::SleepFor(absl::Minutes(1));
+  // absl::SleepFor(absl::Minutes(1));
 
   return 0;
 }

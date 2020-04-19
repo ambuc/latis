@@ -27,7 +27,7 @@ class Window {
 public:
   struct Opts {
     bool border = true;
-    bool show_dimensions = false;
+    bool show_dimensions = true;
   };
   Window(Dimensions dimensions, Opts opts);
   Window(Dimensions dimensions) : Window(dimensions, Opts()){};
@@ -36,7 +36,7 @@ public:
   void Print(int y, int x, absl::string_view s);
   void Refresh();
   void Clear();
-  // operator WINDOW *() { return ptr_; }
+  bool Contains(int y, int x) const;
 
 private:
   void PrintPermanentComponents();

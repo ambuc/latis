@@ -51,6 +51,8 @@ void Window::Clear() {
   PrintPermanentComponents();
 }
 
+bool Window::Contains(int y, int x) const { return dimensions_.Contains(y, x); }
+
 Window::~Window() {
   wclear(ptr_);
   wrefresh(ptr_);

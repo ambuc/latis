@@ -27,6 +27,12 @@ struct Dimensions {
   int ncols;
   int begin_y;
   int begin_x;
+
+  // Returns true if the (y,x) coord is within this window.
+  bool Contains(int y, int x) const {
+    return (begin_y <= y && y <= (begin_y + nlines - 1)) &&
+           (begin_x <= x && x <= (begin_x + ncols - 1));
+  }
 };
 
 } // namespace ui

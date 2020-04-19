@@ -14,6 +14,7 @@
 
 #include "src/ui/widget.h"
 
+#include "absl/strings/str_format.h"
 #include <ncurses.h>
 
 namespace latis {
@@ -32,6 +33,17 @@ void Textbox::Update(absl::string_view s) {
 void Textbox::Clear() {
   window_->Clear();
   window_->Refresh();
+}
+
+void Textbox::BubbleCh(int ch) {
+  //
+}
+
+void Textbox::BubbleEvent(const MEVENT &event) {
+  if (window_->Contains(event.y, event.x)) {
+    Update(absl::StrFormat("%d,%d,%d,%d", event.bstate, event.x, event.y,
+                           event.z));
+  }
 }
 
 } // namespace ui
