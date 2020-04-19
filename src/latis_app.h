@@ -37,7 +37,9 @@ private:
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 
-  // if .show_debug_textbox == false, this is nullptr.
+  int frame_{0};
+
+  // if .show_debug_textbox == false, these are all nullptr.
   std::shared_ptr<ui::Textbox> debug_tbx_;
   std::shared_ptr<ui::Textbox> fc_tbx_;
 };

@@ -31,9 +31,7 @@ void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
 
 void LatisApp::ReadEvalPrintLoop() {
   MEVENT event;
-  int count = 0;
   while (true) {
-    count++;
 
     const int ch = getch();
 
@@ -52,14 +50,14 @@ void LatisApp::ReadEvalPrintLoop() {
     }
 
     if (opts_.show_debug_textbox) {
-      fc_tbx_->Update(std::to_string(count));
-      if (has_event) {
-        debug_tbx_->Update(absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
-                                           event.bstate, event.x, event.y));
-      } else {
-        debug_tbx_->Update(absl::StrFormat("Keypress: %d", ch));
-      }
+      fc_tbx_->Update(std::to_string(frame_));
+      debug_tbx_->Update((has_event)
+                             ? absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
+                                               event.bstate, event.x, event.y)
+                             : absl::StrFormat("Keypress: %d", ch));
     }
+    frame_++;
+    frame_ %= 100;
   }
 }
 
