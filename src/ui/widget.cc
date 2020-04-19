@@ -40,9 +40,15 @@ void Textbox::BubbleCh(int ch) {
 }
 
 void Textbox::BubbleEvent(const MEVENT &event) {
-  if (window_->Contains(event.y, event.x)) {
-    Update(absl::StrFormat("%d,%d,%d,%d", event.bstate, event.x, event.y,
-                           event.z));
+  if (!window_->Contains(event.y, event.x)) {
+    return;
+  }
+  if (event.bstate & BUTTON1_PRESSED) {
+    Update("You pressed me!");
+  } else if (event.bstate & BUTTON1_CLICKED) {
+    Update("You clicked me!");
+  } else if (event.bstate & BUTTON1_DOUBLE_CLICKED) {
+    Update("You double-clicked me!");
   }
 }
 

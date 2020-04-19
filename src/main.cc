@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
       .show_dimensions = absl::GetFlag(FLAGS_debug_mode),
       .show_borders = absl::GetFlag(FLAGS_debug_mode),
       .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
+      .show_frame_count = absl::GetFlag(FLAGS_debug_mode),
   });
 
   // If --textproto_input is set, read a file and load it in.

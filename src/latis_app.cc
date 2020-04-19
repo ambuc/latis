@@ -31,13 +31,34 @@ void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
 
 void LatisApp::ReadEvalPrintLoop() {
   MEVENT event;
+  int count = 0;
   while (true) {
-    if (int ch = getch(); getmouse(&event) == OK) {
-      app_->BubbleEvent(event);
+    count++;
+
+    const int ch = getch();
+
+    if (ch == ERR) {
+      continue;
     } else if (ch == int('q')) {
-      break; // and return
+      break;
+    }
+
+    bool has_event = (getmouse(&event) == OK);
+
+    if (has_event) {
+      app_->BubbleEvent(event);
     } else {
       app_->BubbleCh(ch);
+    }
+
+    if (opts_.show_debug_textbox) {
+      fc_tbx_->Update(std::to_string(count));
+      if (has_event) {
+        debug_tbx_->Update(absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
+                                           event.bstate, event.x, event.y));
+      } else {
+        debug_tbx_->Update(absl::StrFormat("Keypress: %d", ch));
+      }
     }
   }
 }
@@ -72,9 +93,12 @@ void LatisApp::WireUp() {
   if (opts_.show_debug_textbox) {
     int y, x;
     getmaxyx(stdscr, y, x);
-    app_->AddTextbox(
-            "debug", {3, x, y - 3, 0}, [](absl::string_view) {}, opts_)
-        ->Update("DEBUG_MODE_ENABLED");
+    debug_tbx_ = app_->AddTextbox(
+        "debug_textbox", {3, x, y - 3, 0}, [](absl::string_view) {}, opts_);
+    debug_tbx_->Update("DEBUG_MODE_ENABLED");
+    fc_tbx_ = app_->AddTextbox(
+        "frame_count", {3, x, y - 5, 0}, [](absl::string_view) {}, opts_);
+    fc_tbx_->Update("FRAME_COUNT");
   }
 }
 

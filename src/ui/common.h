@@ -27,6 +27,7 @@ struct Opts {
   bool show_dimensions = false;
   bool show_borders = false;
   bool show_debug_textbox = false;
+  bool show_frame_count = false;
 };
 
 struct Dimensions {

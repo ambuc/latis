@@ -36,6 +36,10 @@ private:
   const ui::Opts opts_;
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
+
+  // if .show_debug_textbox == false, this is nullptr.
+  std::shared_ptr<ui::Textbox> debug_tbx_;
+  std::shared_ptr<ui::Textbox> fc_tbx_;
 };
 
 } // namespace latis

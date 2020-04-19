@@ -30,9 +30,7 @@ App::App() {
 
   initscr();
 
-  raw();
-  nodelay(stdscr, true); // non-blocking call.
-
+  halfdelay(1000 / 60); // 60 FPS
   keypad(stdscr, true); // enable mouse.
   mousemask(ALL_MOUSE_EVENTS, NULL);
 
