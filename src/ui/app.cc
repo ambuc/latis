@@ -25,33 +25,17 @@
 namespace latis {
 namespace ui {
 
-Window::Window(int nlines, int ncols, int begin_y, int begin_x, Opts opts)
-    : nlines_(nlines), ncols_(ncols), begin_y_(begin_y), begin_x_(begin_x),
-      opts_(opts), ptr_(newwin(nlines_, ncols_, begin_y_, begin_x_)) {
-  if (opts_.border) {
-    wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
-  }
-  if (opts_.dimensions) {
-    std::string dimensions = absl::StrFormat("%dx%d", nlines_, ncols_);
-    mvwprintw(ptr_, 0, 0, dimensions.c_str());
-  }
-  wrefresh(ptr_);
-}
-
-void Window::Put(absl::string_view input) {
-  mvwprintw(ptr_, 1, 2, std::string(input).c_str());
-  wrefresh(ptr_);
-}
-
-Window::~Window() {
-  delwin(ptr_);
-  refresh();
-}
-
 App::App() {
   setlocale(LC_ALL, "");
 
   initscr();
+
+  // raw();
+  nodelay(stdscr, true); // non-blocking call.
+
+  keypad(stdscr, true); // enable mouse.
+  mousemask(ALL_MOUSE_EVENTS, NULL);
+
   cbreak();
   noecho();
   clear();
@@ -61,17 +45,28 @@ App::App() {
 
 App::~App() { clear(); }
 
-void App::InsertWindow(std::string title, std::unique_ptr<Window> w) {
-  windows_[title] = std::move(w);
+std::shared_ptr<Textbox>
+App::AddTextbox(absl::string_view title, Dimensions dimensions,
+                std::function<void(absl::string_view)> recv_cb) {
+  auto textbox = std::make_shared<Textbox>(dimensions, std::move(recv_cb));
+  widgets_[title] = textbox;
+  return textbox;
 }
 
-Window *App::GetWindow(std::string title) {
-  auto it = windows_.find(title);
-  if (it == windows_.end()) {
+std::shared_ptr<Textbox> App::AddTextbox(absl::string_view title,
+                                         Dimensions dimensions) {
+  return AddTextbox(title, dimensions, [](absl::string_view) {});
+}
+
+std::shared_ptr<Widget> App::Get(absl::string_view title) {
+  auto it = widgets_.find(title);
+  if (it == widgets_.end()) {
     return nullptr;
   }
-  return it->second.get();
+  return it->second;
 }
+
+void App::Remove(absl::string_view title) { widgets_.erase(title); }
 
 } // namespace ui
 } // namespace latis

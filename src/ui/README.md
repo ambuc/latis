@@ -1,5 +1,11 @@
 # latis::ui README+md
 
+    std::function<void(std::string_view)> recv_cb;
+    std::shared_ptr<Textbox> t = app.AddTextbox(5, 10, 0, 0, recv_cb);
+    t->Update("Foo"); // renders too
+    t->Clear();       // renders too
+
+
            A  
       +------+
     1 | 2012 |

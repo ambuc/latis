@@ -16,41 +16,45 @@
 #ifndef SRC_UI_APP_H_
 #define SRC_UI_APP_H_
 
+#include "src/ui/common.h"
+#include "src/ui/widget.h"
+#include "src/ui/window.h"
+
 #include "absl/container/flat_hash_map.h"
+#include <memory>
 #include <ncurses.h>
 
 namespace latis {
 namespace ui {
-
-class Window {
-public:
-  struct Opts {
-    bool border = false;
-    bool dimensions = false;
-  };
-  Window(int nlines, int ncols, int begin_y, int begin_x, Opts opts);
-  Window(int nlines, int ncols, int begin_y, int begin_x)
-      : Window(nlines, ncols, begin_y, begin_x, Opts()){};
-  ~Window();
-  operator WINDOW *() { return ptr_; }
-  void Put(absl::string_view input);
-
-private:
-  const int nlines_, ncols_, begin_y_, begin_x_;
-  const Opts opts_;
-  WINDOW *ptr_;
-};
 
 class App {
 public:
   App();
   ~App();
 
-  void InsertWindow(std::string title, std::unique_ptr<Window> w);
-  Window *GetWindow(std::string title);
+  std::shared_ptr<Textbox>
+  AddTextbox(absl::string_view title, Dimensions dimensions,
+             std::function<void(absl::string_view)> recv_cb);
+
+  // If you don't care about the recv_cb.
+  std::shared_ptr<Textbox> AddTextbox(absl::string_view title,
+                                      Dimensions dimensions);
+
+  std::shared_ptr<Widget> Get(absl::string_view title);
+
+  template <typename T> //
+  std::shared_ptr<T> Get(absl::string_view title) {
+    if (auto ptr = Get(title); ptr == nullptr) {
+      return nullptr;
+    } else {
+      return std::dynamic_pointer_cast<T>(ptr);
+    }
+  }
+
+  void Remove(absl::string_view title);
 
 private:
-  absl::flat_hash_map<std::string, std::unique_ptr<Window>> windows_;
+  absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
 };
 
 } // namespace ui

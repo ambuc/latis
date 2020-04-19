@@ -31,19 +31,27 @@ int main(int argc, char *argv[]) {
 
   latis::ui::App app;
 
-  const std::string kTitle = "title";
-  app.InsertWindow(kTitle,
-                   absl::make_unique<latis::ui::Window>(
-                       3, 40, 0, 0, latis::ui::Window::Opts{.border = true}));
-  app.GetWindow(kTitle)->Put(
-      absl::StrFormat("Title: %s", latis_obj.Title().value_or("")));
+  app.AddTextbox("title", {3, 40, 0, 0})
+      ->Update(absl::StrFormat("Title: %s", latis_obj.Title().value_or("")));
 
-  const std::string kAuthor = "author";
-  app.InsertWindow(kAuthor,
-                   absl::make_unique<latis::ui::Window>(
-                       3, 40, 0, 40, latis::ui::Window::Opts{.border = true}));
-  app.GetWindow(kAuthor)->Put(
-      absl::StrFormat("Author: %s", latis_obj.Author().value_or("")));
+  app.AddTextbox("author", {3, 40, 0, 39})
+      ->Update(absl::StrFormat("Author: %s", latis_obj.Author().value_or("")));
+
+  app.AddTextbox("date_created", {3, 40, 2, 0})
+      ->Update(absl::StrFormat("Date Created: %s",
+                               absl::FormatTime(latis_obj.CreatedTime())));
+  app.AddTextbox("date_edited", {3, 40, 2, 39})
+      ->Update(absl::StrFormat("Date Edited: %s",
+                               absl::FormatTime(latis_obj.EditedTime())));
+
+  // this is it
+  while (true) {
+    MEVENT event;
+    if (int ch = getch(); ch == KEY_MOUSE && getmouse(&event) == OK) {
+      app.Get<latis::ui::Textbox>("title")->Update(absl::StrFormat(
+          "%d,%d,%d,%d", event.bstate, event.x, event.y, event.z));
+    }
+  }
 
   absl::SleepFor(absl::Minutes(1));
 
