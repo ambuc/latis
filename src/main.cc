@@ -35,9 +35,10 @@ int main(int argc, char *argv[]) {
 
   // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
-    latis_app.Load(latis::FromTextproto<LatisMsg>(path).ValueOrDie());
+    LatisMsg msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
+    latis_app.Load(msg);
   }
-  // Otherwise, use the default empty ssheet obj.
+  // Otherwise, use the default empty SSheet obj.
 
   latis_app.ReadEvalPrintLoop();
 
