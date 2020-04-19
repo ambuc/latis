@@ -22,7 +22,6 @@
 
 #include "absl/container/flat_hash_map.h"
 #include <memory>
-#include <ncurses.h>
 
 namespace latis {
 namespace ui {

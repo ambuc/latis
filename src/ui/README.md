@@ -1,35 +1,4 @@
-# latis::ui README+md
+# latis::ui README.md
 
-    std::function<void(std::string_view)> recv_cb;
-    std::shared_ptr<Textbox> t = app.AddTextbox(5, 10, 0, 0, recv_cb);
-    t->Update("Foo"); // renders too
-    t->Clear();       // renders too
-
-
-           A  
-      +------+
-    1 | 2012 |
-      +------+
-    2 | 2013 |
-      +------+
-    
-    B1 := $30000
-    B2 := $20000
-
-           A         B
-      +------+---------+
-    1 | 2012 | $30,000 |
-      +------+---------+
-    2 | 2013 | $20,000 |
-      +------+---------+
-    
-    B3 := AVG(B1:B2)
-
-       |    A |       B |
-    ---+------+---------+
-     1 | 2012 | $30,000 |
-    ---+------+---------+
-     2 | 2013 | $20,000 |
-    ---+------+---------+
-     3 |      | $25,000 |
-    ---+------+---------+
+Nothing under `latis::ui::*` knows about latis-specific spreadsheets, cells,
+protos, etc. 

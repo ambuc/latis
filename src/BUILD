@@ -28,6 +28,18 @@ cc_test(
 )
 
 cc_library(
+    name = "latis_app",
+    srcs = ["latis_app.cc"],
+    hdrs = ["latis_app.h"],
+    deps = [
+        ":latis_impl",
+        "//proto:latis_msg_cc_proto",
+        "//src/ui:app_lib",
+        "//src/utils:io",
+    ],
+)
+
+cc_library(
     name = "latis_interface",
     hdrs = ["latis_interface.h"],
     deps = [
@@ -76,6 +88,7 @@ cc_binary(
     srcs = ["main.cc"],
     linkopts = ["-lncurses"],
     deps = [
+        ":latis_app",
         ":latis_impl",
         "//src/ui:app_lib",
         "//src/utils:io",

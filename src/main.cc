@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "proto/latis_msg.pb.h"
+#include "src/latis_app.h"
 #include "src/latis_impl.h"
 #include "src/ui/app.h"
 #include "src/utils/io.h"
@@ -27,49 +28,23 @@ ABSL_FLAG(bool, debug_mode, false,
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
-  latis::Latis latis_obj(
-      latis::FromTextproto<LatisMsg>(absl::GetFlag(FLAGS_textproto_input))
-          .ValueOrDie());
-
-  latis::ui::App app;
-
-  app.AddTextbox("title", {3, 40, 0, 0},
-                 [&latis_obj](absl::string_view s) { latis_obj.SetTitle(s); })
-      ->Update(absl::StrFormat("Title: %s", latis_obj.Title().value_or("")));
-
-  app.AddTextbox("author", {3, 40, 0, 39},
-                 [&latis_obj](absl::string_view s) { latis_obj.SetAuthor(s); })
-      ->Update(absl::StrFormat("Author: %s", latis_obj.Author().value_or("")));
-
-  app.AddTextbox("date_created", {3, 40, 2, 0})
-      ->Update(absl::StrFormat("Date Created: %s",
-                               absl::FormatTime(latis_obj.CreatedTime())));
-  app.AddTextbox("date_edited", {3, 40, 2, 39})
-      ->Update(absl::StrFormat("Date Edited: %s",
-                               absl::FormatTime(latis_obj.EditedTime())));
-
-  // When the latis_obj changes, change this too.
-  latis_obj.RegisterEditedTimeCallback([&app](absl::Time t) {
-    app.Get<latis::ui::Textbox>("date_edited")
-        ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
+  latis::LatisApp latis_app({
+      .debug = absl::GetFlag(FLAGS_debug_mode),
   });
 
-  // Maybe instantiate debug textbox.
-  if (absl::GetFlag(FLAGS_debug_mode)) {
-    int y, x;
-    getmaxyx(stdscr, y, x);
-    app.AddTextbox("debug", {3, x, y - 3, 0})->Update("DEBUG_MODE_ENABLED");
+  if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
+    latis_app.Load(latis::FromTextproto<LatisMsg>(path).ValueOrDie());
   }
 
   // read-eval-print loop
   MEVENT event;
   while (true) {
     if (int ch = getch(); getmouse(&event) == OK) {
-      app.BubbleEvent(event);
+      latis_app.BubbleEvent(event);
     } else if (ch == int('q')) {
       break; // and return
     } else {
-      app.BubbleCh(ch);
+      latis_app.BubbleCh(ch);
     }
   }
 

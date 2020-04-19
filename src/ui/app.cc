@@ -59,11 +59,11 @@ std::shared_ptr<Textbox> App::AddTextbox(absl::string_view title,
 }
 
 std::shared_ptr<Widget> App::Get(absl::string_view title) {
-  auto it = widgets_.find(title);
-  if (it == widgets_.end()) {
+  if (const auto it = widgets_.find(title); it == widgets_.end()) {
     return nullptr;
+  } else {
+    return it->second;
   }
-  return it->second;
 }
 
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
