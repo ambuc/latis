@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/latis_impl.h"
+#include "src/ssheet_impl.h"
 
 #include "absl/time/time.h"
 #include "google/protobuf/text_format.h"
@@ -36,22 +36,22 @@ using ::testing::StrictMock;
 
 // metadata
 TEST(Metadata, TitleAndAuthor) {
-  Latis latis;
-  latis.SetTitle("t");
-  latis.SetAuthor("a");
+  SSheet ssheet;
+  ssheet.SetTitle("t");
+  ssheet.SetAuthor("a");
 
   LatisMsg latis_msg_output;
-  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+  EXPECT_THAT(ssheet.WriteTo(&latis_msg_output), IsOk());
 
   EXPECT_THAT(latis_msg_output.metadata().title(), Eq("t"));
   EXPECT_THAT(latis_msg_output.metadata().author(), Eq("a"));
 }
 
 TEST(Metadata, CreatedTimeIsSetDuringIngest) {
-  Latis latis;
+  SSheet ssheet;
 
   LatisMsg latis_msg_output;
-  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+  EXPECT_THAT(ssheet.WriteTo(&latis_msg_output), IsOk());
 
   EXPECT_THAT(latis_msg_output.metadata().created_time().seconds(),
               Le(absl::ToUnixSeconds(absl::Now())));
@@ -64,11 +64,11 @@ TEST(Metadata, CreatedTimeIsUntouched) {
       ->mutable_created_time()
       ->set_seconds(s);
 
-  Latis latis(latis_msg_input_with_creation_time);
-  EXPECT_THAT(absl::ToUnixSeconds(latis.CreatedTime()), Eq(s));
+  SSheet ssheet(latis_msg_input_with_creation_time);
+  EXPECT_THAT(absl::ToUnixSeconds(ssheet.CreatedTime()), Eq(s));
 
   LatisMsg latis_msg_output;
-  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+  EXPECT_THAT(ssheet.WriteTo(&latis_msg_output), IsOk());
 
   EXPECT_THAT(latis_msg_output.metadata().created_time().seconds(), Eq(s));
 }
@@ -76,11 +76,11 @@ TEST(Metadata, CreatedTimeIsUntouched) {
 TEST(Metadata, EditedTimeIsEdited) {
   LatisMsg latis_msg_input;
 
-  Latis latis(latis_msg_input);
-  EXPECT_THAT(latis.EditedTime(), Le(absl::Now()));
+  SSheet ssheet(latis_msg_input);
+  EXPECT_THAT(ssheet.EditedTime(), Le(absl::Now()));
 
   LatisMsg latis_msg_output;
-  EXPECT_THAT(latis.WriteTo(&latis_msg_output), IsOk());
+  EXPECT_THAT(ssheet.WriteTo(&latis_msg_output), IsOk());
 
   EXPECT_THAT(latis_msg_output.metadata().edited_time().seconds(),
               Le(absl::ToUnixSeconds(absl::Now())));
@@ -95,7 +95,7 @@ protected:
   const XY B2 = XY::From("B2").ValueOrDie();
   const XY C3 = XY::From("C3").ValueOrDie();
   const XY D4 = XY::From("D4").ValueOrDie();
-  Latis latis_;
+  SSheet latis_;
   StrictMock<MockFunction<void(const Cell &)>> update_cb_;
 };
 

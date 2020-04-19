@@ -17,7 +17,7 @@
 #define SRC_LATIS_APP_H_
 
 #include "proto/latis_msg.pb.h"
-#include "src/latis_impl.h"
+#include "src/ssheet_impl.h"
 #include "src/ui/app.h"
 
 namespace latis {
@@ -37,7 +37,7 @@ public:
 
 private:
   const Options options_;
-  std::unique_ptr<Latis> latis_obj_;
+  std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 };
 

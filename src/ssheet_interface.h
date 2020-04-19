@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SRC_LATIS_INTERFACE_H_
-#define SRC_LATIS_INTERFACE_H_
+#ifndef SRC_SSHEET_INTERFACE_H_
+#define SRC_SSHEET_INTERFACE_H_
 
 #include "proto/latis_msg.pb.h"
 #include "src/xy.h"
@@ -30,9 +30,9 @@ namespace latis {
 using HasChangedCb = std::function<void(const Cell &)>;
 using EditedTimeCb = std::function<void(absl::Time)>;
 
-// LatisInterface is the spreadsheet engine. It doesn't know anything about
+// SSheetInterface is the spreadsheet engine. It doesn't know anything about
 // graphics or display or anything, it just has a few methods. Thread-safe.
-class LatisInterface {
+class SSheetInterface {
 public:
   virtual ::google::protobuf::util::StatusOr<Amount> Get(XY xy) const = 0;
 
@@ -57,4 +57,4 @@ public:
 
 } // namespace latis
 
-#endif // SRC_LATIS_INTERFACE_H_
+#endif // SRC_SSHEET_INTERFACE_H_

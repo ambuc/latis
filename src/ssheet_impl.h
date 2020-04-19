@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef SRC_LATIS_IMPL_H_
-#define SRC_LATIS_IMPL_H_
+#ifndef SRC_SSHEET_IMPL_H_
+#define SRC_SSHEET_IMPL_H_
 
-#include "src/latis_interface.h"
+#include "src/ssheet_interface.h"
 
 #include "proto/latis_msg.pb.h"
 #include "src/display_utils.h"
@@ -33,13 +33,13 @@
 
 namespace latis {
 
-class Latis : public LatisInterface {
+class SSheet : public SSheetInterface {
 public:
   // Create new.
-  Latis();
+  SSheet();
 
   // Create from sheet.
-  Latis(const LatisMsg &sheet);
+  SSheet(const LatisMsg &sheet);
 
   ::google::protobuf::util::StatusOr<Amount> Get(XY xy) const override;
 
@@ -93,4 +93,4 @@ private:
 
 } // namespace latis
 
-#endif // SRC_LATIS_IMPL_H_
+#endif // SRC_SSHEET_IMPL_H_

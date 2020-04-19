@@ -14,7 +14,6 @@
 
 #include "proto/latis_msg.pb.h"
 #include "src/latis_app.h"
-#include "src/latis_impl.h"
 #include "src/ui/app.h"
 #include "src/utils/io.h"
 

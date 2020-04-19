@@ -32,7 +32,7 @@ cc_library(
     srcs = ["latis_app.cc"],
     hdrs = ["latis_app.h"],
     deps = [
-        ":latis_impl",
+        ":ssheet_impl",
         "//proto:latis_msg_cc_proto",
         "//src/ui:app_lib",
         "//src/utils:io",
@@ -40,8 +40,8 @@ cc_library(
 )
 
 cc_library(
-    name = "latis_interface",
-    hdrs = ["latis_interface.h"],
+    name = "ssheet_interface",
+    hdrs = ["ssheet_interface.h"],
     deps = [
         "//proto:latis_msg_cc_proto",
         "@com_google_absl//absl/time",
@@ -49,12 +49,12 @@ cc_library(
 )
 
 cc_library(
-    name = "latis_impl",
-    srcs = ["latis_impl.cc"],
-    hdrs = ["latis_impl.h"],
+    name = "ssheet_impl",
+    srcs = ["ssheet_impl.cc"],
+    hdrs = ["ssheet_impl.h"],
     deps = [
         ":display_utils_lib",
-        ":latis_interface",
+        ":ssheet_interface",
         ":xy_lib",
         "//proto:latis_msg_cc_proto",
         "//src/formula:common_lib",
@@ -70,12 +70,12 @@ cc_library(
 )
 
 cc_test(
-    name = "latis_impl_test",
-    srcs = ["latis_impl_test.cc"],
+    name = "ssheet_impl_test",
+    srcs = ["ssheet_impl_test.cc"],
     deps = [
         ":display_utils_lib",
-        ":latis_impl",
-        ":latis_interface",
+        ":ssheet_impl",
+        ":ssheet_interface",
         "//proto:latis_msg_cc_proto",
         "//src/test_utils:test_utils_lib",
         "@com_google_absl//absl/time",
@@ -89,7 +89,7 @@ cc_binary(
     linkopts = ["-lncurses"],
     deps = [
         ":latis_app",
-        ":latis_impl",
+        ":ssheet_impl",
         "//src/ui:app_lib",
         "//src/utils:io",
         "@com_google_absl//absl/flags:flag",

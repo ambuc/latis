@@ -15,32 +15,31 @@
 #include "src/latis_app.h"
 
 #include "proto/latis_msg.pb.h"
-#include "src/latis_impl.h"
+#include "src/ssheet_impl.h"
 
 #include <ncurses.h>
 
 namespace latis {
 
 LatisApp::LatisApp(Options options)
-    : options_(options), latis_obj_(absl::make_unique<Latis>()),
+    : options_(options), ssheet_(absl::make_unique<SSheet>()),
       app_(absl::make_unique<ui::App>()) {
   app_->AddTextbox("title", {3, 40, 0, 0},
-                   [this](absl::string_view s) { latis_obj_->SetTitle(s); })
-      ->Update(absl::StrFormat("Title: %s", latis_obj_->Title().value_or("")));
+                   [this](absl::string_view s) { ssheet_->SetTitle(s); })
+      ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("")));
 
   app_->AddTextbox("author", {3, 40, 0, 39},
-                   [this](absl::string_view s) { latis_obj_->SetAuthor(s); })
-      ->Update(
-          absl::StrFormat("Author: %s", latis_obj_->Author().value_or("")));
+                   [this](absl::string_view s) { ssheet_->SetAuthor(s); })
+      ->Update(absl::StrFormat("Author: %s", ssheet_->Author().value_or("")));
 
   app_->AddTextbox("date_created", {3, 40, 2, 0})
       ->Update(absl::StrFormat("Date Created: %s",
-                               absl::FormatTime(latis_obj_->CreatedTime())));
+                               absl::FormatTime(ssheet_->CreatedTime())));
   app_->AddTextbox("date_edited", {3, 40, 2, 39})
       ->Update(absl::StrFormat("Date Edited: %s",
-                               absl::FormatTime(latis_obj_->EditedTime())));
+                               absl::FormatTime(ssheet_->EditedTime())));
 
-  latis_obj_->RegisterEditedTimeCallback([this](absl::Time t) {
+  ssheet_->RegisterEditedTimeCallback([this](absl::Time t) {
     app_->Get<latis::ui::Textbox>("date_edited")
         ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
@@ -53,9 +52,7 @@ LatisApp::LatisApp(Options options)
   }
 }
 
-void LatisApp::Load(LatisMsg msg) {
-  latis_obj_ = absl::make_unique<Latis>(msg);
-}
+void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
 
 void LatisApp::BubbleCh(int ch) { app_->BubbleCh(ch); }
 

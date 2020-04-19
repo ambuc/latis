@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/latis_impl.h"
+#include "src/ssheet_impl.h"
 
 #include "src/display_utils.h"
 #include "src/formula/evaluator.h"
@@ -27,9 +27,9 @@ using ::google::protobuf::util::StatusOr;
 using ::google::protobuf::util::error::INVALID_ARGUMENT;
 using ::google::protobuf::util::error::OK;
 
-Latis::Latis() : Latis(LatisMsg()) {}
+SSheet::SSheet() : SSheet(LatisMsg()) {}
 
-Latis::Latis(const LatisMsg &sheet)
+SSheet::SSheet(const LatisMsg &sheet)
     : title_(sheet.metadata().has_title()
                  ? absl::optional<std::string>(sheet.metadata().title())
                  : std::nullopt),
@@ -49,7 +49,7 @@ Latis::Latis(const LatisMsg &sheet)
   }
 }
 
-StatusOr<Amount> Latis::Get(XY xy) const {
+StatusOr<Amount> SSheet::Get(XY xy) const {
   const auto it = cells_.find(xy);
   if (it == cells_.end()) {
     return Status(INVALID_ARGUMENT,
@@ -62,7 +62,7 @@ StatusOr<Amount> Latis::Get(XY xy) const {
   return formula.cached_amount();
 }
 
-StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
+StatusOr<Amount> SSheet::Set(XY xy, std::string_view input) {
   // Evaluate and store lookups.
   absl::flat_hash_set<XY> looked_up{};
 
@@ -117,7 +117,7 @@ StatusOr<Amount> Latis::Set(XY xy, std::string_view input) {
   return std::get<1>(expression_and_amount);
 }
 
-void Latis::Clear(XY xy) {
+void SSheet::Clear(XY xy) {
   cells_.erase(xy);
   for (const XY &descendant : graph_.Delete(xy)) {
     Update(descendant);
@@ -125,7 +125,7 @@ void Latis::Clear(XY xy) {
   UpdateEditTime();
 }
 
-Status Latis::WriteTo(LatisMsg *latis_msg) const {
+Status SSheet::WriteTo(LatisMsg *latis_msg) const {
   if (title_.has_value()) {
     latis_msg->mutable_metadata()->set_title(title_.value());
   }
@@ -144,7 +144,7 @@ Status Latis::WriteTo(LatisMsg *latis_msg) const {
   return Status(OK, "");
 }
 
-void Latis::Update(XY xy) {
+void SSheet::Update(XY xy) {
   LookupFn lookup_fn = [&](XY xy) -> absl::optional<Amount> {
     if (const auto maybe = Get(xy); maybe.ok()) {
       return maybe.ValueOrDie();
@@ -171,7 +171,7 @@ void Latis::Update(XY xy) {
   UpdateEditTime();
 }
 
-void Latis::UpdateEditTime() {
+void SSheet::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
   for (auto &cb : edited_time_callbacks_) {
