@@ -22,20 +22,50 @@
 namespace latis {
 
 LatisApp::LatisApp(Options options)
-    : options_(options), ssheet_(absl::make_unique<SSheet>()),
-      app_(absl::make_unique<ui::App>()) {
-  app_->AddTextbox("title", {3, 40, 0, 0},
-                   [this](absl::string_view s) { ssheet_->SetTitle(s); })
-      ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("")));
+    : options_(options), widget_options_(ui::Widget::Options{
+                             .debug_mode = options_.debug,
+                         }),
+      ssheet_(absl::make_unique<SSheet>()), app_(absl::make_unique<ui::App>()) {
+  WireUp();
+}
 
-  app_->AddTextbox("author", {3, 40, 0, 39},
-                   [this](absl::string_view s) { ssheet_->SetAuthor(s); })
-      ->Update(absl::StrFormat("Author: %s", ssheet_->Author().value_or("")));
+void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
 
-  app_->AddTextbox("date_created", {3, 40, 2, 0})
+void LatisApp::ReadEvalPrintLoop() {
+  MEVENT event;
+  while (true) {
+    if (int ch = getch(); getmouse(&event) == OK) {
+      app_->BubbleEvent(event);
+    } else if (ch == int('q')) {
+      break; // and return
+    } else {
+      app_->BubbleCh(ch);
+    }
+  }
+}
+
+void LatisApp::WireUp() {
+  app_->AddTextbox(
+          "title", {3, 40, 0, 0},
+          [this](absl::string_view s) { ssheet_->SetTitle(s); },
+          widget_options_)
+      ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("n/a")));
+
+  app_->AddTextbox(
+          "author", {3, 40, 0, 39},
+          [this](absl::string_view s) { ssheet_->SetAuthor(s); },
+          widget_options_)
+      ->Update(
+          absl::StrFormat("Author: %s", ssheet_->Author().value_or("n/a")));
+
+  app_->AddTextbox(
+          "date_created", {3, 40, 2, 0}, [](absl::string_view) {},
+          widget_options_)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
-  app_->AddTextbox("date_edited", {3, 40, 2, 39})
+  app_->AddTextbox(
+          "date_edited", {3, 40, 2, 39}, [](absl::string_view) {},
+          widget_options_)
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
@@ -45,17 +75,14 @@ LatisApp::LatisApp(Options options)
   });
 
   // Maybe instantiate debug textbox.
-  if (options.debug) {
+  if (options_.debug) {
     int y, x;
     getmaxyx(stdscr, y, x);
-    app_->AddTextbox("debug", {3, x, y - 3, 0})->Update("DEBUG_MODE_ENABLED");
+    app_->AddTextbox(
+            "debug", {3, x, y - 3, 0}, [](absl::string_view) {},
+            widget_options_)
+        ->Update("DEBUG_MODE_ENABLED");
   }
 }
-
-void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
-
-void LatisApp::BubbleCh(int ch) { app_->BubbleCh(ch); }
-
-void LatisApp::BubbleEvent(const MEVENT &event) { app_->BubbleEvent(event); }
 
 } // namespace latis

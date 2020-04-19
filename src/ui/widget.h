@@ -27,6 +27,9 @@ namespace ui {
 
 class Widget {
 public:
+  struct Options {
+    bool debug_mode = false;
+  };
   virtual ~Widget() = default;
   virtual void BubbleCh(int ch) = 0;
   virtual void BubbleEvent(const MEVENT &event) = 0;
@@ -34,8 +37,8 @@ public:
 
 class Textbox : public Widget {
 public:
-  Textbox(Dimensions dimensions,
-          std::function<void(absl::string_view)> recv_cb);
+  Textbox(Dimensions dimensions, std::function<void(absl::string_view)> recv_cb,
+          Options options);
   ~Textbox() override {}
   void Update(absl::string_view s);
   void Clear();
@@ -43,6 +46,7 @@ public:
   void BubbleEvent(const MEVENT &event) override;
 
 private:
+  const Options options_;
   const std::function<void(absl::string_view)> recv_cb_;
   const std::unique_ptr<Window> window_;
 };

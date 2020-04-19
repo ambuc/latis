@@ -31,21 +31,13 @@ int main(int argc, char *argv[]) {
       .debug = absl::GetFlag(FLAGS_debug_mode),
   });
 
+  // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
     latis_app.Load(latis::FromTextproto<LatisMsg>(path).ValueOrDie());
   }
+  // Otherwise, use the default empty ssheet obj.
 
-  // read-eval-print loop
-  MEVENT event;
-  while (true) {
-    if (int ch = getch(); getmouse(&event) == OK) {
-      latis_app.BubbleEvent(event);
-    } else if (ch == int('q')) {
-      break; // and return
-    } else {
-      latis_app.BubbleCh(ch);
-    }
-  }
+  latis_app.ReadEvalPrintLoop();
 
   return 0;
 }

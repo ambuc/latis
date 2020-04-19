@@ -35,6 +35,7 @@ cc_library(
         ":ssheet_impl",
         "//proto:latis_msg_cc_proto",
         "//src/ui:app_lib",
+        "//src/ui:widget_lib",
         "//src/utils:io",
     ],
 )

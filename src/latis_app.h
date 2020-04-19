@@ -19,6 +19,7 @@
 #include "proto/latis_msg.pb.h"
 #include "src/ssheet_impl.h"
 #include "src/ui/app.h"
+#include "src/ui/widget.h"
 
 namespace latis {
 
@@ -31,12 +32,13 @@ public:
   LatisApp() : LatisApp(Options()) {}
   explicit LatisApp(Options options);
   void Load(LatisMsg msg);
-
-  void BubbleCh(int ch);
-  void BubbleEvent(const MEVENT &event);
+  void ReadEvalPrintLoop();
 
 private:
+  void WireUp();
+
   const Options options_;
+  const ui::Widget::Options widget_options_;
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 };

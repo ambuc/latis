@@ -27,7 +27,7 @@ class Window {
 public:
   struct Opts {
     bool border = true;
-    bool show_dimensions = true;
+    bool show_dimensions = false;
   };
   Window(Dimensions dimensions, Opts opts);
   Window(Dimensions dimensions) : Window(dimensions, Opts()){};

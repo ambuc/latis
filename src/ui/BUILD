@@ -29,6 +29,7 @@ cc_library(
     linkopts = [
         "-lncursesw",
     ],
+    visibility = ["//src:__subpackages__"],
     deps = [
         ":common",
         ":window_lib",
