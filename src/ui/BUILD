@@ -4,6 +4,7 @@ cc_library(
     hdrs = ["app.h"],
     linkopts = [
         "-lncursesw",
+        "-lformw",
     ],
     visibility = ["//src:__subpackages__"],
     deps = [

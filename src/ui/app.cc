@@ -18,6 +18,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
+#include <form.h>
 #include <iostream>
 #include <ncurses.h>
 
@@ -47,7 +48,7 @@ Window::~Window() {
   refresh();
 }
 
-App::App(Opts opts) : opts_(opts) {
+App::App() {
   setlocale(LC_ALL, "");
 
   initscr();
@@ -63,6 +64,7 @@ App::~App() { clear(); }
 void App::InsertWindow(std::string title, std::unique_ptr<Window> w) {
   windows_[title] = std::move(w);
 }
+
 Window *App::GetWindow(std::string title) {
   auto it = windows_.find(title);
   if (it == windows_.end()) {

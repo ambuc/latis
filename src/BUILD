@@ -78,6 +78,7 @@ cc_binary(
     deps = [
         ":latis_impl",
         "//src/ui:app_lib",
+        "//src/utils:io",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
     ],

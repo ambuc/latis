@@ -15,34 +15,19 @@
 #include "proto/latis_msg.pb.h"
 #include "src/latis_impl.h"
 #include "src/ui/app.h"
+#include "src/utils/io.h"
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/text_format.h>
-
-#include <fcntl.h>
-#include <fstream>
-#include <iostream>
 
 ABSL_FLAG(std::string, textproto_input, "", "Path to input textproto");
 
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
-  const std::string path = absl::GetFlag(FLAGS_textproto_input);
-  if (path.empty()) {
-    std::cout << "FLAGS_textproto_input was empty." << std::endl;
-    return 1;
-  }
-
-  LatisMsg parsed;
-  int fd = open(path.c_str(), O_RDONLY);
-  google::protobuf::io::FileInputStream fstream(fd);
-  google::protobuf::TextFormat::Parse(&fstream, &parsed);
-  close(fd);
-
-  latis::Latis latis_obj(parsed);
+  latis::Latis latis_obj(
+      latis::FromTextproto<LatisMsg>(absl::GetFlag(FLAGS_textproto_input))
+          .ValueOrDie());
 
   latis::ui::App app;
 

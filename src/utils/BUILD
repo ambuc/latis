@@ -3,6 +3,15 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 package(default_visibility = ["//src:__subpackages__"])
 
 cc_library(
+    name = "io",
+    hdrs = ["io.h"],
+    deps = [
+        ":cleanup",
+        "//proto:latis_msg_cc_proto",
+    ],
+)
+
+cc_library(
     name = "cleanup",
     hdrs = ["cleanup.h"],
     deps = [],

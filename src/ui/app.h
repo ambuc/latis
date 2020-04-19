@@ -43,19 +43,13 @@ private:
 
 class App {
 public:
-  struct Opts {
-    bool enable_window_dimensions = false;
-  };
-
-  App() : App(Opts()) {}
-  explicit App(Opts opts);
+  App();
   ~App();
 
   void InsertWindow(std::string title, std::unique_ptr<Window> w);
   Window *GetWindow(std::string title);
 
 private:
-  Opts opts_;
   absl::flat_hash_map<std::string, std::unique_ptr<Window>> windows_;
 };
 
