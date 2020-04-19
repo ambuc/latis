@@ -174,6 +174,9 @@ void Latis::Update(XY xy) {
 void Latis::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
+  for (auto &cb : edited_time_callbacks_) {
+    cb(edited_time_);
+  }
 }
 
 } // namespace latis

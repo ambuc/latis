@@ -33,19 +33,28 @@ int main(int argc, char *argv[]) {
 
   latis::ui::App app;
 
-  app.AddTextbox("title", {3, 40, 0, 0})
+  app.AddTextbox("title", {3, 40, 0, 0},
+                 [&latis_obj](absl::string_view s) { latis_obj.SetTitle(s); })
       ->Update(absl::StrFormat("Title: %s", latis_obj.Title().value_or("")));
 
-  app.AddTextbox("author", {3, 40, 0, 40})
+  app.AddTextbox("author", {3, 40, 0, 39},
+                 [&latis_obj](absl::string_view s) { latis_obj.SetAuthor(s); })
       ->Update(absl::StrFormat("Author: %s", latis_obj.Author().value_or("")));
 
-  app.AddTextbox("date_created", {3, 40, 3, 0})
+  app.AddTextbox("date_created", {3, 40, 2, 0})
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(latis_obj.CreatedTime())));
-  app.AddTextbox("date_edited", {3, 40, 3, 40})
+  app.AddTextbox("date_edited", {3, 40, 2, 39})
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(latis_obj.EditedTime())));
 
+  // When the latis_obj changes, change this too.
+  latis_obj.RegisterEditedTimeCallback([&app](absl::Time t) {
+    app.Get<latis::ui::Textbox>("date_edited")
+        ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
+  });
+
+  // Maybe instantiate debug textbox.
   if (absl::GetFlag(FLAGS_debug_mode)) {
     int y, x;
     getmaxyx(stdscr, y, x);
@@ -53,16 +62,16 @@ int main(int argc, char *argv[]) {
   }
 
   // read-eval-print loop
+  MEVENT event;
   while (true) {
-    MEVENT event;
     if (int ch = getch(); getmouse(&event) == OK) {
       app.BubbleEvent(event);
+    } else if (ch == int('q')) {
+      break; // and return
     } else {
       app.BubbleCh(ch);
     }
   }
-
-  // absl::SleepFor(absl::Minutes(1));
 
   return 0;
 }

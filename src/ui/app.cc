@@ -43,7 +43,7 @@ App::App() {
   refresh();
 }
 
-App::~App() { clear(); }
+App::~App() { endwin(); }
 
 std::shared_ptr<Textbox>
 App::AddTextbox(absl::string_view title, Dimensions dimensions,

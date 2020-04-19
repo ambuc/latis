@@ -28,6 +28,7 @@
 namespace latis {
 
 using HasChangedCb = std::function<void(const Cell &)>;
+using EditedTimeCb = std::function<void(absl::Time)>;
 
 // LatisInterface is the spreadsheet engine. It doesn't know anything about
 // graphics or display or anything, it just has a few methods. Thread-safe.
@@ -44,11 +45,12 @@ public:
   WriteTo(LatisMsg *latis_msg) const = 0;
 
   virtual void RegisterCallback(HasChangedCb has_changed_cb) = 0;
+  virtual void RegisterEditedTimeCallback(EditedTimeCb edited_time_cb) = 0;
 
   virtual absl::optional<std::string> Title() const = 0;
-  virtual void SetTitle(std::string title) = 0;
+  virtual void SetTitle(absl::string_view title) = 0;
   virtual absl::optional<std::string> Author() const = 0;
-  virtual void SetAuthor(std::string author) = 0;
+  virtual void SetAuthor(absl::string_view author) = 0;
   virtual absl::Time CreatedTime() const = 0;
   virtual absl::Time EditedTime() const = 0;
 };

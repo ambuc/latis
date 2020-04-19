@@ -55,14 +55,17 @@ public:
   void RegisterCallback(HasChangedCb has_changed_cb) override {
     callbacks_.push_back(has_changed_cb);
   }
+  void RegisterEditedTimeCallback(EditedTimeCb edited_time_cb) override {
+    edited_time_callbacks_.push_back(edited_time_cb);
+  }
 
   absl::optional<std::string> Title() const override { return title_; }
-  void SetTitle(std::string title) override {
+  void SetTitle(absl::string_view title) override {
     UpdateEditTime();
     title_ = title;
   }
   absl::optional<std::string> Author() const override { return author_; }
-  void SetAuthor(std::string author) override {
+  void SetAuthor(absl::string_view author) override {
     UpdateEditTime();
     author_ = author;
   }
@@ -79,6 +82,7 @@ private:
   graph::Graph<XY> graph_;
 
   std::vector<HasChangedCb> callbacks_{};
+  std::vector<EditedTimeCb> edited_time_callbacks_{};
 
   // Metadata
   absl::optional<std::string> title_{std::nullopt};

@@ -53,7 +53,6 @@ public:
 
   void Remove(absl::string_view title);
 
-  // bubbling events up/down
   void BubbleCh(int ch);
   void BubbleEvent(const MEVENT &event);
 
