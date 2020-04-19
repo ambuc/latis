@@ -15,10 +15,65 @@
 #include "src/ui/widget.h"
 
 #include "absl/strings/str_format.h"
+#include <form.h>
 #include <ncurses.h>
 
 namespace latis {
 namespace ui {
+
+Form::Form(WINDOW *window_ptr) : window_ptr_(window_ptr) {
+  assert(window_ptr_ != nullptr);
+
+  field_[0] = new_field(1, 10, 0, 0, 0, 0);
+  set_field_back(field_[0], A_UNDERLINE);
+  field_opts_off(field_[0], O_AUTOSKIP);
+  assert(field_[0] != nullptr);
+  set_field_buffer(field_[0], 0, "label1");
+
+  assert(form_ == nullptr);
+  form_ = new_form(field_);
+  assert(form_ != nullptr);
+  keypad(window_ptr_, TRUE);
+  // int rows = 1;
+  // int cols = 10;
+  // scale_form(form_, &rows, &cols);
+  // set_form_win(form_, window_ptr_);
+  // auto dw = derwin(window_ptr_, rows, cols, 0, 0);
+  // set_form_sub(form_, dw);
+  // post_form(form_);
+  // wrefresh(dw);
+  // wrefresh(window_ptr_);
+}
+
+Form::~Form() {
+  if (form_ != nullptr) {
+    unpost_form(form_);
+    free_form(form_);
+    // form_ = nullptr;
+  }
+  if (field_[0] != nullptr) {
+    free_field(field_[0]);
+    // field_[0] = nullptr;
+  }
+}
+
+void Form::BubbleCh(int ch) {
+  if (form_ != nullptr) {
+    switch (ch) {
+    case KEY_DOWN:
+      form_driver(form_, REQ_NEXT_FIELD);
+      form_driver(form_, REQ_END_LINE);
+      break;
+    case KEY_UP:
+      form_driver(form_, REQ_PREV_FIELD);
+      form_driver(form_, REQ_END_LINE);
+      break;
+    default:
+      form_driver(form_, ch);
+      break;
+    }
+  }
+}
 
 Textbox::Textbox(Dimensions dimensions,
                  std::function<void(absl::string_view)> recv_cb, Opts opts)
@@ -36,19 +91,34 @@ void Textbox::Clear() {
 }
 
 void Textbox::BubbleCh(int ch) {
-  //
+  echo();
+  if (form_ != nullptr) {
+    form_->BubbleCh(ch);
+  }
 }
 
 void Textbox::BubbleEvent(const MEVENT &event) {
   if (!window_->Contains(event.y, event.x)) {
     return;
   }
-  if (event.bstate & BUTTON1_PRESSED) {
-    Update("You pressed me!");
-  } else if (event.bstate & BUTTON1_CLICKED) {
-    Update("You clicked me!");
+  if (event.bstate & BUTTON1_CLICKED) {
+    Update("Becoming form");
+    BecomeFormIfNotAlready();
   } else if (event.bstate & BUTTON1_DOUBLE_CLICKED) {
-    Update("You double-clicked me!");
+    BecomeDisplayIfNotAlready();
+  }
+}
+
+void Textbox::BecomeFormIfNotAlready() {
+  if (form_ == nullptr) {
+    Update("Becoming form...");
+    form_ = absl::make_unique<Form>(**window_);
+  }
+}
+
+void Textbox::BecomeDisplayIfNotAlready() {
+  if (form_ != nullptr) {
+    form_.reset(nullptr);
   }
 }
 

@@ -29,6 +29,7 @@ cc_library(
     hdrs = ["widget.h"],
     linkopts = [
         "-lncursesw",
+        "-lformw",
     ],
     deps = [
         ":common",

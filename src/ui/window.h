@@ -33,6 +33,7 @@ public:
   void Refresh();
   void Clear();
   bool Contains(int y, int x) const;
+  WINDOW *operator*() const { return ptr_; }
 
 private:
   void PrintPermanentComponents();

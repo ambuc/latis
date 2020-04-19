@@ -20,6 +20,7 @@
 #include "src/ui/window.h"
 
 #include "absl/memory/memory.h"
+#include <form.h>
 #include <ncurses.h>
 
 namespace latis {
@@ -30,6 +31,19 @@ public:
   virtual ~Widget() = default;
   virtual void BubbleCh(int ch) = 0;
   virtual void BubbleEvent(const MEVENT &event) = 0;
+};
+
+// RAII for forms. Form::~Form() is your friend.
+class Form {
+public:
+  Form(WINDOW *window_ptr);
+  ~Form();
+  void BubbleCh(int ch);
+
+private:
+  WINDOW *window_ptr_;
+  FORM *form_{nullptr};
+  FIELD *field_[1];
 };
 
 class Textbox : public Widget {
@@ -43,9 +57,14 @@ public:
   void BubbleEvent(const MEVENT &event) override;
 
 private:
+  void BecomeFormIfNotAlready();
+  void BecomeDisplayIfNotAlready();
+
   const Opts opts_;
   const std::function<void(absl::string_view)> recv_cb_;
   const std::unique_ptr<Window> window_;
+
+  std::unique_ptr<Form> form_{nullptr};
 };
 
 } // namespace ui
