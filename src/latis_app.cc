@@ -24,42 +24,6 @@ namespace latis {
 LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
     : opts_(opts), ssheet_(absl::make_unique<SSheet>(msg)),
       app_(absl::make_unique<ui::App>()) {
-  WireUp();
-}
-
-void LatisApp::Run() {
-  MEVENT event;
-  while (true) {
-
-    const int ch = getch();
-
-    if (ch == ERR) {
-      continue;
-    } else if (ch == int('q')) {
-      break;
-    }
-
-    bool has_event = (getmouse(&event) == OK);
-
-    if (has_event) {
-      app_->BubbleEvent(event);
-    } else {
-      app_->BubbleCh(ch);
-    }
-
-    if (opts_.show_debug_textbox) {
-      fc_tbx_->Update(std::to_string(frame_));
-      debug_tbx_->Update((has_event)
-                             ? absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
-                                               event.bstate, event.x, event.y)
-                             : absl::StrFormat("Keypress: %d", ch));
-    }
-    frame_++;
-    frame_ %= 100;
-  }
-}
-
-void LatisApp::WireUp() {
   app_->AddTextbox(
           "title", {3, 40, 0, 0},
           [this](absl::string_view s) { ssheet_->SetTitle(s); }, opts_)
@@ -95,6 +59,38 @@ void LatisApp::WireUp() {
     fc_tbx_ = app_->AddTextbox(
         "frame_count", {3, x, y - 5, 0}, [](absl::string_view) {}, opts_);
     fc_tbx_->Update("FRAME_COUNT");
+  }
+}
+
+void LatisApp::Run() {
+  MEVENT event;
+  while (true) {
+
+    const int ch = getch();
+
+    if (ch == ERR) {
+      continue;
+    } else if (ch == int('q')) {
+      break;
+    }
+
+    bool has_event = (getmouse(&event) == OK);
+
+    if (has_event) {
+      app_->BubbleEvent(event);
+    } else {
+      app_->BubbleCh(ch);
+    }
+
+    if (opts_.show_debug_textbox) {
+      fc_tbx_->Update(std::to_string(frame_));
+      debug_tbx_->Update((has_event)
+                             ? absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
+                                               event.bstate, event.x, event.y)
+                             : absl::StrFormat("Keypress: %d", ch));
+    }
+    frame_++;
+    frame_ %= 100;
   }
 }
 
