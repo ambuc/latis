@@ -31,12 +31,19 @@ public:
   App();
   ~App();
 
+  // Add Textbox w/ recv_cb
   std::shared_ptr<Textbox>
   AddTextbox(absl::string_view title, Dimensions dimensions,
              std::function<void(absl::string_view)> recv_cb, Opts opts);
 
+  // Add Textbox w/o recv_cb
+  std::shared_ptr<Textbox> AddTextbox(absl::string_view title,
+                                      Dimensions dimensions, Opts opts);
+
+  // Get widget of any kind, or nullptr.
   std::shared_ptr<Widget> Get(absl::string_view title);
 
+  // Get widget of a particular kind, or nullptr.
   template <typename T> //
   std::shared_ptr<T> Get(absl::string_view title) {
     if (auto ptr = Get(title); ptr == nullptr) {
@@ -46,6 +53,7 @@ public:
     }
   }
 
+  // Remove widget of any kind by a given name.
   void Remove(absl::string_view title);
 
   void BubbleCh(int ch);

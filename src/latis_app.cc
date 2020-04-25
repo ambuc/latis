@@ -24,23 +24,27 @@ namespace latis {
 LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
     : opts_(opts), ssheet_(absl::make_unique<SSheet>(msg)),
       app_(absl::make_unique<ui::App>()) {
+
+  int y, x;
+  getmaxyx(stdscr, y, x);
+  int half_x = x / 2;
+  int half_y = y / 2;
+
   app_->AddTextbox(
-          "title", {3, 40, 0, 0},
+          "title", {3, half_x, 0, 0},
           [this](absl::string_view s) { ssheet_->SetTitle(s); }, opts_)
       ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("n/a")));
 
   app_->AddTextbox(
-          "author", {3, 40, 0, 39},
+          "author", {3, half_x, 0, half_x - 1},
           [this](absl::string_view s) { ssheet_->SetAuthor(s); }, opts_)
       ->Update(
           absl::StrFormat("Author: %s", ssheet_->Author().value_or("n/a")));
 
-  app_->AddTextbox(
-          "date_created", {3, 40, 2, 0}, [](absl::string_view) {}, opts_)
+  app_->AddTextbox("date_created", {3, half_x, 2, 0}, opts_)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
-  app_->AddTextbox(
-          "date_edited", {3, 40, 2, 39}, [](absl::string_view) {}, opts_)
+  app_->AddTextbox("date_edited", {3, half_x, 2, half_x - 1}, opts_)
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
@@ -51,13 +55,11 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
 
   // Maybe instantiate debug textbox.
   if (opts_.show_debug_textbox) {
-    int y, x;
-    getmaxyx(stdscr, y, x);
-    debug_tbx_ = app_->AddTextbox(
-        "debug_textbox", {3, x, y - 3, 0}, [](absl::string_view) {}, opts_);
+    debug_tbx_ =
+        app_->AddTextbox("debug_textbox", {3, half_x, y - 3, 0}, opts_);
     debug_tbx_->Update("DEBUG_MODE_ENABLED");
-    fc_tbx_ = app_->AddTextbox(
-        "frame_count", {3, x, y - 5, 0}, [](absl::string_view) {}, opts_);
+    fc_tbx_ =
+        app_->AddTextbox("frame_count", {3, half_x, y - 3, half_x - 1}, opts_);
     fc_tbx_->Update("FRAME_COUNT");
   }
 }

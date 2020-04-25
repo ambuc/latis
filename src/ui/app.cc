@@ -52,6 +52,13 @@ App::AddTextbox(absl::string_view title, Dimensions dimensions,
   return textbox;
 }
 
+std::shared_ptr<Textbox> App::AddTextbox(absl::string_view title,
+                                         Dimensions dimensions, Opts opts) {
+  static std::function<void(absl::string_view)> devnull_cb =
+      [](absl::string_view) {};
+  return AddTextbox(title, dimensions, devnull_cb, opts);
+}
+
 std::shared_ptr<Widget> App::Get(absl::string_view title) {
   if (const auto it = widgets_.find(title); it == widgets_.end()) {
     return nullptr;
