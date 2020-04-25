@@ -22,7 +22,13 @@ namespace latis {
 namespace ui {
 
 Widget::Widget(Dimensions dimensions, Opts opts)
-    : dimensions_(dimensions), opts_(opts) {}
+    : dimensions_(dimensions), opts_(opts),
+      window_(absl::make_unique<Window>(dimensions, opts)) {}
+
+void Widget::Clear() {
+  window_->Clear();
+  window_->Refresh();
+}
 
 // Form::Form(WINDOW *window_ptr) : window_ptr_(window_ptr) {
 //   assert(window_ptr_ != nullptr);
@@ -80,16 +86,10 @@ Widget::Widget(Dimensions dimensions, Opts opts)
 
 Textbox::Textbox(Dimensions dimensions, Opts opts,
                  absl::optional<std::function<void(absl::string_view)>> recv_cb)
-    : Widget(dimensions, opts), recv_cb_(std::move(recv_cb)),
-      window_(absl::make_unique<Window>(dimensions, opts)) {}
+    : Widget(dimensions, opts), recv_cb_(std::move(recv_cb)) {}
 
 void Textbox::Update(absl::string_view s) {
   window_->Print(1, 2, s);
-  window_->Refresh();
-}
-
-void Textbox::Clear() {
-  window_->Clear();
   window_->Refresh();
 }
 

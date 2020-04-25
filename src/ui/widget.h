@@ -31,12 +31,15 @@ class Widget {
 public:
   Widget(Dimensions dimensions, Opts opts);
   virtual ~Widget() = default;
+  void Clear();
+
   virtual void BubbleCh(int ch) = 0;
   virtual void BubbleEvent(const MEVENT &event) = 0;
 
-private:
+protected:
   const Dimensions dimensions_;
   const Opts opts_;
+  const std::unique_ptr<Window> window_;
 };
 
 // // RAII for forms. Form::~Form() is your friend.
@@ -57,15 +60,13 @@ public:
   Textbox(Dimensions dimensions, Opts opts,
           absl::optional<std::function<void(absl::string_view)>> recv_cb);
   ~Textbox() override {}
+
   void Update(absl::string_view s);
-  void Clear();
   void BubbleCh(int ch) override;
   void BubbleEvent(const MEVENT &event) override;
 
 private:
-  const Opts opts_;
   const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
-  const std::unique_ptr<Window> window_;
 
   // std::unique_ptr<Form> form_{nullptr};
 };
