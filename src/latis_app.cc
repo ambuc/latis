@@ -33,15 +33,15 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
                    [this](absl::string_view s) { ssheet_->SetTitle(s); })
       ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("n/a")));
 
-  app_->AddTextbox("author", {3, half_x, 0, half_x - 1}, opts_,
+  app_->AddTextbox("author", {3, half_x, 0, half_x}, opts_,
                    [this](absl::string_view s) { ssheet_->SetAuthor(s); })
       ->Update(
           absl::StrFormat("Author: %s", ssheet_->Author().value_or("n/a")));
 
-  app_->AddTextbox("date_created", {3, half_x, 2, 0}, opts_)
+  app_->AddTextbox("date_created", {3, half_x, 3, 0}, opts_)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
-  app_->AddTextbox("date_edited", {3, half_x, 2, half_x - 1}, opts_)
+  app_->AddTextbox("date_edited", {3, half_x, 3, half_x}, opts_)
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
@@ -56,7 +56,7 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
         app_->AddTextbox("debug_textbox", {3, half_x, y - 3, 0}, opts_);
     debug_tbx_->Update("DEBUG_MODE_ENABLED");
     fc_tbx_ =
-        app_->AddTextbox("frame_count", {3, half_x, y - 3, half_x - 1}, opts_);
+        app_->AddTextbox("frame_count", {3, half_x, y - 3, half_x}, opts_);
     fc_tbx_->Update("FRAME_COUNT");
   }
 }

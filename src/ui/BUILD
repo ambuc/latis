@@ -3,7 +3,7 @@ cc_library(
     srcs = ["app.cc"],
     hdrs = ["app.h"],
     linkopts = [
-        "-lncursesw",
+        "-lncurses",
     ],
     visibility = ["//src:__subpackages__"],
     deps = [
@@ -23,30 +23,15 @@ cc_library(
 )
 
 cc_library(
-    name = "form_lib",
-    srcs = ["form.cc"],
-    hdrs = ["form.h"],
-    linkopts = [
-        "-lncursesw",
-        "-lformw",
-    ],
-    deps = [
-        ":common",
-        ":window_lib",
-        "@com_google_absl//absl/memory",
-    ],
-)
-
-cc_library(
     name = "widget_lib",
     srcs = ["widget.cc"],
     hdrs = ["widget.h"],
     linkopts = [
-        "-lncursesw",
+        "-lncurses",
+        "-lform",
     ],
     deps = [
         ":common",
-        ":form_lib",
         ":window_lib",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
@@ -58,7 +43,7 @@ cc_library(
     srcs = ["window.cc"],
     hdrs = ["window.h"],
     linkopts = [
-        "-lncursesw",
+        "-lncurses",
     ],
     deps = [
         ":common",

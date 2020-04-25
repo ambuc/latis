@@ -26,10 +26,12 @@ Window::Window(Dimensions dimensions, Opts opts)
       ptr_(newwin(dimensions_.nlines, dimensions_.ncols, dimensions_.begin_y,
                   dimensions_.begin_x)) {
   PrintPermanentComponents();
-  wrefresh(ptr_);
+  Refresh();
 }
 
 void Window::Print(int y, int x, absl::string_view s) {
+  PrintPermanentComponents();
+
   std::string puts = std::string(s);
   // two edges and two padding
   if (int(s.size()) > dimensions_.ncols - 4) {
@@ -42,6 +44,7 @@ void Window::Print(int y, int x, absl::string_view s) {
   }
 
   mvwprintw(ptr_, y, x, puts.c_str());
+  Refresh();
 }
 
 void Window::Refresh() { wrefresh(ptr_); }
@@ -49,6 +52,7 @@ void Window::Refresh() { wrefresh(ptr_); }
 void Window::Clear() {
   wclear(ptr_);
   PrintPermanentComponents();
+  Refresh();
 }
 
 bool Window::Contains(int y, int x) const { return dimensions_.Contains(y, x); }
@@ -58,7 +62,7 @@ int Window::Height() const { return dimensions_.nlines; }
 
 Window::~Window() {
   wclear(ptr_);
-  wrefresh(ptr_);
+  Refresh();
   delwin(ptr_);
 }
 

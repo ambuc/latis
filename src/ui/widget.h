@@ -17,7 +17,6 @@
 #define SRC_UI_WIDGET_H_
 
 #include "src/ui/common.h"
-#include "src/ui/form.h"
 #include "src/ui/window.h"
 
 #include "absl/memory/memory.h"
@@ -32,17 +31,48 @@ class Widget {
 public:
   Widget(Dimensions dimensions, Opts opts);
   virtual ~Widget() = default;
+
   void Clear();
 
   virtual void BubbleCh(int ch) = 0;
   virtual void BubbleEvent(const MEVENT &event) = 0;
 
 protected:
+  void Debug(absl::string_view txt);
+
   const Dimensions dimensions_;
   const Opts opts_;
   const std::unique_ptr<Window> window_;
 };
 
+// Forms are hard.
+// https://invisible-island.net/ncurses/ncurses-intro.html#form
+//
+// The general flow of control of a form program looks like this:
+//   1. Create the form fields, using new_field().
+//   2. Create the form using new_form().
+//   3. Post the form using post_form().
+//   4. Refresh the screen.
+//   5. Process user requests via an input loop.
+//   6. Unpost the form using unpost_form().
+//   7. Free the form, using free_form().
+//   8. Free the fields using free_field().
+class FormWidget : public Widget {
+public:
+  FormWidget(Dimensions dimensions, Opts opts);
+  ~FormWidget() override;
+
+  void BubbleCh(int ch) override;
+  void BubbleEvent(const MEVENT &event) override;
+
+  std::string Extract();
+
+private:
+  FORM *form_{nullptr};
+  FIELD *fields_[2]{nullptr, nullptr};
+};
+
+// Textbox. Spawns a FormWidget when asked.
 class Textbox : public Widget {
 public:
   Textbox(Dimensions dimensions, Opts opts,
@@ -56,7 +86,7 @@ public:
 private:
   const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
 
-  std::unique_ptr<Form> form_{nullptr};
+  std::unique_ptr<FormWidget> form_{nullptr};
 };
 
 } // namespace ui
