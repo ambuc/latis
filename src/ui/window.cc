@@ -53,6 +53,9 @@ void Window::Clear() {
 
 bool Window::Contains(int y, int x) const { return dimensions_.Contains(y, x); }
 
+int Window::Width() const { return dimensions_.ncols; }
+int Window::Height() const { return dimensions_.nlines; }
+
 Window::~Window() {
   wclear(ptr_);
   wrefresh(ptr_);

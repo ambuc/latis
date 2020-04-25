@@ -17,6 +17,7 @@
 #define SRC_UI_WIDGET_H_
 
 #include "src/ui/common.h"
+#include "src/ui/form.h"
 #include "src/ui/window.h"
 
 #include "absl/memory/memory.h"
@@ -42,19 +43,6 @@ protected:
   const std::unique_ptr<Window> window_;
 };
 
-// // RAII for forms. Form::~Form() is your friend.
-// class Form {
-// public:
-//   Form(WINDOW *window_ptr);
-//   ~Form();
-//   void BubbleCh(int ch);
-//
-// private:
-//   WINDOW *window_ptr_;
-//   FORM *form_{nullptr};
-//   FIELD *field_[1];
-// };
-
 class Textbox : public Widget {
 public:
   Textbox(Dimensions dimensions, Opts opts,
@@ -68,7 +56,7 @@ public:
 private:
   const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
 
-  // std::unique_ptr<Form> form_{nullptr};
+  std::unique_ptr<Form> form_{nullptr};
 };
 
 } // namespace ui

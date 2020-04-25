@@ -28,7 +28,6 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   int y, x;
   getmaxyx(stdscr, y, x);
   int half_x = x / 2;
-  int half_y = y / 2;
 
   app_->AddTextbox("title", {3, half_x, 0, 0}, opts_,
                    [this](absl::string_view s) { ssheet_->SetTitle(s); })
