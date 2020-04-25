@@ -30,14 +30,12 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   int half_x = x / 2;
   int half_y = y / 2;
 
-  app_->AddTextbox(
-          "title", {3, half_x, 0, 0},
-          [this](absl::string_view s) { ssheet_->SetTitle(s); }, opts_)
+  app_->AddTextbox("title", {3, half_x, 0, 0}, opts_,
+                   [this](absl::string_view s) { ssheet_->SetTitle(s); })
       ->Update(absl::StrFormat("Title: %s", ssheet_->Title().value_or("n/a")));
 
-  app_->AddTextbox(
-          "author", {3, half_x, 0, half_x - 1},
-          [this](absl::string_view s) { ssheet_->SetAuthor(s); }, opts_)
+  app_->AddTextbox("author", {3, half_x, 0, half_x - 1}, opts_,
+                   [this](absl::string_view s) { ssheet_->SetAuthor(s); })
       ->Update(
           absl::StrFormat("Author: %s", ssheet_->Author().value_or("n/a")));
 

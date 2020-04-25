@@ -34,6 +34,7 @@ cc_library(
     deps = [
         ":common",
         ":window_lib",
+        "@com_google_absl//absl/types:optional",
     ],
 )
 

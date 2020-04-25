@@ -33,12 +33,9 @@ public:
 
   // Add Textbox w/ recv_cb
   std::shared_ptr<Textbox>
-  AddTextbox(absl::string_view title, Dimensions dimensions,
-             std::function<void(absl::string_view)> recv_cb, Opts opts);
-
-  // Add Textbox w/o recv_cb
-  std::shared_ptr<Textbox> AddTextbox(absl::string_view title,
-                                      Dimensions dimensions, Opts opts);
+  AddTextbox(absl::string_view title, Dimensions dimensions, Opts opts,
+             absl::optional<std::function<void(absl::string_view)>> recv_cb =
+                 absl::nullopt);
 
   // Get widget of any kind, or nullptr.
   std::shared_ptr<Widget> Get(absl::string_view title);

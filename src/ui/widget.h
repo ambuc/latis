@@ -20,6 +20,7 @@
 #include "src/ui/window.h"
 
 #include "absl/memory/memory.h"
+#include "absl/types/optional.h"
 #include <form.h>
 #include <ncurses.h>
 
@@ -28,9 +29,14 @@ namespace ui {
 
 class Widget {
 public:
+  Widget(Dimensions dimensions, Opts opts);
   virtual ~Widget() = default;
   virtual void BubbleCh(int ch) = 0;
   virtual void BubbleEvent(const MEVENT &event) = 0;
+
+private:
+  const Dimensions dimensions_;
+  const Opts opts_;
 };
 
 // // RAII for forms. Form::~Form() is your friend.
@@ -48,8 +54,8 @@ public:
 
 class Textbox : public Widget {
 public:
-  Textbox(Dimensions dimensions, std::function<void(absl::string_view)> recv_cb,
-          Opts opts);
+  Textbox(Dimensions dimensions, Opts opts,
+          absl::optional<std::function<void(absl::string_view)>> recv_cb);
   ~Textbox() override {}
   void Update(absl::string_view s);
   void Clear();
@@ -58,7 +64,7 @@ public:
 
 private:
   const Opts opts_;
-  const std::function<void(absl::string_view)> recv_cb_;
+  const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
   const std::unique_ptr<Window> window_;
 
   // std::unique_ptr<Form> form_{nullptr};
