@@ -21,15 +21,13 @@
 
 namespace latis {
 
-LatisApp::LatisApp(ui::Opts opts)
-    : opts_(opts), ssheet_(absl::make_unique<SSheet>()),
+LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
+    : opts_(opts), ssheet_(absl::make_unique<SSheet>(msg)),
       app_(absl::make_unique<ui::App>()) {
   WireUp();
 }
 
-void LatisApp::Load(LatisMsg msg) { ssheet_ = absl::make_unique<SSheet>(msg); }
-
-void LatisApp::ReadEvalPrintLoop() {
+void LatisApp::Run() {
   MEVENT event;
   while (true) {
 

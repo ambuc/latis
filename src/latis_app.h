@@ -26,9 +26,9 @@ namespace latis {
 class LatisApp {
 public:
   LatisApp() : LatisApp(ui::Opts()) {}
-  explicit LatisApp(ui::Opts opts);
-  void Load(LatisMsg msg);
-  void ReadEvalPrintLoop();
+  explicit LatisApp(ui::Opts opts) : LatisApp(opts, LatisMsg()) {}
+  LatisApp(ui::Opts opts, LatisMsg msg);
+  void Run();
 
 private:
   void WireUp();

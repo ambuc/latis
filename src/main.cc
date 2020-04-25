@@ -27,21 +27,24 @@ ABSL_FLAG(bool, debug_mode, false,
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
-  latis::LatisApp latis_app({
+  latis::ui::Opts opts{
       .show_dimensions = absl::GetFlag(FLAGS_debug_mode),
       .show_borders = absl::GetFlag(FLAGS_debug_mode),
       .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
       .show_frame_count = absl::GetFlag(FLAGS_debug_mode),
-  });
+  };
+
+  std::unique_ptr<latis::LatisApp> latis_app;
 
   // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
-    LatisMsg msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
-    latis_app.Load(msg);
+    latis_app = absl::make_unique<latis::LatisApp>(
+        opts, /*msg=*/latis::FromTextproto<LatisMsg>(path).ValueOrDie());
+  } else {
+    latis_app = absl::make_unique<latis::LatisApp>(opts);
   }
-  // Otherwise, use the default empty SSheet obj.
 
-  latis_app.ReadEvalPrintLoop();
+  latis_app->Run();
 
   return 0;
 }
