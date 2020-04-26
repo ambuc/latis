@@ -22,21 +22,117 @@ namespace latis {
 namespace ui {
 namespace {
 
+using ::testing::AllOf;
 using ::testing::DoubleEq;
 using ::testing::Eq;
+using ::testing::Field;
 using ::testing::Le;
 using ::testing::MockFunction;
 using ::testing::Not;
-using ::testing::Property;
+using ::testing::Optional;
 using ::testing::StrictMock;
 
-TEST(LayoutEngine, Placements) {
-  const int w = 8;
-  const int half_w = 4;
+class LayoutEngineTestBase : public ::testing::Test {
+public:
+  LayoutEngineTestBase() : h_(10), w_(8), e_(/*y=*/h_, /*x=*/w_) {}
 
-  auto e = LayoutEngine(/*y=*/10, /*x=*/w);
+protected:
+  const int h_;
+  const int w_;
+  LayoutEngine e_;
+};
 
-  EXPECT_THAT(e.Place(1, half_w), Eq(ui::Dimensions{1, 4, 0, 0}));
+TEST_F(LayoutEngineTestBase, TooTall) {
+  // too tall
+  EXPECT_EQ(e_.Place(h_ + 1, 1), absl::nullopt);
+  // just right
+  EXPECT_NE(e_.Place(h_, 1), absl::nullopt);
+}
+
+TEST_F(LayoutEngineTestBase, TooWide) {
+  // too wide
+  EXPECT_EQ(e_.Place(1, w_ + 1), absl::nullopt);
+  // just right
+  EXPECT_NE(e_.Place(1, w_), absl::nullopt);
+}
+
+TEST_F(LayoutEngineTestBase, Placements) {
+
+  {
+    // AAAA
+    Dimensions d = e_.Place(1, 4).value();
+    EXPECT_EQ(d.nlines, 1);
+    EXPECT_EQ(d.ncols, 4);
+    EXPECT_EQ(d.begin_y, 0);
+    EXPECT_EQ(d.begin_x, 0);
+  }
+
+  {
+    // AAAABBBB
+    Dimensions d = e_.Place(1, 4).value();
+    EXPECT_EQ(d.nlines, 1);
+    EXPECT_EQ(d.ncols, 4);
+    EXPECT_EQ(d.begin_y, 0);
+    EXPECT_EQ(d.begin_x, 4);
+  }
+
+  {
+    // AAAABBBB
+    // CCC
+    Dimensions d = e_.Place(1, 3).value();
+    EXPECT_EQ(d.nlines, 1);
+    EXPECT_EQ(d.ncols, 3);
+    EXPECT_EQ(d.begin_y, 1);
+    EXPECT_EQ(d.begin_x, 0);
+  }
+
+  {
+    // AAAABBBB
+    // CCCDDD
+    //    DDD
+    Dimensions d = e_.Place(2, 3).value();
+    EXPECT_EQ(d.nlines, 2);
+    EXPECT_EQ(d.ncols, 3);
+    EXPECT_EQ(d.begin_y, 1);
+    EXPECT_EQ(d.begin_x, 3);
+  }
+
+  {
+    // AAAABBBB
+    // CCCDDD
+    // EEEDDD
+    // EEE
+    Dimensions d = e_.Place(2, 3).value();
+    EXPECT_EQ(d.nlines, 2);
+    EXPECT_EQ(d.ncols, 3);
+    EXPECT_EQ(d.begin_y, 2);
+    EXPECT_EQ(d.begin_x, 0);
+  }
+
+  {
+    // AAAABBBB
+    // CCCDDDFF
+    // EEEDDDFF
+    // EEE
+    Dimensions d = e_.Place(2, 2).value();
+    EXPECT_EQ(d.nlines, 2);
+    EXPECT_EQ(d.ncols, 2);
+    EXPECT_EQ(d.begin_y, 1);
+    EXPECT_EQ(d.begin_x, 6);
+  }
+
+  {
+    // AAAABBBB
+    // CCCDDDFF
+    // EEEDDDFF
+    // EEEGGG
+    //    GGG
+    Dimensions d = e_.Place(2, 3).value();
+    EXPECT_EQ(d.nlines, 2);
+    EXPECT_EQ(d.ncols, 3);
+    EXPECT_EQ(d.begin_y, 3);
+    EXPECT_EQ(d.begin_x, 3);
+  }
 }
 
 } // namespace

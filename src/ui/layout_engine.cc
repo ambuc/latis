@@ -14,19 +14,47 @@
 
 #include "src/ui/layout_engine.h"
 
+#include <iostream>
+
 namespace latis {
 namespace ui {
 
-absl::optional<Dimensions> LayoutEngine::Place(int y, int x) {
+namespace {
+//
+} // namespace
 
-  return Dimensions{.nlines = y, .ncols = x, .begin_y = 0, .begin_x = 0};
-}
-bool LayoutEngine::Newline() {
-  if (next_y_ < height_ - 2) {
-    next_y_++;
-    next_x_ = 0;
-    // TODO pick up from here
+absl::optional<Dimensions> LayoutEngine::Place(int h, int w) {
+  auto d = Dimensions{.nlines = h, .ncols = w, .begin_y = 0, .begin_x = 0};
+
+  while (true) {
+    auto d_lcl = d;
+    for (const auto &box : boxes_) {
+      if (box.CollidesWith(d)) {
+        if (box.RightEdge() + w <= width_) {
+          d.begin_x = box.RightEdge();
+        } else {
+          // newline
+          d.begin_y++;
+          d.begin_x = 0;
+        }
+      }
+    }
+    if (d_lcl == d) {
+      break;
+    }
   }
+
+  if (!InBorders(h, w, d.begin_y, d.begin_x)) {
+    return absl::nullopt;
+  }
+
+  boxes_.push_back(d);
+
+  return d;
+}
+
+bool LayoutEngine::InBorders(int h, int w, int begin_y, int begin_x) {
+  return begin_x + w <= width_ && begin_y + h <= height_;
 }
 
 } // namespace ui

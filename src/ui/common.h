@@ -45,6 +45,24 @@ struct Dimensions {
     return nlines == other.nlines && ncols == other.ncols &&
            begin_y == other.begin_y && begin_x == other.begin_x;
   }
+
+  int Width() const { return ncols; }
+  int Height() const { return nlines; }
+
+  int LeftEdge() const { return begin_x; }
+  int RightEdge() const { return LeftEdge() + Width(); }
+  int TopEdge() const { return begin_y; }
+  int BottomEdge() const { return TopEdge() + Height(); }
+
+  bool CollidesWith(const Dimensions &other) const {
+    if (LeftEdge() < other.LeftEdge() + other.Width() &&
+        LeftEdge() + Width() > other.LeftEdge() &&
+        TopEdge() < other.TopEdge() + other.Height() &&
+        TopEdge() + Height() > other.TopEdge()) {
+      return true;
+    }
+    return false;
+  }
 };
 
 } // namespace ui

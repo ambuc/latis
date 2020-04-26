@@ -27,20 +27,16 @@ class LayoutEngine {
 public:
   LayoutEngine(int height, int width) : height_(height), width_(width) {}
 
-  absl::optional<Dimensions> Place(int y, int x);
-
-  // Returns true if successful.
-  bool Newline();
-
-  // void Reflow(); easy enough to write, how to communicate the new positions
-  // upstream?
+  absl::optional<Dimensions> Place(int h, int w);
 
 private:
+  // Regardless of boxes, true/false is within borders.
+  bool InBorders(int h, int w, int begin_y, int begin_x);
+
   const int height_;
   const int width_;
 
-  int next_y_{0};
-  int next_x_{0};
+  std::vector<Dimensions> boxes_;
 };
 
 } // namespace ui
