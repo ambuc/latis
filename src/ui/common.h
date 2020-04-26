@@ -17,7 +17,6 @@
 #define SRC_UI_COMMON_H_
 
 #include "absl/strings/string_view.h"
-#include <ncurses.h>
 
 namespace latis {
 namespace ui {
@@ -40,6 +39,11 @@ struct Dimensions {
   bool Contains(int y, int x) const {
     return (begin_y <= y && y <= (begin_y + nlines - 1)) &&
            (begin_x <= x && x <= (begin_x + ncols - 1));
+  }
+
+  inline bool operator==(Dimensions other) const {
+    return nlines == other.nlines && ncols == other.ncols &&
+           begin_y == other.begin_y && begin_x == other.begin_x;
   }
 };
 
