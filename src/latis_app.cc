@@ -31,16 +31,13 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
 
   app_->Add<ui::TextboxWithTemplate>(
           "title", ui::Dimensions{3, half_x, 0, 0},
-          /*tmpl=*/
           [](std::string s) { return absl::StrFormat("Title: %s", s); },
-          /*recv_cb=*/[this](absl::string_view s) { ssheet_->SetTitle(s); })
+          [this](absl::string_view s) { ssheet_->SetTitle(s); })
       ->Update(ssheet_->Title().value_or("n/a"));
 
   app_->Add<ui::TextboxWithTemplate>(
           "author", ui::Dimensions{3, half_x, 0, half_x},
-          /*tmpl=*/
           [](std::string s) { return absl::StrFormat("Author: %s", s); },
-          /*recb_cv=*/
           [this](absl::string_view s) { ssheet_->SetAuthor(s); })
       ->Update(ssheet_->Author().value_or("no author"));
 
@@ -48,6 +45,7 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
                          absl::nullopt)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
+
   app_->Add<ui::Textbox>("date_edited", ui::Dimensions{3, half_x, 3, half_x},
                          absl::nullopt)
       ->Update(absl::StrFormat("Date Edited: %s",

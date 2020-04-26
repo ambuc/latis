@@ -37,6 +37,7 @@ cc_library(
         "//src/ui:app_lib",
         "//src/ui:common",
         "//src/utils:io",
+        "@com_google_absl//absl/functional:bind_front",
     ],
 )
 
