@@ -23,7 +23,7 @@ namespace {
 //
 } // namespace
 
-absl::optional<Dimensions> LayoutEngine::Place(int h, int w) {
+absl::optional<Dimensions> LayoutEngine::PlaceTL(int h, int w) {
   auto d = Dimensions{.nlines = h, .ncols = w, .begin_y = 0, .begin_x = 0};
 
   while (true) {

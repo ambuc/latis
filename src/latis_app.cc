@@ -16,6 +16,7 @@
 
 #include "proto/latis_msg.pb.h"
 #include "src/ssheet_impl.h"
+#include "src/ui/layout_engine.h"
 
 #include <ncurses.h>
 
@@ -27,44 +28,18 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
 
   int y, x;
   getmaxyx(stdscr, y, x);
-  int half_x = x / 2;
 
-  ui::Dimensions dims_title = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = 0,
-      .begin_x = 0,
-  };
-  ui::Dimensions dims_author = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = 0,
-      .begin_x = half_x,
-  };
-  ui::Dimensions dims_created = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = 3,
-      .begin_x = 0,
-  };
-  ui::Dimensions dims_edited = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = 3,
-      .begin_x = half_x,
-  };
-  ui::Dimensions dims_debug = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = y - 3,
-      .begin_x = 0,
-  };
-  ui::Dimensions dims_fc = {
-      .nlines = 3,
-      .ncols = half_x,
-      .begin_y = y - 3,
-      .begin_x = half_x,
-  };
+  ui::LayoutEngine e(y, x);
+
+  const auto default_dims = ui::Dimensions{3, 3, 0, 0};
+
+  auto dims_title = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_author = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_created = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_edited = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+
+  auto dims_debug = e.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
+  auto dims_fc = e.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
 
   app_->Add<ui::Textbox>("title", dims_title)
       ->WithTemplate(

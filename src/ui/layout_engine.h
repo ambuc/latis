@@ -27,7 +27,8 @@ class LayoutEngine {
 public:
   LayoutEngine(int height, int width) : height_(height), width_(width) {}
 
-  absl::optional<Dimensions> Place(int h, int w);
+  // Places a box as far in the top-left as it can go.
+  absl::optional<Dimensions> PlaceTL(int h, int w);
 
 private:
   // Regardless of boxes, true/false is within borders.

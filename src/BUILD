@@ -36,6 +36,7 @@ cc_library(
         "//proto:latis_msg_cc_proto",
         "//src/ui:app_lib",
         "//src/ui:common",
+        "//src/ui:layout_engine",
         "//src/utils:io",
         "@com_google_absl//absl/functional:bind_front",
     ],

@@ -29,6 +29,7 @@ cc_library(
     name = "layout_engine",
     srcs = ["layout_engine.cc"],
     hdrs = ["layout_engine.h"],
+    visibility = ["//src:__subpackages__"],
     deps = [
         ":common",
         "@com_google_absl//absl/types:optional",
