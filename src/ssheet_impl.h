@@ -59,6 +59,24 @@ public:
     edited_time_callbacks_.push_back(edited_time_cb);
   }
 
+  int Height() {
+    // TODO cache this
+    int height = 0;
+    for (const auto &[xy, _] : cells_) {
+      height = std::max(height, xy.Y());
+    }
+    return height;
+  }
+
+  int Width() {
+    // TODO cache this
+    int width = 0;
+    for (const auto &[xy, _] : cells_) {
+      width = std::max(width, xy.X());
+    }
+    return width;
+  }
+
   absl::optional<std::string> Title() const override { return title_; }
   void SetTitle(absl::string_view title) override {
     UpdateEditTime();
