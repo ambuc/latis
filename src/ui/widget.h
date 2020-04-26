@@ -46,17 +46,9 @@ protected:
 };
 
 // Forms are hard.
+// TODO(ambuc): Make it so selecting one field unselects the others.
+// TODO(ambuc): Make it so a FormWidget spawns with the current text.
 // https://invisible-island.net/ncurses/ncurses-intro.html#form
-//
-// The general flow of control of a form program looks like this:
-//   1. Create the form fields, using new_field().
-//   2. Create the form using new_form().
-//   3. Post the form using post_form().
-//   4. Refresh the screen.
-//   5. Process user requests via an input loop.
-//   6. Unpost the form using unpost_form().
-//   7. Free the form, using free_form().
-//   8. Free the fields using free_field().
 class FormWidget : public Widget {
 public:
   FormWidget(Dimensions dimensions, Opts opts);

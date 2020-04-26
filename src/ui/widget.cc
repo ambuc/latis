@@ -37,6 +37,8 @@ void Widget::Debug(absl::string_view txt) {
 
 FormWidget::FormWidget(Dimensions dimensions, Opts opts)
     : Widget(dimensions, opts) {
+  // The general flow of control of a form program looks like this:
+  //   1. Create the form fields, using new_field().
   Debug("starting form");
 
   fields_[0] =
@@ -48,28 +50,23 @@ FormWidget::FormWidget(Dimensions dimensions, Opts opts)
   Debug("Created all fields");
 
   assert(E_OK == set_field_back(fields_[0], A_UNDERLINE)); // Print a line
-  assert(E_OK ==
-         field_opts_off(fields_[0], O_AUTOSKIP)); // Don't skip when full
+  assert(E_OK == field_opts_off(fields_[0], O_AUTOSKIP | O_STATIC));
+
+  // bold and colorful
+  const int input_colors = 1;
+  start_color();
+  init_pair(input_colors, COLOR_CYAN, COLOR_BLACK);
+  assert(E_OK == set_field_fore(fields_[0], A_BOLD | COLOR_PAIR(input_colors)));
 
   Debug("set all field options");
 
+  //   2. Create the form using new_form().
   form_ = new_form(fields_);
   set_form_fields(form_, fields_);
   assert(form_fields(form_) == fields_);
   assert(field_count(form_) == 1);
   assert(form_ != nullptr);
-
-  if (errno != E_OK) {
-    assert(errno != E_BAD_ARGUMENT);
-    assert(errno != E_BAD_STATE);
-    assert(errno != E_NOT_POSTED);
-    assert(errno != E_NOT_CONNECTED);
-    assert(errno != E_CONNECTED);
-    assert(errno != E_NO_ROOM);
-    assert(errno != E_POSTED);
-    assert(errno != E_SYSTEM_ERROR);
-    assert(errno == E_OK);
-  }
+  assert(errno == E_OK);
 
   Debug("did new_form()");
 
@@ -77,51 +74,36 @@ FormWidget::FormWidget(Dimensions dimensions, Opts opts)
   int cols;
   scale_form(form_, &rows, &cols);
 
-  // assert(E_OK == set_form_win(form_, **window_)); // Link form to window.
-  // Debug("set form win");
   assert(E_OK == set_form_sub(form_, **window_));
   Debug("set form sub");
 
-  if (const int result = post_form(form_); result != E_OK) {
-    assert(result != E_BAD_ARGUMENT);
-    assert(result != E_BAD_STATE);
-    assert(result != E_NOT_POSTED);
-    assert(result != E_NOT_CONNECTED);
-    assert(result != E_NO_ROOM);
-    assert(result != E_POSTED);
-    assert(result != E_SYSTEM_ERROR);
-    assert(result == E_OK);
-    Debug(std::to_string(result));
-  }
+  //   3. Post the form using post_form().
+  assert(E_OK == post_form(form_));
 
   set_current_field(form_, fields_[0]);
 
   Debug("posted form");
-}
 
-std::string FormWidget::Extract() {
-  assert(field_status(fields_[0]) == true);
-
-  return "TODO";
-}
-
-FormWidget::~FormWidget() {
-  // We don't want to clean up window_ via unpost_form or free_field, since
-  // window_ already gets cleaned up by Window::~Window().
+  //   4. Refresh the screen.
+  window_->Refresh();
 }
 
 void FormWidget::BubbleCh(int ch) {
-  Debug(absl::StrFormat("Handling FormWidget::bubblech %s", ch));
-  // ch = wgetch(**window_);
-
+  //   5. Process user requests via an input loop.
   switch (ch) {
-  case KEY_DOWN:
+  case KEY_ENTER:
+  case 10:
     form_driver(form_, REQ_NEXT_FIELD);
-    form_driver(form_, REQ_END_LINE);
     break;
-  case KEY_UP:
-    form_driver(form_, REQ_PREV_FIELD);
-    form_driver(form_, REQ_END_LINE);
+  case KEY_BACKSPACE:
+  case 127:
+    form_driver(form_, REQ_DEL_PREV);
+    break;
+  case KEY_LEFT:
+    form_driver(form_, REQ_PREV_CHAR);
+    break;
+  case KEY_RIGHT:
+    form_driver(form_, REQ_NEXT_CHAR);
     break;
   default:
     form_driver(form_, ch);
@@ -130,8 +112,26 @@ void FormWidget::BubbleCh(int ch) {
   window_->Refresh();
 }
 
+FormWidget::~FormWidget() {
+  // We don't want to clean up window_ via unpost_form or free_field, since
+  // window_ already gets cleaned up by Window::~Window().
+
+  //   6. Unpost the form using unpost_form().
+
+  //   7. Free the form, using free_form().
+
+  //   8. Free the fields using free_field().
+  // assert(E_OK == free_field(fields_[0]));
+}
+
 void FormWidget::BubbleEvent(const MEVENT &event) {
   // Do nothing. FormWidgets are fully driven by character input.
+}
+
+std::string FormWidget::Extract() {
+  assert(field_status(fields_[0]) == true);
+
+  return field_buffer(fields_[0], 0);
 }
 
 Textbox::Textbox(Dimensions dimensions, Opts opts,
