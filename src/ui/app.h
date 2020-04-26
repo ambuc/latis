@@ -37,6 +37,12 @@ public:
              absl::optional<std::function<void(absl::string_view)>> recv_cb =
                  absl::nullopt);
 
+  std::shared_ptr<TextboxWithTemplate> AddTextboxWithTemplate(
+      absl::string_view title, Dimensions dimensions, Opts opts,
+      std::function<std::string(std::string)> tmpl,
+      absl::optional<std::function<void(absl::string_view)>> recv_cb =
+          absl::nullopt);
+
   // Get widget of any kind, or nullptr.
   std::shared_ptr<Widget> Get(absl::string_view title);
 

@@ -14,6 +14,7 @@
 
 #include "src/ui/widget.h"
 
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include <form.h>
@@ -35,7 +36,8 @@ void Widget::Debug(absl::string_view txt) {
   }
 }
 
-FormWidget::FormWidget(Dimensions dimensions, Opts opts)
+FormWidget::FormWidget(Dimensions dimensions, Opts opts,
+                       absl::string_view placeholder)
     : Widget(dimensions, opts) {
   // The general flow of control of a form program looks like this:
   //   1. Create the form fields, using new_field().
@@ -51,6 +53,8 @@ FormWidget::FormWidget(Dimensions dimensions, Opts opts)
 
   assert(E_OK == set_field_back(fields_[0], A_UNDERLINE)); // Print a line
   assert(E_OK == field_opts_off(fields_[0], O_AUTOSKIP | O_STATIC));
+
+  set_field_buffer(fields_[0], 0, std::string(placeholder).data());
 
   // bold and colorful
   const int input_colors = 1;
@@ -115,13 +119,6 @@ void FormWidget::BubbleCh(int ch) {
 FormWidget::~FormWidget() {
   // We don't want to clean up window_ via unpost_form or free_field, since
   // window_ already gets cleaned up by Window::~Window().
-
-  //   6. Unpost the form using unpost_form().
-
-  //   7. Free the form, using free_form().
-
-  //   8. Free the fields using free_field().
-  // assert(E_OK == free_field(fields_[0]));
 }
 
 void FormWidget::BubbleEvent(const MEVENT &event) {
@@ -130,15 +127,18 @@ void FormWidget::BubbleEvent(const MEVENT &event) {
 
 std::string FormWidget::Extract() {
   assert(field_status(fields_[0]) == true);
-
-  return field_buffer(fields_[0], 0);
+  return std::string(
+      absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
 Textbox::Textbox(Dimensions dimensions, Opts opts,
                  absl::optional<std::function<void(absl::string_view)>> recv_cb)
     : Widget(dimensions, opts), recv_cb_(std::move(recv_cb)) {}
 
-void Textbox::Update(absl::string_view s) { window_->Print(1, 2, s); }
+void Textbox::Update(std::string s) {
+  content_ = s;
+  window_->Print(1, 2, content_);
+}
 
 void Textbox::BubbleCh(int ch) {
   if (form_ != nullptr) {
@@ -167,8 +167,19 @@ void Textbox::BubbleEvent(const MEVENT &event) {
   } else if (form_ == nullptr && recv_cb_.has_value() &&
              event.bstate & BUTTON1_CLICKED) {
     Debug("Becoming form");
-    form_ = absl::make_unique<FormWidget>(dimensions_, opts_);
+    form_ = absl::make_unique<FormWidget>(dimensions_, opts_, content_);
   }
+}
+
+TextboxWithTemplate::TextboxWithTemplate(
+    Dimensions dimensions, Opts opts,
+    std::function<std::string(std::string)> tmpl,
+    absl::optional<std::function<void(absl::string_view)>> recv_cb)
+    : Textbox(dimensions, opts, recv_cb), tmpl_(tmpl) {}
+
+void TextboxWithTemplate::Update(std::string s) {
+  Textbox::Update(s);
+  window_->Print(1, 2, tmpl_(s));
 }
 
 } // namespace ui

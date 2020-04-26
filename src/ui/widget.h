@@ -51,7 +51,7 @@ protected:
 // https://invisible-island.net/ncurses/ncurses-intro.html#form
 class FormWidget : public Widget {
 public:
-  FormWidget(Dimensions dimensions, Opts opts);
+  FormWidget(Dimensions dimensions, Opts opts, absl::string_view placeholder);
   ~FormWidget() override;
 
   void BubbleCh(int ch) override;
@@ -71,14 +71,28 @@ public:
           absl::optional<std::function<void(absl::string_view)>> recv_cb);
   ~Textbox() override {}
 
-  void Update(absl::string_view s);
+  virtual void Update(std::string s);
   void BubbleCh(int ch) override;
   void BubbleEvent(const MEVENT &event) override;
 
 private:
   const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
-
+  std::string content_;
   std::unique_ptr<FormWidget> form_{nullptr};
+};
+
+class TextboxWithTemplate : public Textbox {
+public:
+  TextboxWithTemplate(
+      Dimensions dimensions, Opts opts,
+      std::function<std::string(std::string)> tmpl,
+      absl::optional<std::function<void(absl::string_view)>> recv_cb);
+  ~TextboxWithTemplate() override{};
+
+  void Update(std::string s) override;
+
+private:
+  std::function<std::string(std::string)> tmpl_;
 };
 
 } // namespace ui

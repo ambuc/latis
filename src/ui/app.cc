@@ -52,6 +52,16 @@ std::shared_ptr<Textbox> App::AddTextbox(
   return textbox;
 }
 
+std::shared_ptr<TextboxWithTemplate> App::AddTextboxWithTemplate(
+    absl::string_view title, Dimensions dimensions, Opts opts,
+    std::function<std::string(std::string)> tmpl,
+    absl::optional<std::function<void(absl::string_view)>> recv_cb) {
+  auto textbox_with_template = std::make_shared<TextboxWithTemplate>(
+      dimensions, opts, tmpl, std::move(recv_cb));
+  widgets_[title] = textbox_with_template;
+  return textbox_with_template;
+}
+
 std::shared_ptr<Widget> App::Get(absl::string_view title) {
   if (const auto it = widgets_.find(title); it == widgets_.end()) {
     return nullptr;
