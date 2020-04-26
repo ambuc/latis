@@ -28,32 +28,20 @@ namespace ui {
 
 class App {
 public:
-  App();
+  explicit App(Opts opts);
   ~App();
 
-  // Add Textbox w/ recv_cb
-  std::shared_ptr<Textbox>
-  AddTextbox(absl::string_view title, Dimensions dimensions, Opts opts,
-             absl::optional<std::function<void(absl::string_view)>> recv_cb =
-                 absl::nullopt);
+  template <typename T, typename... Args> //
+  std::shared_ptr<T> Add(absl::string_view title, Args... args) {
+    auto widget = std::make_shared<T>(opts_, args...);
+    widgets_[title] = widget;
+    return widget;
+  }
 
-  std::shared_ptr<TextboxWithTemplate> AddTextboxWithTemplate(
-      absl::string_view title, Dimensions dimensions, Opts opts,
-      std::function<std::string(std::string)> tmpl,
-      absl::optional<std::function<void(absl::string_view)>> recv_cb =
-          absl::nullopt);
-
-  // Get widget of any kind, or nullptr.
-  std::shared_ptr<Widget> Get(absl::string_view title);
-
-  // Get widget of a particular kind, or nullptr.
+  // Get (or create) widget of a particular name and type.
   template <typename T> //
   std::shared_ptr<T> Get(absl::string_view title) {
-    if (auto ptr = Get(title); ptr == nullptr) {
-      return nullptr;
-    } else {
-      return std::dynamic_pointer_cast<T>(ptr);
-    }
+    return std::dynamic_pointer_cast<T>(widgets_[title]);
   }
 
   // Remove widget of any kind by a given name.
@@ -63,6 +51,7 @@ public:
   void BubbleEvent(const MEVENT &event);
 
 private:
+  const Opts opts_;
   absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
 };
 

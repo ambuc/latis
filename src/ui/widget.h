@@ -29,7 +29,7 @@ namespace ui {
 
 class Widget {
 public:
-  Widget(Dimensions dimensions, Opts opts);
+  Widget(Opts opts, Dimensions dimensions);
   virtual ~Widget() = default;
 
   void Clear();
@@ -51,7 +51,7 @@ protected:
 // https://invisible-island.net/ncurses/ncurses-intro.html#form
 class FormWidget : public Widget {
 public:
-  FormWidget(Dimensions dimensions, Opts opts, absl::string_view placeholder);
+  FormWidget(Opts opts, Dimensions dimensions, absl::string_view placeholder);
   ~FormWidget() override;
 
   void BubbleCh(int ch) override;
@@ -64,10 +64,11 @@ private:
   FIELD *fields_[2]{nullptr, nullptr};
 };
 
+// //
 // Textbox. Spawns a FormWidget when asked.
 class Textbox : public Widget {
 public:
-  Textbox(Dimensions dimensions, Opts opts,
+  Textbox(Opts opts, Dimensions dimensions,
           absl::optional<std::function<void(absl::string_view)>> recv_cb);
   ~Textbox() override {}
 
@@ -81,10 +82,11 @@ private:
   std::unique_ptr<FormWidget> form_{nullptr};
 };
 
+// Textbox with a predetermined template.
 class TextboxWithTemplate : public Textbox {
 public:
   TextboxWithTemplate(
-      Dimensions dimensions, Opts opts,
+      Opts opts, Dimensions dimensions,
       std::function<std::string(std::string)> tmpl,
       absl::optional<std::function<void(absl::string_view)>> recv_cb);
   ~TextboxWithTemplate() override{};

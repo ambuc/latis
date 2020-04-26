@@ -24,7 +24,7 @@
 namespace latis {
 namespace ui {
 
-Widget::Widget(Dimensions dimensions, Opts opts)
+Widget::Widget(Opts opts, Dimensions dimensions)
     : dimensions_(dimensions), opts_(opts),
       window_(absl::make_unique<Window>(dimensions, opts)) {}
 
@@ -36,9 +36,9 @@ void Widget::Debug(absl::string_view txt) {
   }
 }
 
-FormWidget::FormWidget(Dimensions dimensions, Opts opts,
+FormWidget::FormWidget(Opts opts, Dimensions dimensions,
                        absl::string_view placeholder)
-    : Widget(dimensions, opts) {
+    : Widget(opts, dimensions) {
   // The general flow of control of a form program looks like this:
   //   1. Create the form fields, using new_field().
   Debug("starting form");
@@ -131,9 +131,9 @@ std::string FormWidget::Extract() {
       absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
-Textbox::Textbox(Dimensions dimensions, Opts opts,
+Textbox::Textbox(Opts opts, Dimensions dimensions,
                  absl::optional<std::function<void(absl::string_view)>> recv_cb)
-    : Widget(dimensions, opts), recv_cb_(std::move(recv_cb)) {}
+    : Widget(opts, dimensions), recv_cb_(std::move(recv_cb)) {}
 
 void Textbox::Update(std::string s) {
   content_ = s;
@@ -167,15 +167,15 @@ void Textbox::BubbleEvent(const MEVENT &event) {
   } else if (form_ == nullptr && recv_cb_.has_value() &&
              event.bstate & BUTTON1_CLICKED) {
     Debug("Becoming form");
-    form_ = absl::make_unique<FormWidget>(dimensions_, opts_, content_);
+    form_ = absl::make_unique<FormWidget>(opts_, dimensions_, content_);
   }
 }
 
 TextboxWithTemplate::TextboxWithTemplate(
-    Dimensions dimensions, Opts opts,
+    Opts opts, Dimensions dimensions,
     std::function<std::string(std::string)> tmpl,
     absl::optional<std::function<void(absl::string_view)>> recv_cb)
-    : Textbox(dimensions, opts, recv_cb), tmpl_(tmpl) {}
+    : Textbox(opts, dimensions, recv_cb), tmpl_(tmpl) {}
 
 void TextboxWithTemplate::Update(std::string s) {
   Textbox::Update(s);
