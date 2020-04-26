@@ -131,13 +131,21 @@ std::string FormWidget::Extract() {
       absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
-Textbox::Textbox(Opts opts, Dimensions dimensions,
-                 absl::optional<std::function<void(absl::string_view)>> recv_cb)
-    : Widget(opts, dimensions), recv_cb_(std::move(recv_cb)) {}
+Textbox::Textbox(Opts opts, Dimensions dimensions) : Widget(opts, dimensions) {}
+
+Textbox *Textbox::WithCb(std::function<void(absl::string_view)> recv_cb) {
+  recv_cb_ = recv_cb;
+  return this;
+}
+
+Textbox *Textbox::WithTemplate(std::function<std::string(std::string)> tmpl) {
+  tmpl_ = tmpl;
+  return this;
+}
 
 void Textbox::Update(std::string s) {
   content_ = s;
-  window_->Print(1, 2, content_);
+  window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
 }
 
 void Textbox::BubbleCh(int ch) {
@@ -166,20 +174,8 @@ void Textbox::BubbleEvent(const MEVENT &event) {
     form_->BubbleEvent(event);
   } else if (form_ == nullptr && recv_cb_.has_value() &&
              event.bstate & BUTTON1_CLICKED) {
-    Debug("Becoming form");
     form_ = absl::make_unique<FormWidget>(opts_, dimensions_, content_);
   }
-}
-
-TextboxWithTemplate::TextboxWithTemplate(
-    Opts opts, Dimensions dimensions,
-    std::function<std::string(std::string)> tmpl,
-    absl::optional<std::function<void(absl::string_view)>> recv_cb)
-    : Textbox(opts, dimensions, recv_cb), tmpl_(tmpl) {}
-
-void TextboxWithTemplate::Update(std::string s) {
-  Textbox::Update(s);
-  window_->Print(1, 2, tmpl_(s));
 }
 
 } // namespace ui

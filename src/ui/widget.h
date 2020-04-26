@@ -64,37 +64,26 @@ private:
   FIELD *fields_[2]{nullptr, nullptr};
 };
 
-// //
+//
 // Textbox. Spawns a FormWidget when asked.
 class Textbox : public Widget {
 public:
-  Textbox(Opts opts, Dimensions dimensions,
-          absl::optional<std::function<void(absl::string_view)>> recv_cb);
+  Textbox(Opts opts, Dimensions dimensions);
   ~Textbox() override {}
+
+  Textbox *WithCb(std::function<void(absl::string_view)> recv_cb);
+  Textbox *WithTemplate(std::function<std::string(std::string)> tmpl);
 
   virtual void Update(std::string s);
   void BubbleCh(int ch) override;
   void BubbleEvent(const MEVENT &event) override;
 
 private:
-  const absl::optional<std::function<void(absl::string_view)>> recv_cb_;
+  // Optional recv_cb_.
+  absl::optional<std::function<void(absl::string_view)>> recv_cb_;
+  absl::optional<std::function<std::string(std::string)>> tmpl_;
   std::string content_;
   std::unique_ptr<FormWidget> form_{nullptr};
-};
-
-// Textbox with a predetermined template.
-class TextboxWithTemplate : public Textbox {
-public:
-  TextboxWithTemplate(
-      Opts opts, Dimensions dimensions,
-      std::function<std::string(std::string)> tmpl,
-      absl::optional<std::function<void(absl::string_view)>> recv_cb);
-  ~TextboxWithTemplate() override{};
-
-  void Update(std::string s) override;
-
-private:
-  std::function<std::string(std::string)> tmpl_;
 };
 
 } // namespace ui

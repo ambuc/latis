@@ -29,25 +29,23 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   getmaxyx(stdscr, y, x);
   int half_x = x / 2;
 
-  app_->Add<ui::TextboxWithTemplate>(
-          "title", ui::Dimensions{3, half_x, 0, 0},
-          [](std::string s) { return absl::StrFormat("Title: %s", s); },
-          [this](absl::string_view s) { ssheet_->SetTitle(s); })
+  app_->Add<ui::Textbox>("title", ui::Dimensions{3, half_x, 0, 0})
+      ->WithTemplate(
+          [](std::string s) { return absl::StrFormat("Title: %s", s); })
+      ->WithCb([this](absl::string_view s) { ssheet_->SetTitle(s); })
       ->Update(ssheet_->Title().value_or("n/a"));
 
-  app_->Add<ui::TextboxWithTemplate>(
-          "author", ui::Dimensions{3, half_x, 0, half_x},
-          [](std::string s) { return absl::StrFormat("Author: %s", s); },
-          [this](absl::string_view s) { ssheet_->SetAuthor(s); })
+  app_->Add<ui::Textbox>("author", ui::Dimensions{3, half_x, 0, half_x})
+      ->WithTemplate(
+          [](std::string s) { return absl::StrFormat("Author: %s", s); })
+      ->WithCb([this](absl::string_view s) { ssheet_->SetAuthor(s); })
       ->Update(ssheet_->Author().value_or("no author"));
 
-  app_->Add<ui::Textbox>("date_created", ui::Dimensions{3, half_x, 3, 0},
-                         absl::nullopt)
+  app_->Add<ui::Textbox>("date_created", ui::Dimensions{3, half_x, 3, 0})
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
 
-  app_->Add<ui::Textbox>("date_edited", ui::Dimensions{3, half_x, 3, half_x},
-                         absl::nullopt)
+  app_->Add<ui::Textbox>("date_edited", ui::Dimensions{3, half_x, 3, half_x})
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
@@ -58,11 +56,11 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
 
   // Maybe instantiate debug textbox.
   if (opts_.show_debug_textbox) {
-    debug_tbx_ = app_->Add<ui::Textbox>(
-        "debug_textbox", ui::Dimensions{3, half_x, y - 3, 0}, absl::nullopt);
+    debug_tbx_ = app_->Add<ui::Textbox>("debug_textbox",
+                                        ui::Dimensions{3, half_x, y - 3, 0});
     debug_tbx_->Update("DEBUG_MODE_ENABLED");
-    fc_tbx_ = app_->Add<ui::Textbox>(
-        "frame_count", ui::Dimensions{3, half_x, y - 3, half_x}, absl::nullopt);
+    fc_tbx_ = app_->Add<ui::Textbox>("frame_count",
+                                     ui::Dimensions{3, half_x, y - 3, half_x});
     fc_tbx_->Update("FRAME_COUNT");
   }
 }
