@@ -30,8 +30,9 @@ App::App(Opts opts) : opts_(opts) {
 
   initscr();
 
-  halfdelay(1000 / 60); // 60 FPS
-  keypad(stdscr, true); // enable mouse.
+  halfdelay(1000 / 60);    // 60 FPS
+  keypad(stdscr, true);    // enable mouse.
+  notimeout(stdscr, true); // no timeout, esc persists immediately
   mousemask(ALL_MOUSE_EVENTS, NULL);
 
   cbreak();

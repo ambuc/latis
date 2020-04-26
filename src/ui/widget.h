@@ -46,8 +46,6 @@ protected:
 };
 
 // Forms are hard.
-// TODO(ambuc): Make it so selecting one field unselects the others.
-// TODO(ambuc): Make it so a FormWidget spawns with the current text.
 // https://invisible-island.net/ncurses/ncurses-intro.html#form
 class FormWidget : public Widget {
 public:
@@ -61,6 +59,7 @@ public:
 
 private:
   FORM *form_{nullptr};
+  // Inherently just a single field.
   FIELD *fields_[2]{nullptr, nullptr};
 };
 
@@ -79,6 +78,9 @@ public:
   void BubbleEvent(const MEVENT &event) override;
 
 private:
+  void PersistForm();
+  void CancelForm();
+
   // Optional recv_cb_.
   absl::optional<std::function<void(absl::string_view)>> recv_cb_;
   absl::optional<std::function<std::string(std::string)>> tmpl_;

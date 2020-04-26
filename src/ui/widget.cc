@@ -150,32 +150,60 @@ void Textbox::Update(std::string s) {
 
 void Textbox::BubbleCh(int ch) {
   if (form_ != nullptr) {
-    if (ch == 10) {
-      // send the form the <enter> first.
+    switch (ch) {
+    case (KEY_ENTER):
+    case (10): {
       form_->BubbleCh(ch);
-
-      std::string s = form_->Extract();
-      form_ = nullptr;
-      Update(s);
-      if (recv_cb_.has_value()) {
-        recv_cb_.value()(s);
-      }
-    } else {
+      PersistForm();
+      break;
+    }
+    // KEY_ESC
+    case (27): {
+      CancelForm();
+      break;
+    }
+    default: {
       form_->BubbleCh(ch);
+    }
     }
   }
 }
 
 void Textbox::BubbleEvent(const MEVENT &event) {
   if (!window_->Contains(event.y, event.x)) {
+    // If a click happens outside me and I'm a form, cancel the form.
+    if (form_ != nullptr) {
+      CancelForm();
+    }
     return;
   }
   if (form_ != nullptr) {
     form_->BubbleEvent(event);
   } else if (form_ == nullptr && recv_cb_.has_value() &&
-             event.bstate & BUTTON1_CLICKED) {
+             event.bstate &
+                 (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
     form_ = absl::make_unique<FormWidget>(opts_, dimensions_, content_);
   }
+}
+
+void Textbox::PersistForm() {
+  assert(form_ != nullptr);
+
+  std::string s = form_->Extract();
+  form_ = nullptr;
+
+  Update(s);
+
+  if (recv_cb_.has_value()) {
+    recv_cb_.value()(s);
+  }
+}
+
+void Textbox::CancelForm() {
+  assert(form_ != nullptr);
+
+  form_ = nullptr;
+  Update(content_);
 }
 
 } // namespace ui

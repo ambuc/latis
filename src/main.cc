@@ -38,8 +38,8 @@ int main(int argc, char *argv[]) {
 
   // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
-    latis_app = absl::make_unique<latis::LatisApp>(
-        opts, /*msg=*/latis::FromTextproto<LatisMsg>(path).ValueOrDie());
+    auto msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
+    latis_app = absl::make_unique<latis::LatisApp>(opts, msg);
   } else {
     latis_app = absl::make_unique<latis::LatisApp>(opts);
   }
