@@ -88,6 +88,15 @@ private:
   std::unique_ptr<FormWidget> form_{nullptr};
 };
 
+class Gridbox : public Widget {
+public:
+  Gridbox(Opts opts, Dimensions dimensions);
+  ~Gridbox() override {}
+
+private:
+  // ? design me
+};
+
 } // namespace ui
 } // namespace latis
 

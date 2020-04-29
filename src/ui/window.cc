@@ -21,10 +21,8 @@
 namespace latis {
 namespace ui {
 
-Window::Window(Dimensions dimensions, Opts opts)
-    : dimensions_(dimensions), opts_(opts),
-      ptr_(newwin(dimensions_.nlines, dimensions_.ncols, dimensions_.begin_y,
-                  dimensions_.begin_x)) {
+Window::Window(Dimensions dimensions, Opts opts, WINDOW *window)
+    : dimensions_(dimensions), opts_(opts), ptr_(window) {
   PrintPermanentComponents();
   Refresh();
 }

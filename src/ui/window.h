@@ -25,7 +25,13 @@ namespace ui {
 
 class Window {
 public:
-  Window(Dimensions dimensions, Opts opts);
+  Window(Dimensions dimensions, Opts opts, WINDOW *window);
+  // Default WINDOW
+  Window(Dimensions dimensions, Opts opts)
+      : Window(dimensions, opts,
+               newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
+                      dimensions.begin_x)) {}
+  // Default opts and WINDOW.
   Window(Dimensions dimensions) : Window(dimensions, Opts()){};
   ~Window();
 
@@ -45,6 +51,19 @@ private:
   const Opts opts_;
   WINDOW *ptr_;
 };
+
+// // TODO(ambuc): Add this Pad class and really think about its API.
+// // https://invisible-island.net/ncurses/man/curs_pad.3x.html
+//
+// class Pad : public Window {
+// public:
+//   Pad(Dimensions dimensions, Opts opts)
+//       : Window(dimensions, opts, newpad(dimensions.nlines, dimensions.ncols))
+//       {}
+//   Pad(Dimensions dimensions) : Pad(dimensions, Opts()){};
+//   ~Pad();
+//   void Refresh() override { prefresh(ptr_, sm); }
+// };
 
 } // namespace ui
 } // namespace latis
