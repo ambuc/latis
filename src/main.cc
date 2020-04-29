@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   latis::ui::Opts opts{
-      .show_dimensions = absl::GetFlag(FLAGS_debug_mode),
       .show_borders = absl::GetFlag(FLAGS_debug_mode),
       .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
       .show_frame_count = absl::GetFlag(FLAGS_debug_mode),

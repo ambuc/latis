@@ -19,6 +19,7 @@
 #include "src/ui/layout_engine.h"
 
 #include <ncurses.h>
+#include <signal.h>
 
 namespace latis {
 
@@ -29,17 +30,23 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   int y, x;
   getmaxyx(stdscr, y, x);
 
-  ui::LayoutEngine e(y, x);
+  ui::LayoutEngine layout_engine(y, x);
 
-  const auto default_dims = ui::Dimensions{3, 3, 0, 0};
+  const auto default_dims = ui::Dimensions{5, 5, 0, 0};
 
-  auto dims_title = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
-  auto dims_author = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
-  auto dims_created = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
-  auto dims_edited = e.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_title =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_author =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_created =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+  auto dims_edited =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
 
-  auto dims_debug = e.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
-  auto dims_fc = e.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
+  auto dims_debug =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
+  auto dims_fc =
+      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
 
   app_->Add<ui::Textbox>("title", dims_title)
       ->WithTemplate(
@@ -78,7 +85,8 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   for (int y = 0; y < ssheet_->Height(); ++y) {
     for (int x = 0; x < ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
-      app_->Add<ui::Textbox>(xy.ToA1(), e.PlaceTL(3, 10).value_or(default_dims))
+      app_->Add<ui::Textbox>(
+              xy.ToA1(), layout_engine.PlaceTL(3, 10).value_or(default_dims))
           ->WithCb([this, xy](absl::string_view s) { ssheet_->Set(xy, s); });
 
       if (const auto amt_or_status = ssheet_->Get(xy); amt_or_status.ok()) {

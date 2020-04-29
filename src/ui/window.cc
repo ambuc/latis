@@ -68,12 +68,10 @@ Window::~Window() {
 
 void Window::PrintPermanentComponents() {
   if (opts_.show_borders) {
-    wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
-  }
-  if (opts_.show_dimensions) {
-    mvwprintw(ptr_, 0, 0,
-              absl::StrFormat("%dx%d", dimensions_.nlines, dimensions_.ncols)
-                  .c_str());
+    // wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
+    // wborder(ptr_, WACS_T_HLINE, '|', '-', '-', '+', '+', '+', '+');
+    wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
+                WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER, WACS_LRCORNER);
   }
 }
 

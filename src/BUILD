@@ -89,7 +89,7 @@ cc_test(
 cc_binary(
     name = "latis",
     srcs = ["main.cc"],
-    linkopts = ["-lncurses"],
+    linkopts = ["-lncursesw"],
     deps = [
         ":latis_app",
         ":ssheet_impl",

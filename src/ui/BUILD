@@ -3,7 +3,7 @@ cc_library(
     srcs = ["app.cc"],
     hdrs = ["app.h"],
     linkopts = [
-        "-lncurses",
+        "-lncursesw",
     ],
     visibility = ["//src:__subpackages__"],
     deps = [
@@ -51,8 +51,8 @@ cc_library(
     srcs = ["widget.cc"],
     hdrs = ["widget.h"],
     linkopts = [
-        "-lncurses",
-        "-lform",
+        "-lncursesw",
+        "-lformw",
     ],
     deps = [
         ":common",
@@ -67,7 +67,7 @@ cc_library(
     srcs = ["window.cc"],
     hdrs = ["window.h"],
     linkopts = [
-        "-lncurses",
+        "-lncursesw",
     ],
     deps = [
         ":common",
