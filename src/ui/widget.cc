@@ -25,9 +25,8 @@
 namespace latis {
 namespace ui {
 
-Widget::Widget(Opts opts, Dimensions dimensions)
-    : dimensions_(dimensions), opts_(opts),
-      window_(absl::make_unique<Window>(dimensions, opts)) {}
+Widget::Widget(Opts opts, Dimensions dimensions, std::unique_ptr<Window> window)
+    : dimensions_(dimensions), opts_(opts), window_(std::move(window)) {}
 
 void Widget::Clear() { window_->Clear(); }
 
@@ -117,6 +116,10 @@ std::string FormWidget::Extract() {
       absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
+Textbox::Textbox(Opts opts, Dimensions dimensions,
+                 std::unique_ptr<Window> window)
+    : Widget(opts, dimensions, std::move(window)) {}
+
 Textbox::Textbox(Opts opts, Dimensions dimensions) : Widget(opts, dimensions) {}
 
 Textbox *Textbox::WithCb(std::function<void(absl::string_view)> recv_cb) {
@@ -190,6 +193,15 @@ void Textbox::CancelForm() {
 
   form_ = nullptr;
   Update(content_);
+}
+
+Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
+    : Widget(opts, dimensions), num_lines_(num_lines), num_cols_(num_cols),
+      widgets_array_() {
+  widgets_array_.resize(num_cols_);
+  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
+    v.resize(num_lines_);
+  }
 }
 
 } // namespace ui

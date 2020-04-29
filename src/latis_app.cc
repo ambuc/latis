@@ -81,15 +81,20 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
     fc_tbx_->Update("FRAME_COUNT");
   }
 
+  auto dims_gridbox =
+      layout_engine.PlaceTL(/*h=*/12, /*w=*/80).value_or(default_dims);
+  auto gridbox_ptr = app_->Add<ui::Gridbox>("gridbox", dims_gridbox,
+                                            /*num_lines=*/4, /*num_cols=*/4);
+  assert(gridbox_ptr != nullptr);
+
   for (int y = 0; y < ssheet_->Height(); ++y) {
     for (int x = 0; x < ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
-      app_->Add<ui::Textbox>(
-              xy.ToA1(), layout_engine.PlaceTL(3, 10).value_or(default_dims))
-          ->WithCb([this, xy](absl::string_view s) { ssheet_->Set(xy, s); });
+      gridbox_ptr->Add<ui::Textbox>(y, x)->WithCb(
+          [this, xy](absl::string_view s) { ssheet_->Set(xy, s); });
 
       if (const auto amt_or_status = ssheet_->Get(xy); amt_or_status.ok()) {
-        app_->Get<ui::Textbox>(xy.ToA1())->Update(
+        gridbox_ptr->Get<ui::Textbox>(y, x)->Update(
             PrintAmount(amt_or_status.ValueOrDie()));
       }
       // TODO gotta figure out the relationship between latis_app, ssheet,
