@@ -27,10 +27,11 @@ namespace ui {
 // necessary deletion and cleanup.
 class Window {
 public:
-  Window(Dimensions dimensions, Opts opts, WINDOW *window);
+  Window(Dimensions dimensions, Opts opts, BorderStyle border_style,
+         WINDOW *window);
   // Default WINDOW
   Window(Dimensions dimensions, Opts opts)
-      : Window(dimensions, opts,
+      : Window(dimensions, opts, BorderStyle::kThin,
                newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
                       dimensions.begin_x)) {}
   // Default opts and WINDOW.
@@ -60,6 +61,7 @@ private:
   void PrintPermanentComponents();
   const Dimensions dimensions_;
   const Opts opts_;
+  const BorderStyle border_style_;
   WINDOW *ptr_;
 };
 

@@ -28,6 +28,12 @@ struct Opts {
   bool show_frame_count = false;
 };
 
+enum BorderStyle { kNone, kThin, kThick, kDouble };
+
+struct Style {
+  BorderStyle border_style = BorderStyle::kNone;
+};
+
 struct Dimensions {
   int nlines;
   int ncols;

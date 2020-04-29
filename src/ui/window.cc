@@ -21,8 +21,10 @@
 namespace latis {
 namespace ui {
 
-Window::Window(Dimensions dimensions, Opts opts, WINDOW *window)
-    : dimensions_(dimensions), opts_(opts), ptr_(window) {
+Window::Window(Dimensions dimensions, Opts opts, BorderStyle border_style,
+               WINDOW *window)
+    : dimensions_(dimensions), opts_(opts), border_style_(border_style),
+      ptr_(window) {
   PrintPermanentComponents();
   Refresh();
 }
@@ -65,9 +67,28 @@ void Window::PrintPermanentComponents() {
   if (opts_.show_borders) {
     // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
     // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
-    wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE, WACS_D_HLINE,
-                WACS_D_ULCORNER, WACS_D_URCORNER, WACS_D_LLCORNER,
-                WACS_D_LRCORNER);
+    switch (border_style_) {
+    case (BorderStyle::kThin): {
+      wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
+                  WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER, WACS_LRCORNER);
+      break;
+    }
+    case (BorderStyle::kThick): {
+      wborder_set(ptr_, WACS_T_VLINE, WACS_T_VLINE, WACS_T_HLINE, WACS_T_HLINE,
+                  WACS_T_ULCORNER, WACS_T_URCORNER, WACS_T_LLCORNER,
+                  WACS_T_LRCORNER);
+      break;
+    }
+    case (BorderStyle::kDouble): {
+      wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE, WACS_D_HLINE,
+                  WACS_D_ULCORNER, WACS_D_URCORNER, WACS_D_LLCORNER,
+                  WACS_D_LRCORNER);
+      break;
+    }
+    default: {
+      // none
+    }
+    }
   }
 }
 
