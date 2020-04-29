@@ -43,11 +43,6 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   auto dims_edited =
       layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
 
-  auto dims_debug =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
-  auto dims_fc =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
-
   app_->Add<ui::Textbox>("title", dims_title)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Title: %s", s); })
@@ -75,6 +70,10 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
 
   // Maybe instantiate debug textbox.
   if (opts_.show_debug_textbox) {
+    auto dims_debug =
+        layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
+    auto dims_fc =
+        layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
     debug_tbx_ = app_->Add<ui::Textbox>("debug_textbox", dims_debug);
     debug_tbx_->Update("DEBUG_MODE_ENABLED");
 

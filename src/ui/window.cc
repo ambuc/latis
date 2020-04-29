@@ -68,10 +68,11 @@ Window::~Window() {
 
 void Window::PrintPermanentComponents() {
   if (opts_.show_borders) {
-    // wborder(ptr_, '|', '|', '-', '-', '+', '+', '+', '+');
-    // wborder(ptr_, WACS_T_HLINE, '|', '-', '-', '+', '+', '+', '+');
-    wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
-                WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER, WACS_LRCORNER);
+    // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
+    // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
+    wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE, WACS_D_HLINE,
+                WACS_D_ULCORNER, WACS_D_URCORNER, WACS_D_LLCORNER,
+                WACS_D_LRCORNER);
   }
 }
 

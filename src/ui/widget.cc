@@ -145,7 +145,7 @@ Textbox *Textbox::WithTemplate(std::function<std::string(std::string)> tmpl) {
 
 void Textbox::Update(std::string s) {
   content_ = s;
-  window_->Print(1, 1, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
+  window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
 }
 
 void Textbox::BubbleCh(int ch) {
