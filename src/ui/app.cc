@@ -45,15 +45,27 @@ App::~App() { endwin(); }
 
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
 
-void App::BubbleCh(int ch) {
-  for (auto &[_, w] : widgets_) {
-    w->BubbleCh(ch);
-  }
-}
+void App::Run() {
+  // New model. If you don't have anything to do with a keyboard/mouse event,
+  // put it on the stack.
+  while (true) {
+    bool was_processed = false;
+    for (auto &[_, w] : widgets_) {
+      if (!was_processed && w->Process()) {
+        was_processed = true;
+      }
+    }
 
-void App::BubbleEvent(const MEVENT &event) {
-  for (auto &[_, w] : widgets_) {
-    w->BubbleEvent(event);
+    // Fallback -- if no one else processed it, I will.
+    if (!was_processed) {
+      // goodbye
+      if (getch() == int('q')) {
+        break;
+      }
+      was_processed = true;
+    }
+
+    assert(was_processed);
   }
 }
 

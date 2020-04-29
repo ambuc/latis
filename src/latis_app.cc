@@ -68,19 +68,6 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
         ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
-  // Maybe instantiate debug textbox.
-  if (opts_.show_debug_textbox) {
-    auto dims_debug =
-        layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
-    auto dims_fc =
-        layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 2).value_or(default_dims);
-    debug_tbx_ = app_->Add<ui::Textbox>("debug_textbox", dims_debug);
-    debug_tbx_->Update("DEBUG_MODE_ENABLED");
-
-    fc_tbx_ = app_->Add<ui::Textbox>("frame_count", dims_fc);
-    fc_tbx_->Update("FRAME_COUNT");
-  }
-
   auto dims_gridbox =
       layout_engine.PlaceTL(/*h=*/12, /*w=*/80).value_or(default_dims);
   auto gridbox_ptr = app_->Add<ui::Gridbox>("gridbox", dims_gridbox,
@@ -103,36 +90,6 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   }
 }
 
-void LatisApp::Run() {
-  MEVENT event;
-  while (true) {
-
-    const int ch = getch();
-
-    if (ch == ERR) {
-      continue;
-    } else if (ch == int('q')) {
-      break;
-    }
-
-    bool has_event = (getmouse(&event) == OK);
-
-    if (has_event) {
-      app_->BubbleEvent(event);
-    } else {
-      app_->BubbleCh(ch);
-    }
-
-    if (opts_.show_debug_textbox) {
-      fc_tbx_->Update(std::to_string(frame_));
-      debug_tbx_->Update((has_event)
-                             ? absl::StrFormat("Mousepress: %d,%d,%d,%d", ch,
-                                               event.bstate, event.x, event.y)
-                             : absl::StrFormat("Keypress: %d", ch));
-    }
-    frame_++;
-    frame_ %= 100;
-  }
-}
+void LatisApp::Run() { app_->Run(); }
 
 } // namespace latis

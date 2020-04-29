@@ -47,8 +47,8 @@ public:
   // Remove widget of any kind by a given name.
   void Remove(absl::string_view title);
 
-  void BubbleCh(int ch);
-  void BubbleEvent(const MEVENT &event);
+  // Run the app.
+  void Run();
 
 private:
   const Opts opts_;

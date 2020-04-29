@@ -29,14 +29,12 @@ namespace ui {
 class Widget {
 public:
   Widget(std::unique_ptr<Window> window);
-  Widget(Opts opts, Dimensions dimensions)
-      : Widget(absl::make_unique<Window>(dimensions, opts)) {}
   virtual ~Widget() = default;
 
   void Clear();
 
-  virtual void BubbleCh(int ch) = 0;
-  virtual void BubbleEvent(const MEVENT &event) = 0;
+  // Returns true if this widget consumed the event.
+  virtual bool Process() = 0;
 
 protected:
   void Debug(absl::string_view txt);
@@ -48,11 +46,11 @@ protected:
 // https://invisible-island.net/ncurses/ncurses-intro.html#form
 class FormWidget : public Widget {
 public:
-  FormWidget(Opts opts, Dimensions dimensions, absl::string_view placeholder);
+  FormWidget(std::unique_ptr<Window> window, absl::string_view placeholder);
   ~FormWidget() override;
 
-  void BubbleCh(int ch) override;
-  void BubbleEvent(const MEVENT &event) override;
+  // Returns true if this widget consumed the event.
+  bool Process() override;
 
   std::string Extract();
 
@@ -74,8 +72,9 @@ public:
   Textbox *WithTemplate(std::function<std::string(std::string)> tmpl);
 
   void Update(std::string s);
-  void BubbleCh(int ch) override;
-  void BubbleEvent(const MEVENT &event) override;
+
+  // Returns true if this widget consumed the event.
+  bool Process() override;
 
 private:
   void PersistForm();
@@ -115,8 +114,8 @@ public:
     return static_cast<T *>(widgets_array_[y][x].get());
   }
 
-  void BubbleCh(int ch) override;
-  void BubbleEvent(const MEVENT &event) override;
+  // Returns true if this widget consumed the event.
+  bool Process() override;
 
 private:
   const int num_lines_;

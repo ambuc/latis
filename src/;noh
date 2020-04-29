@@ -136,11 +136,9 @@ void Textbox::Update(std::string s) {
 }
 
 bool Textbox::Process() {
-
   const int ch = getch();
   MEVENT event;
   if (getmouse(&event) == OK && wenclose(**window_, event.y, event.x)) {
-    Debug("tbx:p");
     if (form_ == nullptr && recv_cb_.has_value() &&
         event.bstate &
             (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
@@ -150,6 +148,7 @@ bool Textbox::Process() {
               dims, window_->GetOpts(), BorderStyle::kThin,
               derwin(**window_, dims.nlines, dims.ncols, 0, 0)),
           content_);
+      // I processed this event.
       return true;
     }
   } else {
@@ -157,21 +156,25 @@ bool Textbox::Process() {
   }
 
   if (form_ != nullptr) {
-    form_->Process();
-
     switch (ch) {
     case (KEY_ENTER):
     case (10): {
+      ungetch(ch);
+      form_->Process();
       PersistForm();
       return true;
     }
     // KEY_ESC
     case (27): {
+      ungetch(ch);
+      form_->Process();
       CancelForm();
       return true;
     }
     default: {
-      break;
+      ungetch(ch);
+      form_->Process();
+      return true;
     }
     }
   }
