@@ -28,9 +28,9 @@ namespace ui {
 
 class Widget {
 public:
-  Widget(Opts opts, Dimensions dimensions, std::unique_ptr<Window> window);
+  Widget(std::unique_ptr<Window> window);
   Widget(Opts opts, Dimensions dimensions)
-      : Widget(opts, dimensions, absl::make_unique<Window>(dimensions, opts)) {}
+      : Widget(absl::make_unique<Window>(dimensions, opts)) {}
   virtual ~Widget() = default;
 
   void Clear();
@@ -41,8 +41,6 @@ public:
 protected:
   void Debug(absl::string_view txt);
 
-  const Dimensions dimensions_;
-  const Opts opts_;
   const std::unique_ptr<Window> window_;
 };
 
@@ -68,7 +66,7 @@ private:
 // Textbox. Spawns a FormWidget when asked.
 class Textbox : public Widget {
 public:
-  Textbox(Opts opts, Dimensions dimensions, std::unique_ptr<Window> window);
+  Textbox(std::unique_ptr<Window> window);
   Textbox(Opts opts, Dimensions dimensions);
   ~Textbox() override {}
 
@@ -97,19 +95,18 @@ public:
 
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
-
+    auto gridbox_dims = window_->GetDimensions();
     auto sub_dims = Dimensions{
-        .nlines = dimensions_.Height() / num_lines_,
-        .ncols = dimensions_.Width() / num_cols_,
-        .begin_y = dimensions_.Height() / num_lines_ * y,
-        .begin_x = dimensions_.Width() / num_cols_ * x,
+        .nlines = 3,
+        .ncols = 10,
+        .begin_y = gridbox_dims.Height() / num_lines_ * y,
+        .begin_x = gridbox_dims.Width() / num_cols_ * x,
     };
-    widgets_array_[y][x] = std::make_unique<T>(
-        opts_, sub_dims, args...,
-        absl::make_unique<Window>(sub_dims, opts_, BorderStyle::kThin,
-                                  derwin(**window_, sub_dims.nlines,
-                                         sub_dims.ncols, sub_dims.begin_y,
-                                         sub_dims.begin_x)));
+    auto window = absl::make_unique<Window>(
+        sub_dims, window_->GetOpts(), BorderStyle::kThin,
+        derwin(**window_, sub_dims.nlines, sub_dims.ncols, sub_dims.begin_y,
+               sub_dims.begin_x));
+    widgets_array_[y][x] = std::make_unique<T>(args..., std::move(window));
     return Get<T>(y, x);
   }
 
@@ -118,8 +115,8 @@ public:
     return static_cast<T *>(widgets_array_[y][x].get());
   }
 
-  void BubbleCh(int ch) override {}
-  void BubbleEvent(const MEVENT &event) override {}
+  void BubbleCh(int ch) override;
+  void BubbleEvent(const MEVENT &event) override;
 
 private:
   const int num_lines_;

@@ -56,6 +56,7 @@ void Window::Clear() {
 }
 
 Dimensions Window::GetDimensions() const { return dimensions_; }
+Opts Window::GetOpts() const { return opts_; }
 
 Window::~Window() {
   wclear(ptr_);

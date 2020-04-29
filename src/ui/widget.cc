@@ -25,8 +25,7 @@
 namespace latis {
 namespace ui {
 
-Widget::Widget(Opts opts, Dimensions dimensions, std::unique_ptr<Window> window)
-    : dimensions_(dimensions), opts_(opts), window_(std::move(window)) {}
+Widget::Widget(std::unique_ptr<Window> window) : window_(std::move(window)) {}
 
 void Widget::Clear() { window_->Clear(); }
 
@@ -116,9 +115,7 @@ std::string FormWidget::Extract() {
       absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
-Textbox::Textbox(Opts opts, Dimensions dimensions,
-                 std::unique_ptr<Window> window)
-    : Widget(opts, dimensions, std::move(window)) {}
+Textbox::Textbox(std::unique_ptr<Window> window) : Widget(std::move(window)) {}
 
 Textbox::Textbox(Opts opts, Dimensions dimensions) : Widget(opts, dimensions) {}
 
@@ -171,7 +168,8 @@ void Textbox::BubbleEvent(const MEVENT &event) {
   } else if (form_ == nullptr && recv_cb_.has_value() &&
              event.bstate &
                  (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
-    form_ = absl::make_unique<FormWidget>(opts_, dimensions_, content_);
+    form_ = absl::make_unique<FormWidget>(window_->GetOpts(),
+                                          window_->GetDimensions(), content_);
   }
 }
 
@@ -201,6 +199,26 @@ Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
   widgets_array_.resize(num_cols_);
   for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
     v.resize(num_lines_);
+  }
+}
+
+void Gridbox::BubbleCh(int ch) {
+  for (std::vector<std::unique_ptr<Widget>> &row : widgets_array_) {
+    for (std::unique_ptr<Widget> &cell : row) {
+      if (cell != nullptr) {
+        cell->BubbleCh(ch);
+      }
+    }
+  }
+}
+
+void Gridbox::BubbleEvent(const MEVENT &event) {
+  for (std::vector<std::unique_ptr<Widget>> &row : widgets_array_) {
+    for (std::unique_ptr<Widget> &cell : row) {
+      if (cell != nullptr) {
+        cell->BubbleEvent(event);
+      }
+    }
   }
 }
 
