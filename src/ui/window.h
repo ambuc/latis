@@ -23,6 +23,8 @@
 namespace latis {
 namespace ui {
 
+// Thin wrapper around ncurses' WINDOW struct. RAII-style, ~Window() handles
+// necessary deletion and cleanup.
 class Window {
 public:
   Window(Dimensions dimensions, Opts opts, WINDOW *window);
@@ -35,14 +37,23 @@ public:
   Window(Dimensions dimensions) : Window(dimensions, Opts()){};
   ~Window();
 
+  // Prints the string |s| to coordinates (x,y) within the window.
+  // Refreshes the window.
   void Print(int y, int x, absl::string_view s);
+
+  // Refreshes the window. Useful for outside methods which take this window as
+  // their canvas.
   void Refresh();
+
+  // Clears the contents of the window, and refreshes the view.
   void Clear();
 
-  bool Contains(int y, int x) const;
-  int Width() const;
-  int Height() const;
+  // Gets the underlying Dimensions struct. Useful for querying .Contains(),
+  // .Width(), .Height(), etc.
+  Dimensions GetDimensions() const;
 
+  // Useful for accessing the underlying WINDOW ptr for use in registering
+  // forms, etc.
   WINDOW *operator*() const { return ptr_; }
 
 private:

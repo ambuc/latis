@@ -22,7 +22,6 @@
 #include "absl/memory/memory.h"
 #include "absl/types/optional.h"
 #include <form.h>
-#include <ncurses.h>
 
 namespace latis {
 namespace ui {

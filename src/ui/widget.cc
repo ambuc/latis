@@ -14,12 +14,13 @@
 
 #include "src/ui/widget.h"
 
+#include "src/ui/window.h"
+
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include <form.h>
 #include <iostream>
-#include <ncurses.h>
 
 namespace latis {
 namespace ui {
@@ -30,26 +31,18 @@ Widget::Widget(Opts opts, Dimensions dimensions)
 
 void Widget::Clear() { window_->Clear(); }
 
-void Widget::Debug(absl::string_view txt) {
-  if (opts_.show_debug_textbox) {
-    window_->Print(0, 0, txt);
-  }
-}
-
 FormWidget::FormWidget(Opts opts, Dimensions dimensions,
                        absl::string_view placeholder)
     : Widget(opts, dimensions) {
   // The general flow of control of a form program looks like this:
   //   1. Create the form fields, using new_field().
-  Debug("starting form");
 
   fields_[0] =
-      new_field(/*height=*/1, /*width=*/window_->Width() - 4, /*toprow=*/1,
+      new_field(/*height=*/1, /*width=*/window_->GetDimensions().Width() - 4,
+                /*toprow=*/1,
                 /*leftcol=*/2, /*offscreen=*/0, /*numbuf=*/0);
   assert(errno == E_OK);
   assert(fields_[0] != nullptr);
-
-  Debug("Created all fields");
 
   assert(E_OK == set_field_back(fields_[0], A_UNDERLINE)); // Print a line
   assert(E_OK == field_opts_off(fields_[0], O_AUTOSKIP | O_STATIC));
@@ -62,8 +55,6 @@ FormWidget::FormWidget(Opts opts, Dimensions dimensions,
   init_pair(input_colors, COLOR_CYAN, COLOR_BLACK);
   assert(E_OK == set_field_fore(fields_[0], A_BOLD | COLOR_PAIR(input_colors)));
 
-  Debug("set all field options");
-
   //   2. Create the form using new_form().
   form_ = new_form(fields_);
   set_form_fields(form_, fields_);
@@ -72,21 +63,16 @@ FormWidget::FormWidget(Opts opts, Dimensions dimensions,
   assert(form_ != nullptr);
   assert(errno == E_OK);
 
-  Debug("did new_form()");
-
   int rows;
   int cols;
   scale_form(form_, &rows, &cols);
 
   assert(E_OK == set_form_sub(form_, **window_));
-  Debug("set form sub");
 
   //   3. Post the form using post_form().
   assert(E_OK == post_form(form_));
 
   set_current_field(form_, fields_[0]);
-
-  Debug("posted form");
 
   //   4. Refresh the screen.
   window_->Refresh();
@@ -170,7 +156,7 @@ void Textbox::BubbleCh(int ch) {
 }
 
 void Textbox::BubbleEvent(const MEVENT &event) {
-  if (!window_->Contains(event.y, event.x)) {
+  if (!window_->GetDimensions().Contains(event.y, event.x)) {
     // If a click happens outside me and I'm a form, cancel the form.
     if (form_ != nullptr) {
       CancelForm();

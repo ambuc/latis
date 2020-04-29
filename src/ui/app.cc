@@ -18,7 +18,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
-#include <form.h>
 #include <iostream>
 #include <ncurses.h>
 

@@ -41,7 +41,6 @@ cc_test(
     srcs = ["layout_engine_test.cc"],
     deps = [
         ":layout_engine",
-        "//src/test_utils:test_utils_lib",
         "@com_google_googletest//:gtest_main",
     ],
 )
