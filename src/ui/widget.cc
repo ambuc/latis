@@ -181,8 +181,7 @@ bool Textbox::Process(int ch) {
                                                     .begin_y = 0,
                                                     .begin_x = 0,
                                                 },
-                                                window_->GetOpts(),
-                                                BorderStyle::kThin),
+                                                window_->GetOpts()),
                                             content_);
       return true;
     }

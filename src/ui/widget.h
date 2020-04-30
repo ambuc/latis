@@ -67,10 +67,7 @@ class Textbox : public Widget {
 public:
   Textbox(std::unique_ptr<Window> window);
   Textbox(Opts opts, Dimensions dimensions);
-  ~Textbox() override {
-    Debug("del tbx.");
-    absl::SleepFor(absl::Seconds(1));
-  }
+  ~Textbox() override {}
 
   Textbox *WithCb(std::function<void(absl::string_view)> recv_cb);
   Textbox *WithTemplate(std::function<std::string(std::string)> tmpl);
@@ -98,16 +95,16 @@ public:
 
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
-    widgets_array_[y][x] = std::make_unique<T>(
-        args..., window_->GetDerwin(
-                     /*dimensions=*/
-                     Dimensions{
-                         .nlines = cell_height_,
-                         .ncols = cell_width_,
-                         .begin_y = (cell_height_ * y) - y,
-                         .begin_x = (cell_width_ * x) - x,
-                     },
-                     /*opts=*/window_->GetOpts(), BorderStyle::kThin));
+    widgets_array_[y][x] =
+        std::make_unique<T>(args..., window_->GetDerwin(
+                                         /*dimensions=*/
+                                         Dimensions{
+                                             .nlines = cell_height_,
+                                             .ncols = cell_width_,
+                                             .begin_y = (cell_height_ * y) - y,
+                                             .begin_x = (cell_width_ * x) - x,
+                                         },
+                                         /*opts=*/window_->GetOpts()));
     return Get<T>(y, x);
   }
 

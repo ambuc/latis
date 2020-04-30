@@ -78,11 +78,14 @@ LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
   for (int y = 0; y <= ssheet_->Height(); ++y) {
     for (int x = 0; x <= ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
-      if (const auto amt = ssheet_->Get(xy); amt.ok()) {
-        gridbox_ptr->Add<ui::Textbox>(y, x)
-            ->WithCb([this, xy](absl::string_view s) { ssheet_->Set(xy, s); })
-            ->Update(PrintAmount(amt.ValueOrDie()));
+      if (const auto amt_or_status = ssheet_->Get(xy); amt_or_status.ok()) {
+        gridbox_ptr->Add<ui::Textbox>(y, x)->WithCb(
+            [this, xy](absl::string_view s) { ssheet_->Set(xy, s); });
+        gridbox_ptr->Get<ui::Textbox>(y, x)->Update(
+            PrintAmount(amt_or_status.ValueOrDie()));
       }
+      // TODO gotta figure out the relationship between latis_app, ssheet,
+      // display_utils, etc. This prints but it doesn't make any sense yet.
     }
   }
 }

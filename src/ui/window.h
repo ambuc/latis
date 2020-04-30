@@ -28,19 +28,18 @@ namespace ui {
 // necessary deletion and cleanup.
 class Window {
 public:
-  Window(Dimensions dimensions, Opts opts, BorderStyle border_style,
-         WINDOW *window);
+  Window(Dimensions dimensions, Opts opts, WINDOW *window);
   // Default WINDOW
   Window(Dimensions dimensions, Opts opts)
-      : Window(dimensions, opts, BorderStyle::kThin,
+      : Window(dimensions, opts,
                newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
                       dimensions.begin_x)) {}
   // Default opts and WINDOW.
-  Window(Dimensions dimensions) : Window(dimensions, Opts()){};
   ~Window();
 
-  std::unique_ptr<Window> GetDerwin(Dimensions dimensions, Opts opts,
-                                    BorderStyle border_style);
+  // Spawns a derived window. The derived window must be deleted before this
+  // window.
+  std::unique_ptr<Window> GetDerwin(Dimensions dimensions, Opts opts);
 
   // Prints the string |s| to coordinates (x,y) within the window.
   // Refreshes the window.
@@ -69,19 +68,6 @@ private:
   const BorderStyle border_style_;
   WINDOW *ptr_;
 };
-
-// // TODO(ambuc): Add this Pad class and really think about its API.
-// // https://invisible-island.net/ncurses/man/curs_pad.3x.html
-//
-// class Pad : public Window {
-// public:
-//   Pad(Dimensions dimensions, Opts opts)
-//       : Window(dimensions, opts, newpad(dimensions.nlines, dimensions.ncols))
-//       {}
-//   Pad(Dimensions dimensions) : Pad(dimensions, Opts()){};
-//   ~Pad();
-//   void Refresh() override { prefresh(ptr_, sm); }
-// };
 
 } // namespace ui
 } // namespace latis

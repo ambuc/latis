@@ -23,17 +23,15 @@
 namespace latis {
 namespace ui {
 
-Window::Window(Dimensions dimensions, Opts opts, BorderStyle border_style,
-               WINDOW *window)
-    : dimensions_(dimensions), opts_(opts), border_style_(border_style),
+Window::Window(Dimensions dimensions, Opts opts, WINDOW *window)
+    : dimensions_(dimensions), opts_(opts), border_style_(BorderStyle::kThin),
       ptr_(window) {
   PrintPermanentComponents();
   Refresh();
 }
 
-std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Opts opts,
-                                          BorderStyle border_style) {
-  return absl::make_unique<Window>(dimensions, opts, border_style,
+std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Opts opts) {
+  return absl::make_unique<Window>(dimensions, opts,
                                    derwin(ptr_, dimensions.nlines,
                                           dimensions.ncols, dimensions.begin_y,
                                           dimensions.begin_x));
