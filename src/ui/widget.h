@@ -98,15 +98,14 @@ public:
 
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
-    auto gridbox_dims = window_->GetDimensions();
     widgets_array_[y][x] = std::make_unique<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
                      Dimensions{
-                         .nlines = gridbox_dims.Height() / num_lines_,
-                         .ncols = gridbox_dims.Width() / num_cols_,
-                         .begin_y = gridbox_dims.Height() / num_lines_ * y,
-                         .begin_x = gridbox_dims.Width() / num_cols_ * x,
+                         .nlines = cell_height_,
+                         .ncols = cell_width_,
+                         .begin_y = (cell_height_ * y) - y,
+                         .begin_x = (cell_width_ * x) - x,
                      },
                      /*opts=*/window_->GetOpts(), BorderStyle::kThin));
     return Get<T>(y, x);
@@ -121,8 +120,12 @@ public:
   bool Process(int ch) override;
 
 private:
-  const int num_lines_;
-  const int num_cols_;
+  const int height_;    // Height of the grid.
+  const int width_;     // Width of the grid.
+  const int num_lines_; // Number of rows in the grid.
+  const int num_cols_;  // Number of columns in the grid.
+  const int cell_width_;
+  const int cell_height_;
   std::vector<std::vector<std::unique_ptr<Widget>>> widgets_array_;
 };
 

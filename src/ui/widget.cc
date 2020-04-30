@@ -212,7 +212,9 @@ void Textbox::CancelForm() {
 
 Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
     : Widget(absl::make_unique<Window>(dimensions, opts)),
-      num_lines_(num_lines), num_cols_(num_cols), widgets_array_() {
+      height_(dimensions.nlines), width_(dimensions.ncols),
+      num_lines_(num_lines), num_cols_(num_cols),
+      cell_width_(width_ / num_cols_), cell_height_(3), widgets_array_() {
   widgets_array_.resize(num_cols_);
   for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
     v.resize(num_lines_);
