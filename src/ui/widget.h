@@ -20,6 +20,7 @@
 #include "src/ui/window.h"
 
 #include "absl/memory/memory.h"
+#include "absl/time/clock.h"
 #include "absl/types/optional.h"
 #include <form.h>
 
@@ -34,12 +35,12 @@ public:
   void Clear();
 
   // Returns true if this widget consumed the event.
-  virtual bool Process() = 0;
+  virtual bool Process(int ch) = 0;
 
 protected:
   void Debug(absl::string_view txt);
 
-  const std::unique_ptr<Window> window_;
+  std::unique_ptr<Window> window_;
 };
 
 // Forms are hard.
@@ -50,7 +51,7 @@ public:
   ~FormWidget() override;
 
   // Returns true if this widget consumed the event.
-  bool Process() override;
+  bool Process(int ch) override;
 
   std::string Extract();
 
@@ -66,7 +67,10 @@ class Textbox : public Widget {
 public:
   Textbox(std::unique_ptr<Window> window);
   Textbox(Opts opts, Dimensions dimensions);
-  ~Textbox() override {}
+  ~Textbox() override {
+    Debug("del tbx.");
+    absl::SleepFor(absl::Seconds(1));
+  }
 
   Textbox *WithCb(std::function<void(absl::string_view)> recv_cb);
   Textbox *WithTemplate(std::function<std::string(std::string)> tmpl);
@@ -74,7 +78,7 @@ public:
   void Update(std::string s);
 
   // Returns true if this widget consumed the event.
-  bool Process() override;
+  bool Process(int ch) override;
 
 private:
   void PersistForm();
@@ -115,7 +119,7 @@ public:
   }
 
   // Returns true if this widget consumed the event.
-  bool Process() override;
+  bool Process(int ch) override;
 
 private:
   const int num_lines_;

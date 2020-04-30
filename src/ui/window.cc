@@ -15,6 +15,7 @@
 #include "src/ui/window.h"
 
 #include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
 
 #include <ncurses.h>
 
@@ -43,14 +44,17 @@ void Window::Print(int y, int x, absl::string_view s) {
     puts.resize(dimensions_.ncols - 4, ' ');
   }
 
-  mvwprintw(ptr_, y, x, puts.c_str());
+  assert(mvwprintw(ptr_, y, x, puts.c_str()) == OK);
   Refresh();
 }
 
-void Window::Refresh() { wrefresh(ptr_); }
+void Window::Refresh() {
+  //
+  assert(OK == wrefresh(ptr_));
+}
 
 void Window::Clear() {
-  wclear(ptr_);
+  assert(OK == wclear(ptr_));
   PrintPermanentComponents();
   Refresh();
 }
@@ -59,7 +63,7 @@ Dimensions Window::GetDimensions() const { return dimensions_; }
 Opts Window::GetOpts() const { return opts_; }
 
 Window::~Window() {
-  wclear(ptr_);
+  assert(wclear(ptr_) == OK);
   Refresh();
   delwin(ptr_);
 }
@@ -70,20 +74,21 @@ void Window::PrintPermanentComponents() {
     // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
     switch (border_style_) {
     case (BorderStyle::kThin): {
-      wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
-                  WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER, WACS_LRCORNER);
+      assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
+                         WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER,
+                         WACS_LRCORNER) == OK);
       break;
     }
     case (BorderStyle::kThick): {
-      wborder_set(ptr_, WACS_T_VLINE, WACS_T_VLINE, WACS_T_HLINE, WACS_T_HLINE,
-                  WACS_T_ULCORNER, WACS_T_URCORNER, WACS_T_LLCORNER,
-                  WACS_T_LRCORNER);
+      assert(wborder_set(ptr_, WACS_T_VLINE, WACS_T_VLINE, WACS_T_HLINE,
+                         WACS_T_HLINE, WACS_T_ULCORNER, WACS_T_URCORNER,
+                         WACS_T_LLCORNER, WACS_T_LRCORNER) == OK);
       break;
     }
     case (BorderStyle::kDouble): {
-      wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE, WACS_D_HLINE,
-                  WACS_D_ULCORNER, WACS_D_URCORNER, WACS_D_LLCORNER,
-                  WACS_D_LRCORNER);
+      assert(wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE,
+                         WACS_D_HLINE, WACS_D_ULCORNER, WACS_D_URCORNER,
+                         WACS_D_LLCORNER, WACS_D_LRCORNER) == OK);
       break;
     }
     default: {

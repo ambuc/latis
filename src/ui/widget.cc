@@ -34,7 +34,6 @@ void Widget::Debug(absl::string_view txt) { window_->Print(0, 0, txt); }
 FormWidget::FormWidget(std::unique_ptr<Window> window,
                        absl::string_view placeholder)
     : Widget(std::move(window)) {
-
   // The general flow of control of a form program looks like this:
   //   1. Create the form fields, using new_field().
 
@@ -79,8 +78,7 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
   window_->Refresh();
 }
 
-bool FormWidget::Process() {
-  const int ch = getch();
+bool FormWidget::Process(int ch) {
   switch (ch) {
   case KEY_ENTER:
   case 10:
@@ -135,30 +133,13 @@ void Textbox::Update(std::string s) {
   window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
 }
 
-bool Textbox::Process() {
-
-  const int ch = getch();
-  MEVENT event;
-  if (getmouse(&event) == OK && wenclose(**window_, event.y, event.x)) {
-    Debug("tbx:p");
-    if (form_ == nullptr && recv_cb_.has_value() &&
-        event.bstate &
-            (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
-      auto dims = window_->GetDimensions();
-      form_ = absl::make_unique<FormWidget>(
-          absl::make_unique<Window>(
-              dims, window_->GetOpts(), BorderStyle::kThin,
-              derwin(**window_, dims.nlines, dims.ncols, 0, 0)),
-          content_);
-      return true;
-    }
-  } else {
-    ungetmouse(&event);
+bool Textbox::Process(int ch) {
+  bool did_process = false;
+  if (form_ != nullptr) {
+    did_process |= form_->Process(ch);
   }
 
   if (form_ != nullptr) {
-    form_->Process();
-
     switch (ch) {
     case (KEY_ENTER):
     case (10): {
@@ -172,12 +153,37 @@ bool Textbox::Process() {
     }
     default: {
       break;
+      //
     }
     }
   }
 
-  ungetch(ch);
-  return false;
+  if (form_ == nullptr && recv_cb_.has_value()) {
+    // if there's no form and this textbox is form-enabled:
+    if (ch != KEY_MOUSE) {
+      return false;
+    }
+    MEVENT event;
+    if (getmouse(&event) != OK) {
+      return did_process;
+    }
+    if (!wenclose(**window_, event.y, event.x)) {
+      ungetmouse(&event);
+      return false;
+    }
+    if (event.bstate &
+        (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
+      auto dims = window_->GetDimensions();
+      form_ = absl::make_unique<FormWidget>(
+          absl::make_unique<Window>(
+              dims, window_->GetOpts(), BorderStyle::kThin,
+              derwin(**window_, dims.nlines, dims.ncols, 0, 0)),
+          content_);
+      return true;
+    }
+  }
+
+  return did_process;
 }
 
 void Textbox::PersistForm() {
@@ -208,17 +214,18 @@ Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
   }
 }
 
-bool Gridbox::Process() {
+bool Gridbox::Process(int ch) {
+  bool did_process = false;
   for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
     for (std::unique_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
-        if (cell->Process()) {
-          return true;
+        if (cell->Process(ch)) {
+          did_process = true;
         }
       }
     }
   }
-  return false;
+  return did_process;
 }
 
 } // namespace ui

@@ -34,11 +34,14 @@ App::App(Opts opts) : opts_(opts) {
   notimeout(stdscr, true); // no timeout, esc persists immediately
   mousemask(ALL_MOUSE_EVENTS, NULL);
 
-  cbreak();
-  noecho();
-  clear();
+  // Disable cursor
+  assert(curs_set(0) != ERR);
 
-  refresh();
+  assert(cbreak() == OK);
+  assert(noecho() == OK);
+  assert(clear() == OK);
+
+  assert(refresh() == OK);
 }
 
 App::~App() { endwin(); }
@@ -46,27 +49,19 @@ App::~App() { endwin(); }
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
 
 void App::Run() {
-  // New model. If you don't have anything to do with a keyboard/mouse event,
-  // put it on the stack.
-  while (true) {
-    bool was_processed = false;
+  bool should_run = true;
+  int ch;
+  do {
+    ch = getch();
     for (auto &[_, w] : widgets_) {
-      if (!was_processed && w->Process()) {
-        was_processed = true;
-      }
+      w->Process(ch);
     }
 
     // Fallback -- if no one else processed it, I will.
-    if (!was_processed) {
-      // goodbye
-      if (getch() == int('q')) {
-        break;
-      }
-      was_processed = true;
+    if (ch == int('q')) {
+      should_run = false;
     }
-
-    assert(was_processed);
-  }
+  } while (should_run);
 }
 
 } // namespace ui
