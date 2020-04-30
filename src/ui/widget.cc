@@ -174,11 +174,16 @@ bool Textbox::Process(int ch) {
     if (event.bstate &
         (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
       auto dims = window_->GetDimensions();
-      form_ = absl::make_unique<FormWidget>(
-          absl::make_unique<Window>(
-              dims, window_->GetOpts(), BorderStyle::kThin,
-              derwin(**window_, dims.nlines, dims.ncols, 0, 0)),
-          content_);
+      form_ = absl::make_unique<FormWidget>(window_->GetDerwin(
+                                                Dimensions{
+                                                    .nlines = dims.nlines,
+                                                    .ncols = dims.ncols,
+                                                    .begin_y = 0,
+                                                    .begin_x = 0,
+                                                },
+                                                window_->GetOpts(),
+                                                BorderStyle::kThin),
+                                            content_);
       return true;
     }
   }

@@ -18,6 +18,7 @@
 
 #include "absl/strings/string_view.h"
 #include "src/ui/common.h"
+#include <memory>
 #include <ncurses.h>
 
 namespace latis {
@@ -37,6 +38,9 @@ public:
   // Default opts and WINDOW.
   Window(Dimensions dimensions) : Window(dimensions, Opts()){};
   ~Window();
+
+  std::unique_ptr<Window> GetDerwin(Dimensions dimensions, Opts opts,
+                                    BorderStyle border_style);
 
   // Prints the string |s| to coordinates (x,y) within the window.
   // Refreshes the window.

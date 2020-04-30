@@ -14,6 +14,7 @@
 
 #include "src/ui/window.h"
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 
@@ -28,6 +29,14 @@ Window::Window(Dimensions dimensions, Opts opts, BorderStyle border_style,
       ptr_(window) {
   PrintPermanentComponents();
   Refresh();
+}
+
+std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Opts opts,
+                                          BorderStyle border_style) {
+  return absl::make_unique<Window>(dimensions, opts, border_style,
+                                   derwin(ptr_, dimensions.nlines,
+                                          dimensions.ncols, dimensions.begin_y,
+                                          dimensions.begin_x));
 }
 
 void Window::Print(int y, int x, absl::string_view s) {

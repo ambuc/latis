@@ -99,17 +99,16 @@ public:
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
     auto gridbox_dims = window_->GetDimensions();
-    auto sub_dims = Dimensions{
-        .nlines = 3,
-        .ncols = 10,
-        .begin_y = gridbox_dims.Height() / num_lines_ * y,
-        .begin_x = gridbox_dims.Width() / num_cols_ * x,
-    };
-    auto window = absl::make_unique<Window>(
-        sub_dims, window_->GetOpts(), BorderStyle::kThin,
-        derwin(**window_, sub_dims.nlines, sub_dims.ncols, sub_dims.begin_y,
-               sub_dims.begin_x));
-    widgets_array_[y][x] = std::make_unique<T>(args..., std::move(window));
+    widgets_array_[y][x] = std::make_unique<T>(
+        args..., window_->GetDerwin(
+                     /*dimensions=*/
+                     Dimensions{
+                         .nlines = gridbox_dims.Height() / num_lines_,
+                         .ncols = gridbox_dims.Width() / num_cols_,
+                         .begin_y = gridbox_dims.Height() / num_lines_ * y,
+                         .begin_x = gridbox_dims.Width() / num_cols_ * x,
+                     },
+                     /*opts=*/window_->GetOpts(), BorderStyle::kThin));
     return Get<T>(y, x);
   }
 
