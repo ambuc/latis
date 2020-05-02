@@ -26,11 +26,13 @@ namespace ui {
 // TextWidget. Spawns a FormWidget when asked.
 class TextWidget : public Widget {
 public:
+  using Cb = std::function<absl::optional<std::string>(absl::string_view)>;
+
   TextWidget(std::unique_ptr<Window> window);
   TextWidget(Dimensions dimensions);
   ~TextWidget() override {}
 
-  TextWidget *WithCb(std::function<void(absl::string_view)> recv_cb);
+  TextWidget *WithCb(Cb recv_cb);
   TextWidget *WithTemplate(std::function<std::string(std::string)> tmpl);
 
   void Update(std::string s);
@@ -44,7 +46,7 @@ private:
   void CancelForm();
 
   // Optional recv_cb_.
-  absl::optional<std::function<void(absl::string_view)>> recv_cb_;
+  absl::optional<Cb> recv_cb_;
   absl::optional<std::function<std::string(std::string)>> tmpl_;
   std::string content_;
   std::unique_ptr<FormWidget> form_{nullptr};

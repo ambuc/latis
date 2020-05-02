@@ -26,7 +26,7 @@ TextWidget::TextWidget(std::unique_ptr<Window> window)
 TextWidget::TextWidget(Dimensions dimensions)
     : Widget(absl::make_unique<Window>(dimensions)) {}
 
-TextWidget *TextWidget::WithCb(std::function<void(absl::string_view)> recv_cb) {
+TextWidget *TextWidget::WithCb(Cb recv_cb) {
   recv_cb_ = recv_cb;
   return this;
 }
@@ -136,10 +136,13 @@ void TextWidget::PersistForm() {
   std::string s = form_->Extract();
   form_ = nullptr;
 
-  Update(s);
-
   assert(recv_cb_.has_value());
-  recv_cb_.value()(s);
+  if (const auto maybe_s = recv_cb_.value()(s); maybe_s.has_value()) {
+    Update(maybe_s.value());
+  } else {
+    Update(content_);
+    window_->Refresh();
+  }
 }
 
 void TextWidget::CancelForm() {

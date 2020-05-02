@@ -49,13 +49,19 @@ LatisApp::LatisApp(LatisMsg msg)
   app_->Add<ui::TextWidget>("title", dims_title)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Title: %s", s); })
-      ->WithCb([this](absl::string_view s) { ssheet_->SetTitle(s); })
+      ->WithCb([this](absl::string_view s) {
+        ssheet_->SetTitle(s);
+        return absl::nullopt;
+      })
       ->Update(ssheet_->Title().value_or("n/a"));
 
   app_->Add<ui::TextWidget>("author", dims_author)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Author: %s", s); })
-      ->WithCb([this](absl::string_view s) { ssheet_->SetAuthor(s); })
+      ->WithCb([this](absl::string_view s) {
+        ssheet_->SetAuthor(s);
+        return absl::nullopt;
+      })
       ->Update(ssheet_->Author().value_or("no author"));
 
   app_->Add<ui::TextWidget>("date_created", dims_created)
@@ -85,7 +91,14 @@ LatisApp::LatisApp(LatisMsg msg)
       auto xy = XY(x, y);
       if (const auto amt = ssheet_->Get(xy); amt.ok()) {
         gridbox_ptr->Add<ui::TextWidget>(y, x)
-            ->WithCb([this, xy](absl::string_view s) { ssheet_->Set(xy, s); })
+            ->WithCb([this,
+                      xy](absl::string_view s) -> absl::optional<std::string> {
+              if (const auto maybe_amt = ssheet_->Set(xy, s); maybe_amt.ok()) {
+                return PrintAmount(maybe_amt.ValueOrDie());
+              } else {
+                return absl::nullopt;
+              }
+            })
             ->Update(PrintAmount(amt.ValueOrDie()));
       }
     }
