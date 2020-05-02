@@ -32,23 +32,19 @@ std::string IntegerToColumnLetter(int i) {
 }
 } // namespace
 
-GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
+GridWidget::GridWidget(Dimensions dimensions)
     : Widget(absl::make_unique<Window>(
           dimensions, Style{.border_style = BorderStyle::kBorderStyleNone})), //
       height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
-      num_lines_(num_lines), num_cols_(num_cols),                             //
-      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),         //
+      cell_width_(15), cell_height_(3),                                       //
       coordinate_markers_(), widgets_array_() {
-  Debug(absl::StrFormat("GridWidget::GridWidget(%s,%d,%d)",
-                        dimensions.ToString(), num_lines, num_cols));
+  Debug(absl::StrFormat("GridWidget::GridWidget(%s)", dimensions.ToString()));
 
-  // make coordinate_markers;
-  coordinate_markers_.resize(num_cols_ + num_lines_);
   // Column headers
-  for (int i = 0; i < num_cols_; i++) {
+  for (int i = 0; i < width_ / (cell_width_ - 1); i++) {
     auto w = absl::make_unique<TextWidget>(
         window_->GetDerwin(Dimensions{.nlines = col_header_height_,
-                                      .ncols = col_header_width_,
+                                      .ncols = cell_width_,
                                       .begin_y = 0,
                                       .begin_x = ((cell_width_ - 1) * i) + 1},
                            Style{
@@ -61,11 +57,12 @@ GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
     w->Update(IntegerToColumnLetter(i));
     coordinate_markers_.push_back(std::move(w));
   }
+
   //  Row headers
-  for (int i = 0; i < num_lines_; i++) {
+  for (int i = 0; i < height_ / (cell_height_ - 1); i++) {
     auto w = absl::make_unique<TextWidget>(window_->GetDerwin(
         Dimensions{
-            .nlines = row_header_height_,
+            .nlines = cell_height_,
             .ncols = row_header_width_,
             .begin_y = (cell_height_ - 1) * i + col_header_height_,
             .begin_x = 0,
@@ -80,9 +77,9 @@ GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
     coordinate_markers_.push_back(std::move(w));
   }
 
-  widgets_array_.resize(num_cols_);
+  widgets_array_.resize(width_ / cell_width_);
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
-    v.resize(num_lines_);
+    v.resize(height_ / cell_height_);
   }
 }
 

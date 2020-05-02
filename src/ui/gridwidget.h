@@ -25,12 +25,16 @@ namespace ui {
 
 class GridWidget : public Widget {
 public:
-  GridWidget(Dimensions dimensions, int num_lines, int num_cols);
+  GridWidget(Dimensions dimensions);
   ~GridWidget() override {}
 
+  // returns nullptr if there is no room.
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
+    if (widgets_array_.size() <= y || widgets_array_[y].size() <= x) {
+      return nullptr;
+    }
     widgets_array_[y][x] = std::make_shared<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
@@ -57,18 +61,14 @@ public:
   bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
 private:
-  const int height_;    // Height of the grid.
-  const int width_;     // Width of the grid.
-  const int num_lines_; // Number of rows in the grid.
-  const int num_cols_;  // Number of columns in the grid.
+  const int height_; // Height of the grid.
+  const int width_;  // Width of the grid.
   const int cell_width_;
   const int cell_height_;
 
   // for headers
   const int col_header_height_{1};
-  const int col_header_width_{cell_width_};
   const int row_header_width_{3};
-  const int row_header_height_{cell_height_};
 
   // if nullptr, none is selected.
   std::shared_ptr<Widget> active_;

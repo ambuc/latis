@@ -82,24 +82,25 @@ LatisApp::LatisApp(LatisMsg msg)
   auto dims_gridbox = layout_engine.FillRest().value();
 
   // TODO(ambuc): Refuse xy placements greater than num_lines / num_cols
-  auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox,
-                                               /*num_lines=*/5, /*num_cols=*/5);
+  auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox);
   assert(gridbox_ptr != nullptr);
 
   for (int y = 0; y <= ssheet_->Height(); ++y) {
     for (int x = 0; x <= ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
       if (const auto amt = ssheet_->Get(xy); amt.ok()) {
-        gridbox_ptr->Add<ui::TextWidget>(y, x)
-            ->WithCb([this,
-                      xy](absl::string_view s) -> absl::optional<std::string> {
-              if (const auto maybe_amt = ssheet_->Set(xy, s); maybe_amt.ok()) {
-                return PrintAmount(maybe_amt.ValueOrDie());
-              } else {
-                return absl::nullopt;
-              }
-            })
-            ->Update(PrintAmount(amt.ValueOrDie()));
+        auto w = gridbox_ptr->Add<ui::TextWidget>(y, x);
+        if (w != nullptr) {
+          w->WithCb([this,
+                     xy](absl::string_view s) -> absl::optional<std::string> {
+            if (const auto maybe_amt = ssheet_->Set(xy, s); maybe_amt.ok()) {
+              return PrintAmount(maybe_amt.ValueOrDie());
+            } else {
+              return absl::nullopt;
+            }
+          });
+          w->Update(PrintAmount(amt.ValueOrDie()));
+        }
       }
     }
   }
