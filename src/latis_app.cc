@@ -16,6 +16,7 @@
 
 #include "proto/latis_msg.pb.h"
 #include "src/ssheet_impl.h"
+#include "src/ui/common.h"
 #include "src/ui/gridwidget.h"
 #include "src/ui/layout_engine.h"
 #include "src/ui/textwidget.h"
@@ -72,8 +73,8 @@ LatisApp::LatisApp(LatisMsg msg)
 
   layout_engine.Place(/*h=*/1, /*w=*/x); // newline
 
-  auto dims_gridbox =
-      layout_engine.Place(/*h=*/20, /*w=*/x).value_or(default_dims);
+  auto dims_gridbox = layout_engine.FillRest().value();
+
   // TODO(ambuc): Refuse xy placements greater than num_lines / num_cols
   auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox,
                                                /*num_lines=*/5, /*num_cols=*/5);

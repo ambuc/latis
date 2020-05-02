@@ -49,6 +49,21 @@ absl::optional<Dimensions> LayoutEngine::Place(int h, int w) {
   return d;
 }
 
+absl::optional<Dimensions> LayoutEngine::FillRest() {
+  // find the bottommost box;
+  int top_edge = 0;
+  for (const auto &box : boxes_) {
+    top_edge = std::max(top_edge, box.BottomEdge());
+  }
+  if (height_ == top_edge) {
+    return absl::nullopt;
+  }
+  return Dimensions{.nlines = height_ - top_edge,
+                    .ncols = width_,
+                    .begin_y = top_edge,
+                    .begin_x = 0};
+}
+
 bool LayoutEngine::InBorders(int h, int w, int begin_y, int begin_x) {
   return begin_x + w <= width_ && begin_y + h <= height_;
 }

@@ -30,6 +30,9 @@ public:
   // Places a box as far in the top-left as it can go.
   absl::optional<Dimensions> Place(int h, int w);
 
+  // Return a box which fills the rest of the screen.
+  absl::optional<Dimensions> FillRest();
+
 private:
   // Regardless of boxes, true/false is within borders.
   bool InBorders(int h, int w, int begin_y, int begin_x);

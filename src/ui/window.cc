@@ -26,6 +26,8 @@ namespace ui {
 
 Window::Window(Dimensions dimensions, Style style, WINDOW *window)
     : dimensions_(dimensions), style_(style), ptr_(window) {
+  assert(dimensions_.ncols > 1);
+
   Debug(
       absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(), window));
 
@@ -47,6 +49,7 @@ void Window::Print(int y, int x, absl::string_view s) {
   PrintPermanentComponents();
 
   std::string puts = std::string(s);
+
   // two edges and two padding
   if (int(s.size()) > dimensions_.ncols - 4) {
     // two edges, two padding, and three ellipses.
@@ -101,9 +104,9 @@ void Window::PrintPermanentComponents() {
       break;
     }
     default: {
-      break;
       assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
                          nullptr, nullptr, nullptr, nullptr) == OK);
+      break;
     }
     }
     break;
