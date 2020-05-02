@@ -53,8 +53,11 @@ void App::Run() {
   int ch;
   do {
     ch = getch();
+    MEVENT event;
+    bool is_mouse = getmouse(&event) == OK;
+
     for (auto &[_, w] : widgets_) {
-      w->Process(ch);
+      w->Process(ch, event, is_mouse);
     }
 
     // Fallback -- if no one else processed it, I will.

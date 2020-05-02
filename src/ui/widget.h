@@ -35,7 +35,7 @@ public:
   void Clear();
 
   // Returns true if this widget consumed the event.
-  virtual bool Process(int ch) = 0;
+  virtual bool Process(int ch, const MEVENT &event, bool is_mouse) = 0;
 
 protected:
   std::unique_ptr<Window> window_;
@@ -49,7 +49,7 @@ public:
   ~FormWidget() override;
 
   // Returns true if this widget consumed the event.
-  bool Process(int ch) override;
+  bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
   std::string Extract();
 
@@ -73,7 +73,7 @@ public:
   void Update(std::string s);
 
   // Returns true if this widget consumed the event.
-  bool Process(int ch) override;
+  bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
 private:
   void PersistForm();
@@ -95,7 +95,7 @@ public:
   T *Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("Gridbox::Add(%d, %d)", y, x));
     widgets_array_[y][x] =
-        std::make_unique<T>(args..., window_->GetDerwin(
+        std::make_shared<T>(args..., window_->GetDerwin(
                                          /*dimensions=*/
                                          Dimensions{
                                              .nlines = cell_height_,
@@ -113,7 +113,7 @@ public:
   }
 
   // Returns true if this widget consumed the event.
-  bool Process(int ch) override;
+  bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
 private:
   const int height_;    // Height of the grid.
@@ -122,7 +122,8 @@ private:
   const int num_cols_;  // Number of columns in the grid.
   const int cell_width_;
   const int cell_height_;
-  std::vector<std::vector<std::unique_ptr<Widget>>> widgets_array_;
+
+  std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
 };
 
 } // namespace ui

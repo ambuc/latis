@@ -82,7 +82,7 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
   set_current_field(form_, fields_[0]);
 }
 
-bool FormWidget::Process(int ch) {
+bool FormWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
   Debug(absl::StrFormat("FormWidget::Process(%c)", ch));
 
   switch (ch) {
@@ -148,12 +148,12 @@ void Textbox::Update(std::string s) {
   window_->Refresh();
 }
 
-bool Textbox::Process(int ch) {
+bool Textbox::Process(int ch, const MEVENT &event, bool is_mouse) {
   Debug(absl::StrFormat("Textbox::Process(%c)", ch));
 
   bool did_process = false;
   if (form_ != nullptr) {
-    did_process |= form_->Process(ch);
+    did_process |= form_->Process(ch, event, is_mouse);
   }
 
   if (form_ != nullptr) {
@@ -175,29 +175,19 @@ bool Textbox::Process(int ch) {
     }
   }
 
-  if (form_ == nullptr && recv_cb_.has_value()) {
-    // if there's no form and this textbox is form-enabled:
-    if (ch != KEY_MOUSE) {
-      return false;
-    }
-    MEVENT event;
-    if (getmouse(&event) != OK) {
-      return did_process;
-    }
-    if (!wenclose(**window_, event.y, event.x)) {
-      ungetmouse(&event);
-      return false;
-    }
+  if (form_ == nullptr && recv_cb_.has_value() && is_mouse && ch == KEY_MOUSE &&
+      wenclose(**window_, event.y, event.x)) {
     if (event.bstate &
         (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
       auto dims = window_->GetDimensions();
-      form_ = absl::make_unique<FormWidget>(window_->GetDerwin(Dimensions{
-                                                .nlines = dims.nlines,
-                                                .ncols = dims.ncols,
-                                                .begin_y = 0,
-                                                .begin_x = 0,
-                                            }),
-                                            content_);
+      form_ = absl::make_unique<FormWidget>( //
+          window_->GetDerwin(Dimensions{
+              .nlines = dims.nlines,
+              .ncols = dims.ncols,
+              .begin_y = 0,
+              .begin_x = 0,
+          }),
+          content_);
       return true;
     }
   }
@@ -229,27 +219,28 @@ void Textbox::CancelForm() {
 }
 
 Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
-    : Widget(absl::make_unique<Window>(dimensions)), height_(dimensions.nlines),
-      width_(dimensions.ncols), num_lines_(num_lines), num_cols_(num_cols),
-      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),
+    : Widget(absl::make_unique<Window>(dimensions)),                  //
+      height_(dimensions.nlines), width_(dimensions.ncols),           //
+      num_lines_(num_lines), num_cols_(num_cols),                     //
+      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3), //
       widgets_array_() {
   Debug(absl::StrFormat("Gridbox::Gridbox(%s,%d,%d)", dimensions.ToString(),
                         num_lines, num_cols));
 
   widgets_array_.resize(num_cols_);
-  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
+  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     v.resize(num_lines_);
   }
 }
 
-bool Gridbox::Process(int ch) {
+bool Gridbox::Process(int ch, const MEVENT &event, bool is_mouse) {
   Debug(absl::StrFormat("Gridbox::Process(%c)", ch));
 
   bool did_process = false;
-  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
-    for (std::unique_ptr<Widget> &cell : v) {
+  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
+    for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
-        if (cell->Process(ch)) {
+        if (cell->Process(ch, event, is_mouse)) {
           did_process = true;
         }
       }
