@@ -35,13 +35,13 @@ LatisApp::LatisApp(LatisMsg msg)
   const auto default_dims = ui::Dimensions{5, 5, 0, 0};
 
   auto dims_title =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+      layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
   auto dims_author =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+      layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
   auto dims_created =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+      layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
   auto dims_edited =
-      layout_engine.PlaceTL(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
+      layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
 
   app_->Add<ui::Textbox>("title", dims_title)
       ->WithTemplate(
@@ -68,8 +68,10 @@ LatisApp::LatisApp(LatisMsg msg)
         ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
+  layout_engine.Place(/*h=*/1, /*w=*/x); // newline
+
   auto dims_gridbox =
-      layout_engine.PlaceTL(/*h=*/20, /*w=*/x).value_or(default_dims);
+      layout_engine.Place(/*h=*/20, /*w=*/x).value_or(default_dims);
   // TODO(ambuc): Refuse xy placements greater than num_lines / num_cols
   auto gridbox_ptr = app_->Add<ui::Gridbox>("gridbox", dims_gridbox,
                                             /*num_lines=*/5, /*num_cols=*/5);

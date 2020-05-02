@@ -43,23 +43,23 @@ protected:
 
 TEST_F(LayoutEngineTestBase, TooTall) {
   // too tall
-  EXPECT_EQ(e_.PlaceTL(h_ + 1, 1), absl::nullopt);
+  EXPECT_EQ(e_.Place(h_ + 1, 1), absl::nullopt);
   // just right
-  EXPECT_NE(e_.PlaceTL(h_, 1), absl::nullopt);
+  EXPECT_NE(e_.Place(h_, 1), absl::nullopt);
 }
 
 TEST_F(LayoutEngineTestBase, TooWide) {
   // too wide
-  EXPECT_EQ(e_.PlaceTL(1, w_ + 1), absl::nullopt);
+  EXPECT_EQ(e_.Place(1, w_ + 1), absl::nullopt);
   // just right
-  EXPECT_NE(e_.PlaceTL(1, w_), absl::nullopt);
+  EXPECT_NE(e_.Place(1, w_), absl::nullopt);
 }
 
 TEST_F(LayoutEngineTestBase, Placements) {
 
   {
     // AAAA
-    Dimensions d = e_.PlaceTL(1, 4).value();
+    Dimensions d = e_.Place(1, 4).value();
     EXPECT_EQ(d.nlines, 1);
     EXPECT_EQ(d.ncols, 4);
     EXPECT_EQ(d.begin_y, 0);
@@ -68,7 +68,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
 
   {
     // AAAABBBB
-    Dimensions d = e_.PlaceTL(1, 4).value();
+    Dimensions d = e_.Place(1, 4).value();
     EXPECT_EQ(d.nlines, 1);
     EXPECT_EQ(d.ncols, 4);
     EXPECT_EQ(d.begin_y, 0);
@@ -78,7 +78,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
   {
     // AAAABBBB
     // CCC
-    Dimensions d = e_.PlaceTL(1, 3).value();
+    Dimensions d = e_.Place(1, 3).value();
     EXPECT_EQ(d.nlines, 1);
     EXPECT_EQ(d.ncols, 3);
     EXPECT_EQ(d.begin_y, 1);
@@ -89,7 +89,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
     // AAAABBBB
     // CCCDDD
     //    DDD
-    Dimensions d = e_.PlaceTL(2, 3).value();
+    Dimensions d = e_.Place(2, 3).value();
     EXPECT_EQ(d.nlines, 2);
     EXPECT_EQ(d.ncols, 3);
     EXPECT_EQ(d.begin_y, 1);
@@ -101,7 +101,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
     // CCCDDD
     // EEEDDD
     // EEE
-    Dimensions d = e_.PlaceTL(2, 3).value();
+    Dimensions d = e_.Place(2, 3).value();
     EXPECT_EQ(d.nlines, 2);
     EXPECT_EQ(d.ncols, 3);
     EXPECT_EQ(d.begin_y, 2);
@@ -113,7 +113,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
     // CCCDDDFF
     // EEEDDDFF
     // EEE
-    Dimensions d = e_.PlaceTL(2, 2).value();
+    Dimensions d = e_.Place(2, 2).value();
     EXPECT_EQ(d.nlines, 2);
     EXPECT_EQ(d.ncols, 2);
     EXPECT_EQ(d.begin_y, 1);
@@ -126,7 +126,7 @@ TEST_F(LayoutEngineTestBase, Placements) {
     // EEEDDDFF
     // EEEGGG
     //    GGG
-    Dimensions d = e_.PlaceTL(2, 3).value();
+    Dimensions d = e_.Place(2, 3).value();
     EXPECT_EQ(d.nlines, 2);
     EXPECT_EQ(d.ncols, 3);
     EXPECT_EQ(d.begin_y, 3);

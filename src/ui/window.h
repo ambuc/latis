@@ -43,14 +43,13 @@ public:
   std::unique_ptr<Window> GetDerwin(Dimensions dimensions);
 
   // Prints the string |s| to coordinates (x,y) within the window.
-  // Refreshes the window.
   void Print(int y, int x, absl::string_view s);
 
   // Refreshes the window. Useful for outside methods which take this window as
   // their canvas.
   void Refresh();
 
-  // Clears the contents of the window, and refreshes the view.
+  // Clears the contents of the window.
   void Clear();
 
   // Gets the underlying Dimensions struct. Useful for querying .Contains(),
