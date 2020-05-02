@@ -124,6 +124,9 @@ private:
   const int cell_width_;
   const int cell_height_;
 
+  // if nullptr, none is selected.
+  std::shared_ptr<Widget> active_;
+
   std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
 };
 

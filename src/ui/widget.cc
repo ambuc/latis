@@ -188,6 +188,7 @@ bool Textbox::Process(int ch, const MEVENT &event, bool is_mouse) {
               .begin_x = 0,
           }),
           content_);
+      window_->Refresh();
       return true;
     }
   }
@@ -237,15 +238,27 @@ Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
 bool Gridbox::Process(int ch, const MEVENT &event, bool is_mouse) {
   Debug(absl::StrFormat("Gridbox::Process(%c)", ch));
 
+  // optimization for sending characters to the existing textbox, if there is
+  // one.
+  if (active_ != nullptr) {
+    if (active_->Process(ch, event, is_mouse)) {
+      return true;
+    } else {
+      active_ == nullptr;
+    }
+  }
+
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
         if (cell->Process(ch, event, is_mouse)) {
+          active_ = cell;
           return true;
         }
       }
     }
   }
+
   return false;
 }
 
