@@ -20,8 +20,6 @@
 
 #include "src/ui/formwidget.h"
 
-#include "absl/memory/memory.h"
-
 namespace latis {
 namespace ui {
 

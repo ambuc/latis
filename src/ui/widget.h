@@ -16,13 +16,7 @@
 #ifndef SRC_UI_WIDGET_H_
 #define SRC_UI_WIDGET_H_
 
-#include "src/ui/common.h"
 #include "src/ui/window.h"
-
-#include "absl/memory/memory.h"
-#include "absl/time/clock.h"
-#include "absl/types/optional.h"
-#include <form.h>
 
 namespace latis {
 namespace ui {

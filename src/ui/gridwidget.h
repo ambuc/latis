@@ -18,8 +18,6 @@
 
 #include "src/ui/widget.h"
 
-#include "absl/memory/memory.h"
-
 namespace latis {
 namespace ui {
 

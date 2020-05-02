@@ -14,14 +14,6 @@
 
 #include "src/ui/widget.h"
 
-#include "src/ui/window.h"
-
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_format.h"
-#include "absl/time/clock.h"
-#include <form.h>
-#include <iostream>
-
 namespace latis {
 namespace ui {
 
