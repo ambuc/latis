@@ -57,7 +57,9 @@ void App::Run() {
     bool is_mouse = getmouse(&event) == OK;
 
     for (auto &[_, w] : widgets_) {
-      w->Process(ch, event, is_mouse);
+      if (w->Process(ch, event, is_mouse)) {
+        break;
+      }
     }
 
     // Fallback -- if no one else processed it, I will.

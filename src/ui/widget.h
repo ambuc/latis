@@ -76,6 +76,7 @@ public:
   bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
 private:
+  bool CanHaveForm();
   void PersistForm();
   void CancelForm();
 

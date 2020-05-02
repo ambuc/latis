@@ -175,7 +175,7 @@ bool Textbox::Process(int ch, const MEVENT &event, bool is_mouse) {
     }
   }
 
-  if (form_ == nullptr && recv_cb_.has_value() && is_mouse && ch == KEY_MOUSE &&
+  if (CanHaveForm() && is_mouse && ch == KEY_MOUSE &&
       wenclose(**window_, event.y, event.x)) {
     if (event.bstate &
         (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
@@ -195,6 +195,8 @@ bool Textbox::Process(int ch, const MEVENT &event, bool is_mouse) {
   return did_process;
 }
 
+bool Textbox::CanHaveForm() { return form_ == nullptr && recv_cb_.has_value(); }
+
 void Textbox::PersistForm() {
   Debug("Textbox::PersistForm");
 
@@ -205,9 +207,8 @@ void Textbox::PersistForm() {
 
   Update(s);
 
-  if (recv_cb_.has_value()) {
-    recv_cb_.value()(s);
-  }
+  assert(recv_cb_.has_value());
+  recv_cb_.value()(s);
 }
 
 void Textbox::CancelForm() {
@@ -236,17 +237,16 @@ Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
 bool Gridbox::Process(int ch, const MEVENT &event, bool is_mouse) {
   Debug(absl::StrFormat("Gridbox::Process(%c)", ch));
 
-  bool did_process = false;
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
         if (cell->Process(ch, event, is_mouse)) {
-          did_process = true;
+          return true;
         }
       }
     }
   }
-  return did_process;
+  return false;
 }
 
 } // namespace ui
