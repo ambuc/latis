@@ -48,6 +48,34 @@ cc_test(
 )
 
 cc_library(
+    name = "formwidget_lib",
+    srcs = ["formwidget.cc"],
+    hdrs = ["formwidget.h"],
+    visibility = ["//src:__subpackages__"],
+    deps = [":widget_lib"],
+)
+
+cc_library(
+    name = "textwidget_lib",
+    srcs = ["textwidget.cc"],
+    hdrs = ["textwidget.h"],
+    visibility = ["//src:__subpackages__"],
+    deps = [
+        ":formwidget_lib",
+        ":widget_lib",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "gridwidget_lib",
+    srcs = ["gridwidget.cc"],
+    hdrs = ["gridwidget.h"],
+    visibility = ["//src:__subpackages__"],
+    deps = [":widget_lib"],
+)
+
+cc_library(
     name = "widget_lib",
     srcs = ["widget.cc"],
     hdrs = ["widget.h"],

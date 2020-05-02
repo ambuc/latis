@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2020 Google LLC
  *
@@ -13,35 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef SRC_UI_WIDGET_H_
-#define SRC_UI_WIDGET_H_
+#ifndef SRC_UI_FORMWIDGET_H_
+#define SRC_UI_FORMWIDGET_H_
 
-#include "src/ui/common.h"
-#include "src/ui/window.h"
+#include "src/ui/widget.h"
 
 #include "absl/memory/memory.h"
-#include "absl/time/clock.h"
-#include "absl/types/optional.h"
-#include <form.h>
 
 namespace latis {
 namespace ui {
 
-class Widget {
+// Forms are hard.
+// https://invisible-island.net/ncurses/ncurses-intro.html#form
+class FormWidget : public Widget {
 public:
-  Widget(std::unique_ptr<Window> window);
-  virtual ~Widget() = default;
-
-  void Clear();
+  FormWidget(std::unique_ptr<Window> window, absl::string_view placeholder);
+  ~FormWidget() override;
 
   // Returns true if this widget consumed the event.
-  virtual bool Process(int ch, const MEVENT &event, bool is_mouse) = 0;
+  bool Process(int ch, const MEVENT &event, bool is_mouse) override;
 
-protected:
-  std::unique_ptr<Window> window_;
+  std::string Extract();
+
+private:
+  FORM *form_{nullptr};
+  // Inherently just a single field.
+  FIELD *fields_[2]{nullptr, nullptr};
 };
 
 } // namespace ui
 } // namespace latis
 
-#endif // SRC_UI_WIDGET_H_
+#endif // SRC_UI_FORMWIDGET_H_

@@ -16,7 +16,9 @@
 
 #include "proto/latis_msg.pb.h"
 #include "src/ssheet_impl.h"
+#include "src/ui/gridwidget.h"
 #include "src/ui/layout_engine.h"
+#include "src/ui/textwidget.h"
 
 #include <ncurses.h>
 #include <signal.h>
@@ -43,28 +45,28 @@ LatisApp::LatisApp(LatisMsg msg)
   auto dims_edited =
       layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
 
-  app_->Add<ui::Textbox>("title", dims_title)
+  app_->Add<ui::TextWidget>("title", dims_title)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Title: %s", s); })
       ->WithCb([this](absl::string_view s) { ssheet_->SetTitle(s); })
       ->Update(ssheet_->Title().value_or("n/a"));
 
-  app_->Add<ui::Textbox>("author", dims_author)
+  app_->Add<ui::TextWidget>("author", dims_author)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Author: %s", s); })
       ->WithCb([this](absl::string_view s) { ssheet_->SetAuthor(s); })
       ->Update(ssheet_->Author().value_or("no author"));
 
-  app_->Add<ui::Textbox>("date_created", dims_created)
+  app_->Add<ui::TextWidget>("date_created", dims_created)
       ->Update(absl::StrFormat("Date Created: %s",
                                absl::FormatTime(ssheet_->CreatedTime())));
 
-  app_->Add<ui::Textbox>("date_edited", dims_edited)
+  app_->Add<ui::TextWidget>("date_edited", dims_edited)
       ->Update(absl::StrFormat("Date Edited: %s",
                                absl::FormatTime(ssheet_->EditedTime())));
 
   ssheet_->RegisterEditedTimeCallback([this](absl::Time t) {
-    app_->Get<ui::Textbox>("date_edited")
+    app_->Get<ui::TextWidget>("date_edited")
         ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
@@ -73,15 +75,15 @@ LatisApp::LatisApp(LatisMsg msg)
   auto dims_gridbox =
       layout_engine.Place(/*h=*/20, /*w=*/x).value_or(default_dims);
   // TODO(ambuc): Refuse xy placements greater than num_lines / num_cols
-  auto gridbox_ptr = app_->Add<ui::Gridbox>("gridbox", dims_gridbox,
-                                            /*num_lines=*/5, /*num_cols=*/5);
+  auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox,
+                                               /*num_lines=*/5, /*num_cols=*/5);
   assert(gridbox_ptr != nullptr);
 
   for (int y = 0; y <= ssheet_->Height(); ++y) {
     for (int x = 0; x <= ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
       if (const auto amt = ssheet_->Get(xy); amt.ok()) {
-        gridbox_ptr->Add<ui::Textbox>(y, x)
+        gridbox_ptr->Add<ui::TextWidget>(y, x)
             ->WithCb([this, xy](absl::string_view s) { ssheet_->Set(xy, s); })
             ->Update(PrintAmount(amt.ValueOrDie()));
       }
