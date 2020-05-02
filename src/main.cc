@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
       .show_borders = absl::GetFlag(FLAGS_debug_mode),
       .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
       .show_frame_count = absl::GetFlag(FLAGS_debug_mode),
+      .write_cerr = absl::GetFlag(FLAGS_debug_mode),
   };
 
   std::unique_ptr<latis::LatisApp> latis_app;

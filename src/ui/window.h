@@ -16,8 +16,10 @@
 #ifndef SRC_UI_WINDOW_H_
 #define SRC_UI_WINDOW_H_
 
-#include "absl/strings/string_view.h"
 #include "src/ui/common.h"
+
+#include "absl/strings/string_view.h"
+
 #include <memory>
 #include <ncurses.h>
 
@@ -62,6 +64,9 @@ public:
   WINDOW *operator*() const { return ptr_; }
 
 private:
+  // Writes to std::cerr.
+  void Debug(absl::string_view s);
+
   void PrintPermanentComponents();
   const Dimensions dimensions_;
   const Opts opts_;

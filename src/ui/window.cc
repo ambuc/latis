@@ -18,6 +18,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 
+#include <iostream>
 #include <ncurses.h>
 
 namespace latis {
@@ -31,6 +32,7 @@ Window::Window(Dimensions dimensions, Opts opts, WINDOW *window)
 }
 
 std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Opts opts) {
+  Debug("Get derwin");
   return absl::make_unique<Window>(dimensions, opts,
                                    derwin(ptr_, dimensions.nlines,
                                           dimensions.ncols, dimensions.begin_y,
@@ -102,6 +104,12 @@ void Window::PrintPermanentComponents() {
       // none
     }
     }
+  }
+}
+
+void Window::Debug(absl::string_view s) {
+  if (opts_.write_cerr) {
+    std::clog << s << std::endl;
   }
 }
 

@@ -26,6 +26,7 @@ struct Opts {
   bool show_borders = false;
   bool show_debug_textbox = false;
   bool show_frame_count = false;
+  bool write_cerr = false;
 };
 
 enum BorderStyle { kNone, kThin, kThick, kDouble };
