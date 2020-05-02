@@ -51,6 +51,9 @@ public:
   void Run();
 
 private:
+  // if nullptr, no active widget
+  std::shared_ptr<Widget> active_;
+
   absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
 };
 

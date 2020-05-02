@@ -56,6 +56,14 @@ void App::Run() {
     MEVENT event;
     bool is_mouse = getmouse(&event) == OK;
 
+    if (active_ != nullptr) {
+      if (active_->Process(ch, event, is_mouse)) {
+        break;
+      } else {
+        active_.reset();
+      }
+    }
+
     for (auto &[_, w] : widgets_) {
       if (w->Process(ch, event, is_mouse)) {
         break;

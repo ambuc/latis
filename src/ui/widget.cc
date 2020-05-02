@@ -221,10 +221,10 @@ void Textbox::CancelForm() {
 }
 
 Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
-    : Widget(absl::make_unique<Window>(dimensions)),                  //
-      height_(dimensions.nlines), width_(dimensions.ncols),           //
-      num_lines_(num_lines), num_cols_(num_cols),                     //
-      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3), //
+    : Widget(absl::make_unique<Window>(dimensions, BorderStyle::kNone)), //
+      height_(dimensions.nlines), width_(dimensions.ncols),              //
+      num_lines_(num_lines), num_cols_(num_cols),                        //
+      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),    //
       widgets_array_() {
   Debug(absl::StrFormat("Gridbox::Gridbox(%s,%d,%d)", dimensions.ToString(),
                         num_lines, num_cols));
@@ -244,7 +244,7 @@ bool Gridbox::Process(int ch, const MEVENT &event, bool is_mouse) {
     if (active_->Process(ch, event, is_mouse)) {
       return true;
     } else {
-      active_ == nullptr;
+      active_.reset();
     }
   }
 

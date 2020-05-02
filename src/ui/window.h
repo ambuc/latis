@@ -30,12 +30,14 @@ namespace ui {
 // necessary deletion and cleanup.
 class Window {
 public:
-  Window(Dimensions dimensions, WINDOW *window);
-  // Default WINDOW
-  Window(Dimensions dimensions)
-      : Window(dimensions, newwin(dimensions.nlines, dimensions.ncols,
-                                  dimensions.begin_y, dimensions.begin_x)) {}
-  // Default WINDOW.
+  Window(Dimensions dimensions, BorderStyle border_style, WINDOW *window);
+  Window(Dimensions dimensions, WINDOW *window)
+      : Window(dimensions, BorderStyle::kThin, window) {}
+  Window(Dimensions dimensions, BorderStyle border_style)
+      : Window(dimensions, border_style,
+               newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
+                      dimensions.begin_x)) {}
+  Window(Dimensions dimensions) : Window(dimensions, BorderStyle::kThin) {}
   ~Window();
 
   // Spawns a derived window. The derived window must be deleted before this

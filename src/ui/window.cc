@@ -24,8 +24,8 @@
 namespace latis {
 namespace ui {
 
-Window::Window(Dimensions dimensions, WINDOW *window)
-    : dimensions_(dimensions), border_style_(BorderStyle::kThin), ptr_(window) {
+Window::Window(Dimensions dimensions, BorderStyle border_style, WINDOW *window)
+    : dimensions_(dimensions), border_style_(border_style), ptr_(window) {
   Debug(
       absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(), window));
 
