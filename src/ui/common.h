@@ -28,10 +28,13 @@ ABSL_DECLARE_FLAG(bool, debug_mode);
 namespace latis {
 namespace ui {
 
-enum BorderStyle { kNone, kThin, kThick, kDouble };
+enum BorderStyle { kBorderStyleNone, kThin, kThick, kDouble };
+enum CornerStyle { kCornerStyleNone, kClosed, kPlus };
 
+// Defaults
 struct Style {
-  BorderStyle border_style = BorderStyle::kNone;
+  BorderStyle border_style = BorderStyle::kThin;
+  CornerStyle corner_style = CornerStyle::kClosed;
 };
 
 struct Dimensions {

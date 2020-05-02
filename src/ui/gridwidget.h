@@ -37,6 +37,10 @@ public:
                                              .ncols = cell_width_,
                                              .begin_y = (cell_height_ * y) - y,
                                              .begin_x = (cell_width_ * x) - x,
+                                         },
+                                         Style{
+                                             .border_style = BorderStyle::kThin,
+                                             .corner_style = CornerStyle::kPlus,
                                          }));
     return Get<T>(y, x);
   }

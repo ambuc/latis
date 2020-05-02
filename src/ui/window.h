@@ -30,19 +30,22 @@ namespace ui {
 // necessary deletion and cleanup.
 class Window {
 public:
-  Window(Dimensions dimensions, BorderStyle border_style, WINDOW *window);
+  Window(Dimensions dimensions, Style style, WINDOW *window);
   Window(Dimensions dimensions, WINDOW *window)
-      : Window(dimensions, BorderStyle::kThin, window) {}
-  Window(Dimensions dimensions, BorderStyle border_style)
-      : Window(dimensions, border_style,
+      : Window(dimensions, Style{}, window) {}
+  Window(Dimensions dimensions, Style style)
+      : Window(dimensions, style,
                newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
                       dimensions.begin_x)) {}
-  Window(Dimensions dimensions) : Window(dimensions, BorderStyle::kThin) {}
+  Window(Dimensions dimensions) : Window(dimensions, Style{}) {}
   ~Window();
 
   // Spawns a derived window. The derived window must be deleted before this
   // window.
-  std::unique_ptr<Window> GetDerwin(Dimensions dimensions);
+  std::unique_ptr<Window> GetDerwin(Dimensions dimensions, Style style);
+  std::unique_ptr<Window> GetDerwin(Dimensions dimensions) {
+    return GetDerwin(dimensions, Style{});
+  }
 
   // Prints the string |s| to coordinates (x,y) within the window.
   void Print(int y, int x, absl::string_view s);
@@ -65,7 +68,7 @@ public:
 private:
   void PrintPermanentComponents();
   const Dimensions dimensions_;
-  const BorderStyle border_style_;
+  const Style style_;
   WINDOW *ptr_;
 };
 

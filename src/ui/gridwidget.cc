@@ -19,10 +19,11 @@ namespace latis {
 namespace ui {
 
 GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
-    : Widget(absl::make_unique<Window>(dimensions, BorderStyle::kNone)), //
-      height_(dimensions.nlines), width_(dimensions.ncols),              //
-      num_lines_(num_lines), num_cols_(num_cols),                        //
-      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),    //
+    : Widget(absl::make_unique<Window>(
+          dimensions, Style{.border_style = BorderStyle::kBorderStyleNone})), //
+      height_(dimensions.nlines), width_(dimensions.ncols),                   //
+      num_lines_(num_lines), num_cols_(num_cols),                             //
+      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),         //
       widgets_array_() {
   Debug(absl::StrFormat("GridWidget::GridWidget(%s,%d,%d)",
                         dimensions.ToString(), num_lines, num_cols));
