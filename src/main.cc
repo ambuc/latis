@@ -21,27 +21,18 @@
 #include "absl/flags/parse.h"
 
 ABSL_FLAG(std::string, textproto_input, "", "Path to input textproto");
-ABSL_FLAG(bool, debug_mode, false,
-          "If true, prints debug stuff at the bottom.");
 
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
-
-  latis::ui::Opts opts{
-      .show_borders = absl::GetFlag(FLAGS_debug_mode),
-      .show_debug_textbox = absl::GetFlag(FLAGS_debug_mode),
-      .show_frame_count = absl::GetFlag(FLAGS_debug_mode),
-      .write_cerr = absl::GetFlag(FLAGS_debug_mode),
-  };
 
   std::unique_ptr<latis::LatisApp> latis_app;
 
   // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
     auto msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
-    latis_app = absl::make_unique<latis::LatisApp>(opts, msg);
+    latis_app = absl::make_unique<latis::LatisApp>(msg);
   } else {
-    latis_app = absl::make_unique<latis::LatisApp>(opts);
+    latis_app = absl::make_unique<latis::LatisApp>();
   }
 
   latis_app->Run();

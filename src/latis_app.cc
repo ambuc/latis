@@ -23,9 +23,9 @@
 
 namespace latis {
 
-LatisApp::LatisApp(ui::Opts opts, LatisMsg msg)
-    : opts_(opts), ssheet_(absl::make_unique<SSheet>(msg)),
-      app_(absl::make_unique<ui::App>(opts_)) {
+LatisApp::LatisApp(LatisMsg msg)
+    : ssheet_(absl::make_unique<SSheet>(msg)),
+      app_(absl::make_unique<ui::App>()) {
 
   int y, x;
   getmaxyx(stdscr, y, x);

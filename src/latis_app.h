@@ -25,14 +25,12 @@ namespace latis {
 
 class LatisApp {
 public:
-  LatisApp() : LatisApp(ui::Opts()) {}
-  explicit LatisApp(ui::Opts opts) : LatisApp(opts, LatisMsg()) {}
-  LatisApp(ui::Opts opts, LatisMsg msg);
+  LatisApp() : LatisApp(LatisMsg()) {}
+  explicit LatisApp(LatisMsg msg);
 
   void Run();
 
 private:
-  const ui::Opts opts_;
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 };

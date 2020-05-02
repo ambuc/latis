@@ -24,22 +24,26 @@
 namespace latis {
 namespace ui {
 
-Window::Window(Dimensions dimensions, Opts opts, WINDOW *window)
-    : dimensions_(dimensions), opts_(opts), border_style_(BorderStyle::kThin),
-      ptr_(window) {
+Window::Window(Dimensions dimensions, WINDOW *window)
+    : dimensions_(dimensions), border_style_(BorderStyle::kThin), ptr_(window) {
+  Debug(
+      absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(), window));
+
   PrintPermanentComponents();
   Refresh();
 }
 
-std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Opts opts) {
-  Debug("Get derwin");
-  return absl::make_unique<Window>(dimensions, opts,
-                                   derwin(ptr_, dimensions.nlines,
-                                          dimensions.ncols, dimensions.begin_y,
-                                          dimensions.begin_x));
+std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions) {
+  Debug(absl::StrFormat("GetDerwin(%s)", dimensions.ToString()));
+
+  return absl::make_unique<Window>(
+      dimensions, derwin(ptr_, dimensions.nlines, dimensions.ncols,
+                         dimensions.begin_y, dimensions.begin_x));
 }
 
 void Window::Print(int y, int x, absl::string_view s) {
+  Debug(absl::StrFormat("Window::Print(%d,%d,%s)", y, x, s));
+
   PrintPermanentComponents();
 
   std::string puts = std::string(s);
@@ -58,58 +62,55 @@ void Window::Print(int y, int x, absl::string_view s) {
 }
 
 void Window::Refresh() {
-  //
+  Debug("Window::Refresh()");
   assert(OK == wrefresh(ptr_));
 }
 
 void Window::Clear() {
+  Debug("Window::Clear()");
+
   assert(OK == wclear(ptr_));
   PrintPermanentComponents();
   Refresh();
 }
 
 Dimensions Window::GetDimensions() const { return dimensions_; }
-Opts Window::GetOpts() const { return opts_; }
 
 Window::~Window() {
+  Debug("Window::~Window()");
+
   assert(wclear(ptr_) == OK);
   Refresh();
   delwin(ptr_);
 }
 
 void Window::PrintPermanentComponents() {
-  if (opts_.show_borders) {
-    // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
-    // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
-    switch (border_style_) {
-    case (BorderStyle::kThin): {
-      assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
-                         WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER,
-                         WACS_LRCORNER) == OK);
-      break;
-    }
-    case (BorderStyle::kThick): {
-      assert(wborder_set(ptr_, WACS_T_VLINE, WACS_T_VLINE, WACS_T_HLINE,
-                         WACS_T_HLINE, WACS_T_ULCORNER, WACS_T_URCORNER,
-                         WACS_T_LLCORNER, WACS_T_LRCORNER) == OK);
-      break;
-    }
-    case (BorderStyle::kDouble): {
-      assert(wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE,
-                         WACS_D_HLINE, WACS_D_ULCORNER, WACS_D_URCORNER,
-                         WACS_D_LLCORNER, WACS_D_LRCORNER) == OK);
-      break;
-    }
-    default: {
-      // none
-    }
-    }
-  }
-}
+  Debug("Window::PrintPermanentComponents()");
 
-void Window::Debug(absl::string_view s) {
-  if (opts_.write_cerr) {
-    std::clog << s << std::endl;
+  // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
+  // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
+  switch (border_style_) {
+  case (BorderStyle::kThin): {
+    assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
+                       WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER,
+                       WACS_LRCORNER) == OK);
+    break;
+  }
+  case (BorderStyle::kThick): {
+    assert(wborder_set(ptr_, WACS_T_VLINE, WACS_T_VLINE, WACS_T_HLINE,
+                       WACS_T_HLINE, WACS_T_ULCORNER, WACS_T_URCORNER,
+                       WACS_T_LLCORNER, WACS_T_LRCORNER) == OK);
+    break;
+  }
+  case (BorderStyle::kDouble): {
+    assert(wborder_set(ptr_, WACS_D_VLINE, WACS_D_VLINE, WACS_D_HLINE,
+                       WACS_D_HLINE, WACS_D_ULCORNER, WACS_D_URCORNER,
+                       WACS_D_LLCORNER, WACS_D_LRCORNER) == OK);
+    break;
+  }
+  default: {
+    // none
+  }
   }
 }
 

@@ -24,7 +24,7 @@
 namespace latis {
 namespace ui {
 
-App::App(Opts opts) : opts_(opts) {
+App::App() {
   setlocale(LC_ALL, "");
 
   initscr();

@@ -25,15 +25,20 @@
 namespace latis {
 namespace ui {
 
-Widget::Widget(std::unique_ptr<Window> window) : window_(std::move(window)) {}
+Widget::Widget(std::unique_ptr<Window> window) : window_(std::move(window)) {
+  Debug(absl::StrFormat("Widget::Widget(%p)", window.get()));
+}
 
-void Widget::Clear() { window_->Clear(); }
-
-void Widget::Debug(absl::string_view txt) { window_->Print(0, 0, txt); }
+void Widget::Clear() {
+  Debug("Widget::Clear()");
+  window_->Clear();
+}
 
 FormWidget::FormWidget(std::unique_ptr<Window> window,
                        absl::string_view placeholder)
     : Widget(std::move(window)) {
+  Debug(absl::StrFormat("FormWidget::FormWidget(%p,%s)", window.get(),
+                        placeholder));
   // The general flow of control of a form program looks like this:
   //   1. Create the form fields, using new_field().
 
@@ -79,6 +84,8 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
 }
 
 bool FormWidget::Process(int ch) {
+  Debug(absl::StrFormat("FormWidget::Process(%c)", ch));
+
   switch (ch) {
   case KEY_ENTER:
   case 10:
@@ -103,20 +110,26 @@ bool FormWidget::Process(int ch) {
 }
 
 FormWidget::~FormWidget() {
+  Debug("FormWidget::~FormWidget");
+
   // We don't want to clean up window_ via unpost_form or free_field, since
   // window_ already gets cleaned up by Window::~Window().
 }
 
 std::string FormWidget::Extract() {
+  Debug("FormWidget::Extract");
+
   assert(field_status(fields_[0]) == true);
   return std::string(
       absl::StripTrailingAsciiWhitespace(field_buffer(fields_[0], 0)));
 }
 
-Textbox::Textbox(std::unique_ptr<Window> window) : Widget(std::move(window)) {}
+Textbox::Textbox(std::unique_ptr<Window> window) : Widget(std::move(window)) {
+  Debug(absl::StrFormat("Textbox::Textbox(%p)", window.get()));
+}
 
-Textbox::Textbox(Opts opts, Dimensions dimensions)
-    : Widget(absl::make_unique<Window>(dimensions, opts)) {}
+Textbox::Textbox(Dimensions dimensions)
+    : Widget(absl::make_unique<Window>(dimensions)) {}
 
 Textbox *Textbox::WithCb(std::function<void(absl::string_view)> recv_cb) {
   recv_cb_ = recv_cb;
@@ -129,11 +142,15 @@ Textbox *Textbox::WithTemplate(std::function<std::string(std::string)> tmpl) {
 }
 
 void Textbox::Update(std::string s) {
+  Debug(absl::StrFormat("Textbox::Update(%s)", s));
+
   content_ = s;
   window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
 }
 
 bool Textbox::Process(int ch) {
+  Debug(absl::StrFormat("Textbox::Process(%c)", ch));
+
   bool did_process = false;
   if (form_ != nullptr) {
     did_process |= form_->Process(ch);
@@ -174,14 +191,12 @@ bool Textbox::Process(int ch) {
     if (event.bstate &
         (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
       auto dims = window_->GetDimensions();
-      form_ = absl::make_unique<FormWidget>(window_->GetDerwin(
-                                                Dimensions{
-                                                    .nlines = dims.nlines,
-                                                    .ncols = dims.ncols,
-                                                    .begin_y = 0,
-                                                    .begin_x = 0,
-                                                },
-                                                window_->GetOpts()),
+      form_ = absl::make_unique<FormWidget>(window_->GetDerwin(Dimensions{
+                                                .nlines = dims.nlines,
+                                                .ncols = dims.ncols,
+                                                .begin_y = 0,
+                                                .begin_x = 0,
+                                            }),
                                             content_);
       return true;
     }
@@ -191,6 +206,8 @@ bool Textbox::Process(int ch) {
 }
 
 void Textbox::PersistForm() {
+  Debug("Textbox::PersistForm");
+
   assert(form_ != nullptr);
 
   std::string s = form_->Extract();
@@ -204,16 +221,20 @@ void Textbox::PersistForm() {
 }
 
 void Textbox::CancelForm() {
+  Debug("Textbox::CancelForm");
+
   assert(form_ != nullptr);
   form_ = nullptr;
   Update(content_);
 }
 
-Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
-    : Widget(absl::make_unique<Window>(dimensions, opts)),
-      height_(dimensions.nlines), width_(dimensions.ncols),
-      num_lines_(num_lines), num_cols_(num_cols),
+Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
+    : Widget(absl::make_unique<Window>(dimensions)), height_(dimensions.nlines),
+      width_(dimensions.ncols), num_lines_(num_lines), num_cols_(num_cols),
       cell_width_(width_ / num_cols_), cell_height_(3), widgets_array_() {
+  Debug(absl::StrFormat("Gridbox::Gridbox(%s,%d,%d)", dimensions.ToString(),
+                        num_lines, num_cols));
+
   widgets_array_.resize(num_cols_);
   for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
     v.resize(num_lines_);
@@ -221,6 +242,8 @@ Gridbox::Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols)
 }
 
 bool Gridbox::Process(int ch) {
+  Debug(absl::StrFormat("Gridbox::Process(%c)", ch));
+
   bool did_process = false;
   for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
     for (std::unique_ptr<Widget> &cell : v) {

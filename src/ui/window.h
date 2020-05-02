@@ -30,18 +30,17 @@ namespace ui {
 // necessary deletion and cleanup.
 class Window {
 public:
-  Window(Dimensions dimensions, Opts opts, WINDOW *window);
+  Window(Dimensions dimensions, WINDOW *window);
   // Default WINDOW
-  Window(Dimensions dimensions, Opts opts)
-      : Window(dimensions, opts,
-               newwin(dimensions.nlines, dimensions.ncols, dimensions.begin_y,
-                      dimensions.begin_x)) {}
-  // Default opts and WINDOW.
+  Window(Dimensions dimensions)
+      : Window(dimensions, newwin(dimensions.nlines, dimensions.ncols,
+                                  dimensions.begin_y, dimensions.begin_x)) {}
+  // Default WINDOW.
   ~Window();
 
   // Spawns a derived window. The derived window must be deleted before this
   // window.
-  std::unique_ptr<Window> GetDerwin(Dimensions dimensions, Opts opts);
+  std::unique_ptr<Window> GetDerwin(Dimensions dimensions);
 
   // Prints the string |s| to coordinates (x,y) within the window.
   // Refreshes the window.
@@ -57,19 +56,14 @@ public:
   // Gets the underlying Dimensions struct. Useful for querying .Contains(),
   // .Width(), .Height(), etc.
   Dimensions GetDimensions() const;
-  Opts GetOpts() const;
 
   // Useful for accessing the underlying WINDOW ptr for use in registering
   // forms, etc.
   WINDOW *operator*() const { return ptr_; }
 
 private:
-  // Writes to std::cerr.
-  void Debug(absl::string_view s);
-
   void PrintPermanentComponents();
   const Dimensions dimensions_;
-  const Opts opts_;
   const BorderStyle border_style_;
   WINDOW *ptr_;
 };

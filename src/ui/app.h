@@ -28,12 +28,12 @@ namespace ui {
 
 class App {
 public:
-  explicit App(Opts opts);
+  explicit App();
   ~App();
 
   template <typename T, typename... Args> //
   std::shared_ptr<T> Add(absl::string_view title, Args... args) {
-    auto widget = std::make_shared<T>(opts_, args...);
+    auto widget = std::make_shared<T>(args...);
     widgets_[title] = widget;
     return widget;
   }
@@ -51,7 +51,6 @@ public:
   void Run();
 
 private:
-  const Opts opts_;
   absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
 };
 

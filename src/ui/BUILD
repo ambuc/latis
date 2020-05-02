@@ -18,9 +18,11 @@ cc_library(
 
 cc_library(
     name = "common",
+    srcs = ["common.cc"],
     hdrs = ["common.h"],
     visibility = ["//src:__subpackages__"],
     deps = [
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

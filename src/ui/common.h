@@ -16,18 +16,17 @@
 #ifndef SRC_UI_COMMON_H_
 #define SRC_UI_COMMON_H_
 
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+
+#include "absl/flags/flag.h"
+
+#include <iostream>
+
+ABSL_DECLARE_FLAG(bool, debug_mode);
 
 namespace latis {
 namespace ui {
-
-// general-purpose ui options.
-struct Opts {
-  bool show_borders = false;
-  bool show_debug_textbox = false;
-  bool show_frame_count = false;
-  bool write_cerr = false;
-};
 
 enum BorderStyle { kNone, kThin, kThick, kDouble };
 
@@ -44,6 +43,10 @@ struct Dimensions {
   inline bool operator==(Dimensions other) const {
     return nlines == other.nlines && ncols == other.ncols &&
            begin_y == other.begin_y && begin_x == other.begin_x;
+  }
+
+  std::string ToString() const {
+    return absl::StrFormat("%dx%d @ (%d,%d)", nlines, ncols, begin_y, begin_x);
   }
 
   int Width() const { return ncols; }
@@ -64,6 +67,8 @@ struct Dimensions {
     return false;
   }
 };
+
+void Debug(absl::string_view s);
 
 } // namespace ui
 } // namespace latis

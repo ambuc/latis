@@ -38,8 +38,6 @@ public:
   virtual bool Process(int ch) = 0;
 
 protected:
-  void Debug(absl::string_view txt);
-
   std::unique_ptr<Window> window_;
 };
 
@@ -66,7 +64,7 @@ private:
 class Textbox : public Widget {
 public:
   Textbox(std::unique_ptr<Window> window);
-  Textbox(Opts opts, Dimensions dimensions);
+  Textbox(Dimensions dimensions);
   ~Textbox() override {}
 
   Textbox *WithCb(std::function<void(absl::string_view)> recv_cb);
@@ -90,11 +88,12 @@ private:
 
 class Gridbox : public Widget {
 public:
-  Gridbox(Opts opts, Dimensions dimensions, int num_lines, int num_cols);
+  Gridbox(Dimensions dimensions, int num_lines, int num_cols);
   ~Gridbox() override {}
 
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
+    Debug(absl::StrFormat("Gridbox::Add(%d, %d)", y, x));
     widgets_array_[y][x] =
         std::make_unique<T>(args..., window_->GetDerwin(
                                          /*dimensions=*/
@@ -103,13 +102,13 @@ public:
                                              .ncols = cell_width_,
                                              .begin_y = (cell_height_ * y) - y,
                                              .begin_x = (cell_width_ * x) - x,
-                                         },
-                                         /*opts=*/window_->GetOpts()));
+                                         }));
     return Get<T>(y, x);
   }
 
   template <typename T> //
   T *Get(int y, int x) {
+    Debug(absl::StrFormat("Gridbox::Get(%d, %d)", y, x));
     return static_cast<T *>(widgets_array_[y][x].get());
   }
 
