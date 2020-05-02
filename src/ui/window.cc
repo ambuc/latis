@@ -45,9 +45,7 @@ std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Style style) {
 
 void Window::Print(int y, int x, absl::string_view s) {
   Debug(absl::StrFormat("Window::Print(%d,%d,%s)", y, x, s));
-
   PrintPermanentComponents();
-
   assert(mvwprintw(ptr_, y, x, std::string(s).c_str()) == OK);
 }
 

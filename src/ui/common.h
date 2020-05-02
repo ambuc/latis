@@ -30,14 +30,17 @@ namespace ui {
 
 enum BorderStyle { kBorderStyleNone, kThin, kThick, kDouble };
 enum CornerStyle { kCornerStyleNone, kClosed, kPlus };
-enum PaddingStyle { kPaddingStyleNone, kOne };
+enum HorizontalAlignment { kLeft, kCenter, kRight };
+enum VerticalAlignment { kTop, kMiddle, kBottom };
 
 // Defaults
 struct Style {
   BorderStyle border_style = BorderStyle::kThin;
   CornerStyle corner_style = CornerStyle::kClosed;
-  PaddingStyle x_padding_style = PaddingStyle::kOne;
-  PaddingStyle y_padding_style = PaddingStyle::kOne;
+  int xpad = 1;
+  int ypad = 0;
+  HorizontalAlignment halign = HorizontalAlignment::kLeft;
+  VerticalAlignment valign = VerticalAlignment::kMiddle;
 };
 
 struct Dimensions {

@@ -35,7 +35,7 @@ std::string IntegerToColumnLetter(int i) {
 GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
     : Widget(absl::make_unique<Window>(
           dimensions, Style{.border_style = BorderStyle::kBorderStyleNone})), //
-      height_(dimensions.nlines - 2), width_(dimensions.ncols - 2),           //
+      height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
       num_lines_(num_lines), num_cols_(num_cols),                             //
       cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),         //
       coordinate_markers_(), widgets_array_() {
@@ -46,17 +46,18 @@ GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
   coordinate_markers_.resize(num_cols_ + num_lines_);
   // Column headers
   for (int i = 0; i < num_cols_; i++) {
-    auto w = absl::make_unique<TextWidget>(window_->GetDerwin(
-        Dimensions{.nlines = 1,
-                   .ncols = cell_width_ - 1,
-                   .begin_y = 0,
-                   .begin_x = (cell_width_ - 1) * i},
-        Style{
-            .border_style = BorderStyle::kBorderStyleNone,
-            .corner_style = CornerStyle::kCornerStyleNone,
-            .x_padding_style = PaddingStyle::kOne,
-            .y_padding_style = PaddingStyle::kPaddingStyleNone,
-        }));
+    auto w = absl::make_unique<TextWidget>(
+        window_->GetDerwin(Dimensions{.nlines = col_header_height_,
+                                      .ncols = col_header_width_,
+                                      .begin_y = 0,
+                                      .begin_x = ((cell_width_ - 1) * i) + 1},
+                           Style{
+                               .border_style = BorderStyle::kBorderStyleNone,
+                               .corner_style = CornerStyle::kCornerStyleNone,
+                               .xpad = 1,
+                               .ypad = 0,
+                               .halign = HorizontalAlignment::kCenter,
+                           }));
     w->Update(IntegerToColumnLetter(i));
     coordinate_markers_.push_back(std::move(w));
   }
@@ -64,16 +65,16 @@ GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
   for (int i = 0; i < num_lines_; i++) {
     auto w = absl::make_unique<TextWidget>(window_->GetDerwin(
         Dimensions{
-            .nlines = cell_height_,
-            .ncols = 2,
-            .begin_y = (cell_height_ - 1) * i + 1,
+            .nlines = row_header_height_,
+            .ncols = row_header_width_,
+            .begin_y = (cell_height_ - 1) * i + col_header_height_,
             .begin_x = 0,
         },
         Style{
             .border_style = BorderStyle::kBorderStyleNone,
             .corner_style = CornerStyle::kCornerStyleNone,
-            .x_padding_style = PaddingStyle::kPaddingStyleNone,
-            .y_padding_style = PaddingStyle::kOne,
+            .xpad = 1,
+            .ypad = 1,
         }));
     w->Update(std::to_string(i + 1));
     coordinate_markers_.push_back(std::move(w));

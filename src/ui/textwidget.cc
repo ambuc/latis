@@ -52,24 +52,25 @@ void TextWidget::Update(std::string s) {
     y_offset += 1;
     x_offset += 1;
   }
-  if (style.y_padding_style == PaddingStyle::kOne) {
-    y_offset = 1;
-  }
-  if (style.x_padding_style == PaddingStyle::kOne) {
-    x_offset += 1;
-  }
+  y_offset += style.ypad;
+  x_offset += style.xpad;
 
   int width = dims.ncols;
   if (style.border_style != BorderStyle::kBorderStyleNone) {
     width -= 2;
   }
-  if (style.x_padding_style == PaddingStyle::kOne) {
-    width -= 1;
-  }
+  width -= style.xpad;
   if (width < int(to_print.size())) {
     to_print.resize(width - 3);
     to_print.append("...");
   }
+
+  if (style.halign == HorizontalAlignment::kCenter) {
+    x_offset += (width / 2) - (int(to_print.size()) / 2) + 1;
+  } else if (style.halign == HorizontalAlignment::kRight) {
+    x_offset += width - int(to_print.size()) - 1;
+  }
+  // TODO(ambuc): impl valign
 
   window_->Print(y_offset, x_offset, to_print);
   window_->Refresh();

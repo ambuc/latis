@@ -37,8 +37,8 @@ public:
                      Dimensions{
                          .nlines = cell_height_,
                          .ncols = cell_width_,
-                         .begin_y = (cell_height_ * y) - y + 1,
-                         .begin_x = (cell_width_ * x) - x + 1,
+                         .begin_y = (cell_height_ * y) - y + col_header_height_,
+                         .begin_x = (cell_width_ * x) - x + row_header_width_,
                      },
                      Style{
                          .border_style = BorderStyle::kThin,
@@ -63,6 +63,12 @@ private:
   const int num_cols_;  // Number of columns in the grid.
   const int cell_width_;
   const int cell_height_;
+
+  // for headers
+  const int col_header_height_{1};
+  const int col_header_width_{cell_width_};
+  const int row_header_width_{3};
+  const int row_header_height_{cell_height_};
 
   // if nullptr, none is selected.
   std::shared_ptr<Widget> active_;
