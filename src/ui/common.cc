@@ -20,6 +20,25 @@ ABSL_FLAG(bool, debug_mode, false,
 namespace latis {
 namespace ui {
 
+bool Dimensions::operator==(Dimensions other) const {
+  return nlines == other.nlines && ncols == other.ncols &&
+         begin_y == other.begin_y && begin_x == other.begin_x;
+}
+
+std::string Dimensions::ToString() const {
+  return absl::StrFormat("%dx%d @ (%d,%d)", nlines, ncols, begin_y, begin_x);
+}
+
+bool Dimensions::CollidesWith(const Dimensions &other) const {
+  if (LeftEdge() < other.LeftEdge() + other.Width() &&
+      LeftEdge() + Width() > other.LeftEdge() &&
+      TopEdge() < other.TopEdge() + other.Height() &&
+      TopEdge() + Height() > other.TopEdge()) {
+    return true;
+  }
+  return false;
+}
+
 void Debug(absl::string_view s) {
   if (absl::GetFlag(FLAGS_debug_mode)) {
     std::cerr << absl::GetCurrentTimeNanos() << "\t" << s << std::endl;

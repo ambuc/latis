@@ -40,14 +40,9 @@ struct Dimensions {
   int begin_y;
   int begin_x;
 
-  inline bool operator==(Dimensions other) const {
-    return nlines == other.nlines && ncols == other.ncols &&
-           begin_y == other.begin_y && begin_x == other.begin_x;
-  }
+  bool operator==(Dimensions other) const;
 
-  std::string ToString() const {
-    return absl::StrFormat("%dx%d @ (%d,%d)", nlines, ncols, begin_y, begin_x);
-  }
+  std::string ToString() const;
 
   int Width() const { return ncols; }
   int Height() const { return nlines; }
@@ -57,15 +52,7 @@ struct Dimensions {
   int TopEdge() const { return begin_y; }
   int BottomEdge() const { return TopEdge() + Height(); }
 
-  bool CollidesWith(const Dimensions &other) const {
-    if (LeftEdge() < other.LeftEdge() + other.Width() &&
-        LeftEdge() + Width() > other.LeftEdge() &&
-        TopEdge() < other.TopEdge() + other.Height() &&
-        TopEdge() + Height() > other.TopEdge()) {
-      return true;
-    }
-    return false;
-  }
+  bool CollidesWith(const Dimensions &other) const;
 };
 
 void Debug(absl::string_view s);
