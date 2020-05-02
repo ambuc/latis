@@ -30,7 +30,6 @@ Window::Window(Dimensions dimensions, WINDOW *window)
       absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(), window));
 
   PrintPermanentComponents();
-  Refresh();
 }
 
 std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions) {
@@ -58,11 +57,11 @@ void Window::Print(int y, int x, absl::string_view s) {
   }
 
   assert(mvwprintw(ptr_, y, x, puts.c_str()) == OK);
-  Refresh();
 }
 
 void Window::Refresh() {
   Debug("Window::Refresh()");
+  PrintPermanentComponents();
   assert(OK == wrefresh(ptr_));
 }
 
@@ -70,8 +69,6 @@ void Window::Clear() {
   Debug("Window::Clear()");
 
   assert(OK == wclear(ptr_));
-  PrintPermanentComponents();
-  Refresh();
 }
 
 Dimensions Window::GetDimensions() const { return dimensions_; }
@@ -80,7 +77,6 @@ Window::~Window() {
   Debug("Window::~Window()");
 
   assert(wclear(ptr_) == OK);
-  Refresh();
   delwin(ptr_);
 }
 
@@ -91,9 +87,11 @@ void Window::PrintPermanentComponents() {
   // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html
   switch (border_style_) {
   case (BorderStyle::kThin): {
+    // assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
+    //                   WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER,
+    //                   WACS_LRCORNER) == OK);
     assert(wborder_set(ptr_, WACS_VLINE, WACS_VLINE, WACS_HLINE, WACS_HLINE,
-                       WACS_ULCORNER, WACS_URCORNER, WACS_LLCORNER,
-                       WACS_LRCORNER) == OK);
+                       WACS_PLUS, WACS_PLUS, WACS_PLUS, WACS_PLUS) == OK);
     break;
   }
   case (BorderStyle::kThick): {

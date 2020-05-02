@@ -27,11 +27,13 @@ namespace ui {
 
 Widget::Widget(std::unique_ptr<Window> window) : window_(std::move(window)) {
   Debug(absl::StrFormat("Widget::Widget(%p)", window.get()));
+  window_->Refresh();
 }
 
 void Widget::Clear() {
   Debug("Widget::Clear()");
   window_->Clear();
+  window_->Refresh();
 }
 
 FormWidget::FormWidget(std::unique_ptr<Window> window,
@@ -78,9 +80,6 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
   assert(E_OK == post_form(form_));
 
   set_current_field(form_, fields_[0]);
-
-  //   4. Refresh the screen.
-  window_->Refresh();
 }
 
 bool FormWidget::Process(int ch) {
@@ -146,6 +145,7 @@ void Textbox::Update(std::string s) {
 
   content_ = s;
   window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
+  window_->Refresh();
 }
 
 bool Textbox::Process(int ch) {
@@ -231,7 +231,8 @@ void Textbox::CancelForm() {
 Gridbox::Gridbox(Dimensions dimensions, int num_lines, int num_cols)
     : Widget(absl::make_unique<Window>(dimensions)), height_(dimensions.nlines),
       width_(dimensions.ncols), num_lines_(num_lines), num_cols_(num_cols),
-      cell_width_(width_ / num_cols_), cell_height_(3), widgets_array_() {
+      cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),
+      widgets_array_() {
   Debug(absl::StrFormat("Gridbox::Gridbox(%s,%d,%d)", dimensions.ToString(),
                         num_lines, num_cols));
 
