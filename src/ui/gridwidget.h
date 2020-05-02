@@ -18,6 +18,8 @@
 
 #include "src/ui/widget.h"
 
+#include "src/ui/textwidget.h"
+
 namespace latis {
 namespace ui {
 
@@ -29,19 +31,19 @@ public:
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
-    widgets_array_[y][x] =
-        std::make_shared<T>(args..., window_->GetDerwin(
-                                         /*dimensions=*/
-                                         Dimensions{
-                                             .nlines = cell_height_,
-                                             .ncols = cell_width_,
-                                             .begin_y = (cell_height_ * y) - y,
-                                             .begin_x = (cell_width_ * x) - x,
-                                         },
-                                         Style{
-                                             .border_style = BorderStyle::kThin,
-                                             .corner_style = CornerStyle::kPlus,
-                                         }));
+    widgets_array_[y][x] = std::make_shared<T>(
+        args..., window_->GetDerwin(
+                     /*dimensions=*/
+                     Dimensions{
+                         .nlines = cell_height_,
+                         .ncols = cell_width_,
+                         .begin_y = (cell_height_ * y) - y + 1,
+                         .begin_x = (cell_width_ * x) - x + 1,
+                     },
+                     Style{
+                         .border_style = BorderStyle::kThin,
+                         .corner_style = CornerStyle::kPlus,
+                     }));
     return Get<T>(y, x);
   }
 
@@ -65,6 +67,7 @@ private:
   // if nullptr, none is selected.
   std::shared_ptr<Widget> active_;
 
+  std::vector<std::unique_ptr<TextWidget>> coordinate_markers_;
   std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
 };
 

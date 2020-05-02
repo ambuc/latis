@@ -60,6 +60,7 @@ public:
   // Gets the underlying Dimensions struct. Useful for querying .Contains(),
   // .Width(), .Height(), etc.
   Dimensions GetDimensions() const;
+  Style GetStyle() const;
 
   // Useful for accessing the underlying WINDOW ptr for use in registering
   // forms, etc.

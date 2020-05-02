@@ -72,7 +72,10 @@ cc_library(
     srcs = ["gridwidget.cc"],
     hdrs = ["gridwidget.h"],
     visibility = ["//src:__subpackages__"],
-    deps = [":widget_lib"],
+    deps = [
+        ":textwidget_lib",
+        ":widget_lib",
+    ],
 )
 
 cc_library(

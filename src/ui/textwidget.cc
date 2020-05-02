@@ -39,9 +39,39 @@ TextWidget::WithTemplate(std::function<std::string(std::string)> tmpl) {
 
 void TextWidget::Update(std::string s) {
   Debug(absl::StrFormat("TextWidget::Update(%s)", s));
+  const auto style = window_->GetStyle();
+  const auto dims = window_->GetDimensions();
 
   content_ = s;
-  window_->Print(1, 2, tmpl_.has_value() ? tmpl_.value()(content_) : content_);
+
+  std::string to_print = tmpl_.has_value() ? tmpl_.value()(content_) : content_;
+
+  int y_offset = 0;
+  int x_offset = 0;
+  if (style.border_style != BorderStyle::kBorderStyleNone) {
+    y_offset += 1;
+    x_offset += 1;
+  }
+  if (style.y_padding_style == PaddingStyle::kOne) {
+    y_offset = 1;
+  }
+  if (style.x_padding_style == PaddingStyle::kOne) {
+    x_offset += 1;
+  }
+
+  int width = dims.ncols;
+  if (style.border_style != BorderStyle::kBorderStyleNone) {
+    width -= 2;
+  }
+  if (style.x_padding_style == PaddingStyle::kOne) {
+    width -= 1;
+  }
+  if (width < int(to_print.size())) {
+    to_print.resize(width - 3);
+    to_print.append("...");
+  }
+
+  window_->Print(y_offset, x_offset, to_print);
   window_->Refresh();
 }
 

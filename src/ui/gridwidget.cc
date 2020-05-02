@@ -18,15 +18,66 @@
 namespace latis {
 namespace ui {
 
+namespace {
+// better than a hard dep. on :xy_lib
+const int kCapitalLetterA = (int)'A';
+
+std::string IntegerToColumnLetter(int i) {
+  std::string v;
+  if (const int r = i / 26; r > 0) {
+    v.append(IntegerToColumnLetter(r - 1));
+  }
+  v.push_back((char)(kCapitalLetterA + (i % 26)));
+  return v;
+}
+} // namespace
+
 GridWidget::GridWidget(Dimensions dimensions, int num_lines, int num_cols)
     : Widget(absl::make_unique<Window>(
           dimensions, Style{.border_style = BorderStyle::kBorderStyleNone})), //
-      height_(dimensions.nlines), width_(dimensions.ncols),                   //
+      height_(dimensions.nlines - 2), width_(dimensions.ncols - 2),           //
       num_lines_(num_lines), num_cols_(num_cols),                             //
       cell_width_(std::min(width_ / num_cols_, 15)), cell_height_(3),         //
-      widgets_array_() {
+      coordinate_markers_(), widgets_array_() {
   Debug(absl::StrFormat("GridWidget::GridWidget(%s,%d,%d)",
                         dimensions.ToString(), num_lines, num_cols));
+
+  // make coordinate_markers;
+  coordinate_markers_.resize(num_cols_ + num_lines_);
+  // Column headers
+  for (int i = 0; i < num_cols_; i++) {
+    auto w = absl::make_unique<TextWidget>(window_->GetDerwin(
+        Dimensions{.nlines = 1,
+                   .ncols = cell_width_ - 1,
+                   .begin_y = 0,
+                   .begin_x = (cell_width_ - 1) * i},
+        Style{
+            .border_style = BorderStyle::kBorderStyleNone,
+            .corner_style = CornerStyle::kCornerStyleNone,
+            .x_padding_style = PaddingStyle::kOne,
+            .y_padding_style = PaddingStyle::kPaddingStyleNone,
+        }));
+    w->Update(IntegerToColumnLetter(i));
+    coordinate_markers_.push_back(std::move(w));
+  }
+  //  Row headers
+  for (int i = 0; i < num_lines_; i++) {
+    auto w = absl::make_unique<TextWidget>(window_->GetDerwin(
+        Dimensions{
+            .nlines = cell_height_,
+            .ncols = 2,
+            .begin_y = (cell_height_ - 1) * i + 1,
+            .begin_x = 0,
+        },
+        Style{
+            .border_style = BorderStyle::kBorderStyleNone,
+            .corner_style = CornerStyle::kCornerStyleNone,
+            .x_padding_style = PaddingStyle::kPaddingStyleNone,
+            .y_padding_style = PaddingStyle::kOne,
+        }));
+    w->Update(std::to_string(i + 1));
+    coordinate_markers_.push_back(std::move(w));
+  }
 
   widgets_array_.resize(num_cols_);
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {

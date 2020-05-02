@@ -48,19 +48,7 @@ void Window::Print(int y, int x, absl::string_view s) {
 
   PrintPermanentComponents();
 
-  std::string puts = std::string(s);
-
-  // two edges and two padding
-  if (int(s.size()) > dimensions_.ncols - 4) {
-    // two edges, two padding, and three ellipses.
-    puts.resize(dimensions_.ncols - 4 - 3);
-    puts.append("...");
-  } else {
-    // Fill the rest with spaces.
-    puts.resize(dimensions_.ncols - 4, ' ');
-  }
-
-  assert(mvwprintw(ptr_, y, x, puts.c_str()) == OK);
+  assert(mvwprintw(ptr_, y, x, std::string(s).c_str()) == OK);
 }
 
 void Window::Refresh() {
@@ -76,6 +64,7 @@ void Window::Clear() {
 }
 
 Dimensions Window::GetDimensions() const { return dimensions_; }
+Style Window::GetStyle() const { return style_; }
 
 Window::~Window() {
   Debug("Window::~Window()");
