@@ -31,8 +31,7 @@ TextWidget *TextWidget::WithCb(Cb recv_cb) {
   return this;
 }
 
-TextWidget *
-TextWidget::WithTemplate(std::function<std::string(std::string)> tmpl) {
+TextWidget *TextWidget::WithTemplate(TmplCb tmpl) {
   tmpl_ = tmpl;
   return this;
 }

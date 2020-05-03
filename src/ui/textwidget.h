@@ -27,13 +27,14 @@ namespace ui {
 class TextWidget : public Widget {
 public:
   using Cb = std::function<absl::optional<std::string>(absl::string_view)>;
+  using TmplCb = std::function<std::string(std::string)>;
 
   TextWidget(std::unique_ptr<Window> window);
   TextWidget(Dimensions dimensions);
   ~TextWidget() override {}
 
   TextWidget *WithCb(Cb recv_cb);
-  TextWidget *WithTemplate(std::function<std::string(std::string)> tmpl);
+  TextWidget *WithTemplate(TmplCb tmpl);
 
   void UpdateUnderlyingContent(std::string s);
   void UpdateDisplayContent(std::string s);
@@ -49,11 +50,11 @@ private:
 
   // Optional recv_cb_.
   absl::optional<Cb> recv_cb_;
-  absl::optional<std::function<std::string(std::string)>> tmpl_;
+  absl::optional<TmplCb> tmpl_;
 
   // the underlying content, i.e. "2+2"
   std::string underlying_content_;
-  // if present, the thing to print instead when not in form mode.
+  // the thing to print instead when not in form mode.
   std::string display_content_;
 
   std::unique_ptr<FormWidget> form_{nullptr};
