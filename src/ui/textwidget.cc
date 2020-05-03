@@ -20,7 +20,7 @@ namespace ui {
 
 TextWidget::TextWidget(std::unique_ptr<Window> window)
     : Widget(std::move(window)) {
-  Debug(absl::StrFormat("TextWidget::TextWidget(%p)", window.get()));
+  // Debug(absl::StrFormat("TextWidget::TextWidget(%p)", window.get()));
 }
 
 TextWidget::TextWidget(Dimensions dimensions)
@@ -39,20 +39,20 @@ TextWidget *TextWidget::WithTemplate(TmplCb tmpl) {
 void TextWidget::UpdateUnderlyingContent(std::string s) {
   static auto id = [](std::string s) { return s; };
 
-  Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
+  // Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
   underlying_content_ = s;
   display_content_ = tmpl_.value_or(id)(underlying_content_);
   FormatAndFlushToWindow(display_content_);
 }
 
 void TextWidget::UpdateDisplayContent(std::string s) {
-  Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
+  // Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
   display_content_ = s;
   FormatAndFlushToWindow(display_content_);
 }
 
 bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
-  Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
+  // Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
 
   bool did_process = false;
   if (form_ != nullptr) {
@@ -104,7 +104,7 @@ bool TextWidget::CanHaveForm() {
 }
 
 void TextWidget::PersistForm() {
-  Debug("TextWidget::PersistForm");
+  // Debug("TextWidget::PersistForm");
 
   assert(form_ != nullptr);
   UpdateUnderlyingContent(form_->Extract());
@@ -118,14 +118,14 @@ void TextWidget::PersistForm() {
 }
 
 void TextWidget::CancelForm() {
-  Debug("TextWidget::CancelForm");
+  // Debug("TextWidget::CancelForm");
 
   assert(form_ != nullptr);
   form_ = nullptr;
 }
 
 void TextWidget::FormatAndFlushToWindow(absl::string_view s) {
-  Debug(absl::StrFormat("TextWidget::FormatAndFlushToWindow(%s)", s));
+  // Debug(absl::StrFormat("TextWidget::FormatAndFlushToWindow(%s)", s));
   const auto style = window_->GetStyle();
   const auto dims = window_->GetDimensions();
 

@@ -31,6 +31,8 @@ public:
   void Run();
 
 private:
+  void Layout();
+
   std::unique_ptr<SSheet> ssheet_;
   std::unique_ptr<ui::App> app_;
 };

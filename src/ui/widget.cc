@@ -18,12 +18,12 @@ namespace latis {
 namespace ui {
 
 Widget::Widget(std::unique_ptr<Window> window) : window_(std::move(window)) {
-  Debug(absl::StrFormat("Widget::Widget(%p)", window.get()));
+  // Debug(absl::StrFormat("Widget::Widget(%p)", window.get()));
   window_->Refresh();
 }
 
 void Widget::Clear() {
-  Debug("Widget::Clear()");
+  // Debug("Widget::Clear()");
   window_->Clear();
   window_->Refresh();
 }

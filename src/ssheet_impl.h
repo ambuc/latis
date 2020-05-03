@@ -53,10 +53,10 @@ public:
   // NB: This only returns out-of-bound updates, i.e. cells _other_ than the
   // cell just set.
   void RegisterCallback(HasChangedCb has_changed_cb) override {
-    callbacks_.push_back(has_changed_cb);
+    has_changed_cb_ = has_changed_cb;
   }
   void RegisterEditedTimeCallback(EditedTimeCb edited_time_cb) override {
-    edited_time_callbacks_.push_back(edited_time_cb);
+    edited_time_cb_ = edited_time_cb;
   }
 
   int Height() {
@@ -99,8 +99,8 @@ private:
   absl::flat_hash_map<XY, Cell> cells_ ABSL_GUARDED_BY(mu_);
   graph::Graph<XY> graph_;
 
-  std::vector<HasChangedCb> callbacks_{};
-  std::vector<EditedTimeCb> edited_time_callbacks_{};
+  absl::optional<HasChangedCb> has_changed_cb_;
+  absl::optional<EditedTimeCb> edited_time_cb_;
 
   // Metadata
   absl::optional<std::string> title_{std::nullopt};

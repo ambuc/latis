@@ -48,13 +48,24 @@ App::~App() { endwin(); }
 
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
 
+void App::RemoveAllWidgets() {
+  active_.reset();
+  widgets_.clear();
+}
+
 void App::Run() {
   bool should_run = true;
   int ch;
   do {
     ch = getch();
+    ui::Debug(absl::StrFormat("Handling %c", ch));
+
     MEVENT event;
     bool is_mouse = getmouse(&event) == OK;
+    if (ch == KEY_RESIZE && resize_cb_.has_value()) {
+      resize_cb_.value()();
+      continue;
+    }
 
     if (active_ != nullptr) {
       if (active_->Process(ch, event, is_mouse)) {
@@ -76,6 +87,8 @@ void App::Run() {
     }
   } while (should_run);
 }
+
+void App::RegisterResizeCallback(ResizeCb cb) { resize_cb_ = cb; }
 
 } // namespace ui
 } // namespace latis

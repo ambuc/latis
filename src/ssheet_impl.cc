@@ -165,17 +165,18 @@ void SSheet::Update(XY xy) {
         absl::StrFormat("Can't eval: %s", amt.status().error_message());
   }
 
-  for (auto &cb : callbacks_) {
-    cb(*cell);
+  if (has_changed_cb_.has_value()) {
+    has_changed_cb_.value()(*cell);
   }
+
   UpdateEditTime();
 }
 
 void SSheet::UpdateEditTime() {
   absl::MutexLock l(&mu_);
   edited_time_ = absl::Now();
-  for (auto &cb : edited_time_callbacks_) {
-    cb(edited_time_);
+  if (edited_time_cb_.has_value()) {
+    edited_time_cb_.value()(edited_time_);
   }
 }
 

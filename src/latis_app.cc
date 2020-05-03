@@ -30,8 +30,22 @@ LatisApp::LatisApp(LatisMsg msg)
     : ssheet_(absl::make_unique<SSheet>(msg)),
       app_(absl::make_unique<ui::App>()) {
 
+  Layout();
+
+  app_->RegisterResizeCallback([this]() -> void { Layout(); });
+}
+
+void LatisApp::Run() { app_->Run(); }
+
+void LatisApp::Layout() {
+  // Remove whatever widgets we have already registered.
+  app_->RemoveAllWidgets();
+
   int y, x;
+
   getmaxyx(stdscr, y, x);
+
+  ui::Debug(absl::StrFormat("Laying out: %dx%d", y, x));
 
   ui::LayoutEngine layout_engine(y, x);
 
@@ -115,8 +129,8 @@ LatisApp::LatisApp(LatisMsg msg)
       }
     }
   });
-}
 
-void LatisApp::Run() { app_->Run(); }
+  ui::Debug(absl::StrFormat("\tDone laying out: %dx%d", y, x));
+}
 
 } // namespace latis

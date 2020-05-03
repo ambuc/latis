@@ -31,7 +31,7 @@ public:
   // returns nullptr if there is no room.
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
-    Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
+    // Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
     if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
       return nullptr;
     }
@@ -53,7 +53,7 @@ public:
 
   template <typename T> //
   T *Get(int y, int x) {
-    Debug(absl::StrFormat("GridWidget::Get(%d, %d)", y, x));
+    // Debug(absl::StrFormat("GridWidget::Get(%d, %d)", y, x));
     return static_cast<T *>(widgets_array_[y][x].get());
   }
 

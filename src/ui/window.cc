@@ -28,14 +28,14 @@ Window::Window(Dimensions dimensions, Style style, WINDOW *window)
     : dimensions_(dimensions), style_(style), ptr_(window) {
   assert(dimensions_.ncols > 1);
 
-  Debug(
-      absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(), window));
+  // Debug( absl::StrFormat("Window::Window(%s,%p)", dimensions.ToString(),
+  // window));
 
   PrintPermanentComponents();
 }
 
 std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Style style) {
-  Debug(absl::StrFormat("GetDerwin(%s)", dimensions.ToString()));
+  // Debug(absl::StrFormat("GetDerwin(%s)", dimensions.ToString()));
 
   return absl::make_unique<Window>(dimensions, style,
                                    derwin(ptr_, dimensions.nlines,
@@ -44,20 +44,20 @@ std::unique_ptr<Window> Window::GetDerwin(Dimensions dimensions, Style style) {
 }
 
 void Window::Print(int y, int x, absl::string_view s) {
-  Debug(absl::StrFormat("Window::Print(%d,%d,%s)", y, x, s));
+  // Debug(absl::StrFormat("Window::Print(%d,%d,%s)", y, x, s));
   // PrintPermanentComponents();
   Clear();
   assert(mvwprintw(ptr_, y, x, std::string(s).c_str()) == OK);
 }
 
 void Window::Refresh() {
-  Debug("Window::Refresh()");
+  // Debug("Window::Refresh()");
   PrintPermanentComponents();
   assert(OK == wrefresh(ptr_));
 }
 
 void Window::Clear() {
-  Debug("Window::Clear()");
+  // Debug("Window::Clear()");
 
   assert(OK == wclear(ptr_));
 }
@@ -66,14 +66,14 @@ Dimensions Window::GetDimensions() const { return dimensions_; }
 Style Window::GetStyle() const { return style_; }
 
 Window::~Window() {
-  Debug("Window::~Window()");
+  // Debug("Window::~Window()");
 
   assert(wclear(ptr_) == OK);
   delwin(ptr_);
 }
 
 void Window::PrintPermanentComponents() {
-  Debug("Window::PrintPermanentComponents()");
+  // Debug("Window::PrintPermanentComponents()");
 
   // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
   // https://invisible-island.net/ncurses/man/curs_add_wch.3x.html

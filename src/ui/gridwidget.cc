@@ -38,7 +38,8 @@ GridWidget::GridWidget(Dimensions dimensions)
       height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
       cell_width_(15), cell_height_(3),                                       //
       coordinate_markers_(), widgets_array_() {
-  Debug(absl::StrFormat("GridWidget::GridWidget(%s)", dimensions.ToString()));
+  // Debug(absl::StrFormat("GridWidget::GridWidget(%s)",
+  // dimensions.ToString()));
 
   // Column headers
   for (int i = 0; i < width_ / (cell_width_ - 1); i++) {
@@ -84,7 +85,7 @@ GridWidget::GridWidget(Dimensions dimensions)
 }
 
 bool GridWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
-  Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
+  // Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
 
   // optimization for sending characters to the existing TextWidget, if there is
   // one.

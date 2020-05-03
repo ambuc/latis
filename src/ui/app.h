@@ -28,6 +28,8 @@ namespace ui {
 
 class App {
 public:
+  using ResizeCb = std::function<void(void)>;
+
   explicit App();
   ~App();
 
@@ -35,6 +37,7 @@ public:
   std::shared_ptr<T> Add(absl::string_view title, Args... args) {
     auto widget = std::make_shared<T>(args...);
     widgets_[title] = widget;
+    ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
     return widget;
   }
 
@@ -47,14 +50,21 @@ public:
   // Remove widget of any kind by a given name.
   void Remove(absl::string_view title);
 
+  void RemoveAllWidgets();
+
   // Run the app.
   void Run();
+
+  // Registers a callback to be invoked when the window resized.
+  void RegisterResizeCallback(ResizeCb cb);
 
 private:
   // if nullptr, no active widget
   std::shared_ptr<Widget> active_;
 
   absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
+
+  absl::optional<ResizeCb> resize_cb_;
 };
 
 } // namespace ui
