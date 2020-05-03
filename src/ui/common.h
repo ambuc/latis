@@ -16,6 +16,8 @@
 #ifndef SRC_UI_COMMON_H_
 #define SRC_UI_COMMON_H_
 
+#include "src/ui/color.h"
+
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -41,6 +43,8 @@ struct Style {
   int ypad = 0;
   HorizontalAlignment halign = HorizontalAlignment::kLeft;
   VerticalAlignment valign = VerticalAlignment::kMiddle;
+  int color = Color::COLOR_WHITE;
+  int border_color = Color::COLOR_WHITE;
 };
 
 struct Dimensions {

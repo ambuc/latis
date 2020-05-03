@@ -14,6 +14,8 @@
 
 #include "src/ui/common.h"
 
+#include <ncurses.h>
+
 ABSL_FLAG(bool, debug_mode, false,
           "If true, prints debug stuff at the bottom.");
 

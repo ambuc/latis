@@ -54,6 +54,7 @@ GridWidget::GridWidget(Dimensions dimensions)
                                .xpad = 1,
                                .ypad = 0,
                                .halign = HorizontalAlignment::kCenter,
+                               .color = Color::RED,
                            }));
     w->UpdateUnderlyingContent(IntegerToColumnLetter(i));
     coordinate_markers_.push_back(std::move(w));
@@ -73,6 +74,7 @@ GridWidget::GridWidget(Dimensions dimensions)
             .corner_style = CornerStyle::kCornerStyleNone,
             .xpad = 1,
             .ypad = 1,
+            .color = Color::RED,
         }));
     w->UpdateUnderlyingContent(std::to_string(i + 1));
     coordinate_markers_.push_back(std::move(w));
@@ -82,7 +84,7 @@ GridWidget::GridWidget(Dimensions dimensions)
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     v.resize(height_ / cell_height_);
   }
-}
+} // namespace ui
 
 bool GridWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
   // Debug(absl::StrFormat("GridWidget::Process(%c)", ch));

@@ -17,11 +17,22 @@ cc_library(
 )
 
 cc_library(
+    name = "color",
+    srcs = ["color.cc"],
+    hdrs = ["color.h"],
+    deps = [],
+)
+
+cc_library(
     name = "common",
     srcs = ["common.cc"],
     hdrs = ["common.h"],
+    linkopts = [
+        "-lncursesw",
+    ],
     visibility = ["//src:__subpackages__"],
     deps = [
+        ":color",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],

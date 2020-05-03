@@ -14,6 +14,9 @@
 
 #include "src/ui/app.h"
 
+#include "src/ui/color.h"
+#include "src/ui/common.h"
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -28,6 +31,8 @@ App::App() {
   setlocale(LC_ALL, "");
 
   initscr();
+
+  InitColors(); // see color.h
 
   halfdelay(1000 / 60);    // 60 FPS
   keypad(stdscr, true);    // enable mouse.

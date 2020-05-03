@@ -47,7 +47,10 @@ void Window::Print(int y, int x, absl::string_view s) {
   // Debug(absl::StrFormat("Window::Print(%d,%d,%s)", y, x, s));
   // PrintPermanentComponents();
   Clear();
+
+  assert(wattron(ptr_, COLOR_PAIR(style_.color)) == OK);
   assert(mvwprintw(ptr_, y, x, std::string(s).c_str()) == OK);
+  assert(wattroff(ptr_, COLOR_PAIR(style_.color)) == OK);
 }
 
 void Window::Refresh() {
@@ -73,6 +76,8 @@ Window::~Window() {
 }
 
 void Window::PrintPermanentComponents() {
+  assert(wattron(ptr_, COLOR_PAIR(style_.border_color)) == OK);
+
   // Debug("Window::PrintPermanentComponents()");
 
   // https://invisible-island.net/ncurses/man/curs_border_set.3x.html
@@ -149,6 +154,8 @@ void Window::PrintPermanentComponents() {
     // none
   }
   }
+
+  assert(wattroff(ptr_, COLOR_PAIR(style_.border_color)) == OK);
 }
 
 } // namespace ui
