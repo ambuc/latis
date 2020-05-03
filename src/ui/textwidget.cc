@@ -17,6 +17,14 @@
 
 namespace latis {
 namespace ui {
+namespace {
+std::string pad_right(std::string const &str, size_t s) {
+  if (str.size() < s)
+    return str + std::string(s - str.size(), ' ');
+  else
+    return str;
+}
+} // namespace
 
 TextWidget::TextWidget(std::unique_ptr<Window> window)
     : Widget(std::move(window)) {
@@ -161,6 +169,7 @@ void TextWidget::FormatAndFlushToWindow(absl::string_view s) {
   } else if (style.halign == HorizontalAlignment::kRight) {
     x_offset += width - int(to_print.size()) - 1;
   }
+
   // TODO(ambuc): impl valign
 
   window_->Print(y_offset, x_offset, to_print);

@@ -105,20 +105,16 @@ LatisApp::LatisApp(LatisMsg msg)
     }
   }
 
-  //// promulgate updates
-  // ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {
-  //  ui::Debug(">>> Calling registered callback");
-  //  int x = cell.point_location().col();
-  //  int y = cell.point_location().row();
-  //  if (cell.formula().has_cached_amount()) {
-  //    ui::Debug(">>>  Has cached amount");
-  //    auto w = gridbox_ptr->Get<ui::TextWidget>(y, x);
-  //    if (w != nullptr) {
-  //      ui::Debug(absl::StrFormat(">>>   printing amt to %d,%d", y, x));
-  //      w->Update(PrintAmount(cell.formula().cached_amount()));
-  //    }
-  //  }
-  //});
+  // promulgate updates
+  ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {
+    if (cell.formula().has_cached_amount()) {
+      auto w = gridbox_ptr->Get<ui::TextWidget>(cell.point_location().col(),
+                                                cell.point_location().row());
+      if (w != nullptr) {
+        w->UpdateDisplayContent(PrintAmount(cell.formula().cached_amount()));
+      }
+    }
+  });
 }
 
 void LatisApp::Run() { app_->Run(); }
