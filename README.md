@@ -9,17 +9,11 @@ grounds for writing a parser in the parser-combinator style. (See
 
 ### Building locally
 
-Your local `.bazelrc` should contain:
-
-```
-build --cxxopt='-std=c++2a'
-```
-
-For ncurses stuff on Debian/Ubuntu:
-
-```
-sudo apt-get install libncurses5-dev libncursesw5-dev
-```
+1.   Install [bazel](https://docs.bazel.build/versions/master/install.html).
+2.   Install `ncurses-dev` packages: `sudo apt-get install libncurses5-dev libncursesw5-dev`.
+3.   Make sure your `.bazelrc` contains `build --cxxopt='-std=c++2a'`.
+4.   From the repo root, run `bazel build //src:latis`.
+5.   Run `bazel-bin/src/latis`.
 
 ### Submitting changes
 
