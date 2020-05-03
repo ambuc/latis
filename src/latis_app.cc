@@ -77,11 +77,8 @@ LatisApp::LatisApp(LatisMsg msg)
         ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
-  layout_engine.Place(/*h=*/1, /*w=*/x); // newline
-
   auto dims_gridbox = layout_engine.FillRest().value();
 
-  // TODO(ambuc): Refuse xy placements greater than num_lines / num_cols
   auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox);
   assert(gridbox_ptr != nullptr);
 

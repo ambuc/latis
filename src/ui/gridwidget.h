@@ -32,7 +32,7 @@ public:
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
-    if (widgets_array_.size() <= y || widgets_array_[y].size() <= x) {
+    if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
       return nullptr;
     }
     widgets_array_[y][x] = std::make_shared<T>(
