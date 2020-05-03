@@ -54,7 +54,7 @@ private:
   // the underlying content, i.e. "2+2"
   std::string underlying_content_;
   // if present, the thing to print instead when not in form mode.
-  absl::optional<std::string> display_content_;
+  std::string display_content_;
 
   std::unique_ptr<FormWidget> form_{nullptr};
 };

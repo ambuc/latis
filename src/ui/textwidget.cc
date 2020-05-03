@@ -17,14 +17,6 @@
 
 namespace latis {
 namespace ui {
-namespace {
-std::string pad_right(std::string const &str, size_t s) {
-  if (str.size() < s)
-    return str + std::string(s - str.size(), ' ');
-  else
-    return str;
-}
-} // namespace
 
 TextWidget::TextWidget(std::unique_ptr<Window> window)
     : Widget(std::move(window)) {
@@ -46,16 +38,18 @@ TextWidget::WithTemplate(std::function<std::string(std::string)> tmpl) {
 }
 
 void TextWidget::UpdateUnderlyingContent(std::string s) {
+  static auto id = [](std::string s) { return s; };
+
   Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
   underlying_content_ = s;
-  FormatAndFlushToWindow(underlying_content_);
+  display_content_ = tmpl_.value_or(id)(underlying_content_);
+  FormatAndFlushToWindow(display_content_);
 }
 
 void TextWidget::UpdateDisplayContent(std::string s) {
   Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
   display_content_ = s;
-  assert(display_content_.has_value());
-  FormatAndFlushToWindow(display_content_.value());
+  FormatAndFlushToWindow(display_content_);
 }
 
 bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
@@ -114,18 +108,12 @@ void TextWidget::PersistForm() {
   Debug("TextWidget::PersistForm");
 
   assert(form_ != nullptr);
-
-  std::string s = form_->Extract();
+  UpdateUnderlyingContent(form_->Extract());
   form_ = nullptr;
 
-  UpdateUnderlyingContent(s);
-
   assert(recv_cb_.has_value());
-  if (const auto maybe_s = recv_cb_.value()(s); maybe_s.has_value()) {
-    UpdateDisplayContent(maybe_s.value());
-  } else {
-    UpdateDisplayContent("n/a");
-  }
+  UpdateDisplayContent(
+      recv_cb_.value()(underlying_content_).value_or(display_content_));
 
   window_->Refresh();
 }
@@ -135,7 +123,6 @@ void TextWidget::CancelForm() {
 
   assert(form_ != nullptr);
   form_ = nullptr;
-  // UpdateUnderlyingContent(underlying_content_);
 }
 
 void TextWidget::FormatAndFlushToWindow(absl::string_view s) {
