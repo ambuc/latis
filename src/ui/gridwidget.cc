@@ -54,7 +54,7 @@ GridWidget::GridWidget(Dimensions dimensions)
                                .ypad = 0,
                                .halign = HorizontalAlignment::kCenter,
                            }));
-    w->Update(IntegerToColumnLetter(i));
+    w->UpdateUnderlyingContent(IntegerToColumnLetter(i));
     coordinate_markers_.push_back(std::move(w));
   }
 
@@ -73,7 +73,7 @@ GridWidget::GridWidget(Dimensions dimensions)
             .xpad = 1,
             .ypad = 1,
         }));
-    w->Update(std::to_string(i + 1));
+    w->UpdateUnderlyingContent(std::to_string(i + 1));
     coordinate_markers_.push_back(std::move(w));
   }
 

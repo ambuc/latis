@@ -35,7 +35,8 @@ public:
   TextWidget *WithCb(Cb recv_cb);
   TextWidget *WithTemplate(std::function<std::string(std::string)> tmpl);
 
-  void Update(std::string s);
+  void UpdateUnderlyingContent(std::string s);
+  void UpdateDisplayContent(std::string s);
 
   // Returns true if this widget consumed the event.
   bool Process(int ch, const MEVENT &event, bool is_mouse) override;
@@ -44,11 +45,17 @@ private:
   bool CanHaveForm();
   void PersistForm();
   void CancelForm();
+  void FormatAndFlushToWindow(absl::string_view s);
 
   // Optional recv_cb_.
   absl::optional<Cb> recv_cb_;
   absl::optional<std::function<std::string(std::string)>> tmpl_;
-  std::string content_;
+
+  // the underlying content, i.e. "2+2"
+  std::string underlying_content_;
+  // if present, the thing to print instead when not in form mode.
+  absl::optional<std::string> display_content_;
+
   std::unique_ptr<FormWidget> form_{nullptr};
 };
 

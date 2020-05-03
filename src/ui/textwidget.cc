@@ -37,43 +37,17 @@ TextWidget::WithTemplate(std::function<std::string(std::string)> tmpl) {
   return this;
 }
 
-void TextWidget::Update(std::string s) {
-  Debug(absl::StrFormat("TextWidget::Update(%s)", s));
-  const auto style = window_->GetStyle();
-  const auto dims = window_->GetDimensions();
+void TextWidget::UpdateUnderlyingContent(std::string s) {
+  Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
+  underlying_content_ = s;
+  FormatAndFlushToWindow(underlying_content_);
+}
 
-  content_ = s;
-
-  std::string to_print = tmpl_.has_value() ? tmpl_.value()(content_) : content_;
-
-  int y_offset = 0;
-  int x_offset = 0;
-  if (style.border_style != BorderStyle::kBorderStyleNone) {
-    y_offset += 1;
-    x_offset += 1;
-  }
-  y_offset += style.ypad;
-  x_offset += style.xpad;
-
-  int width = dims.ncols;
-  if (style.border_style != BorderStyle::kBorderStyleNone) {
-    width -= 2;
-  }
-  width -= style.xpad;
-  if (width < int(to_print.size())) {
-    to_print.resize(width - 3);
-    to_print.append("...");
-  }
-
-  if (style.halign == HorizontalAlignment::kCenter) {
-    x_offset += (width / 2) - (int(to_print.size()) / 2) + 1;
-  } else if (style.halign == HorizontalAlignment::kRight) {
-    x_offset += width - int(to_print.size()) - 1;
-  }
-  // TODO(ambuc): impl valign
-
-  window_->Print(y_offset, x_offset, to_print);
-  window_->Refresh();
+void TextWidget::UpdateDisplayContent(std::string s) {
+  Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
+  display_content_ = s;
+  assert(display_content_.has_value());
+  FormatAndFlushToWindow(display_content_.value());
 }
 
 bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
@@ -115,7 +89,7 @@ bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
               .begin_y = 0,
               .begin_x = 0,
           }),
-          content_);
+          underlying_content_);
       window_->Refresh();
       return true;
     }
@@ -136,13 +110,16 @@ void TextWidget::PersistForm() {
   std::string s = form_->Extract();
   form_ = nullptr;
 
+  UpdateUnderlyingContent(s);
+
   assert(recv_cb_.has_value());
   if (const auto maybe_s = recv_cb_.value()(s); maybe_s.has_value()) {
-    Update(maybe_s.value());
+    UpdateDisplayContent(maybe_s.value());
   } else {
-    Update(content_);
-    window_->Refresh();
+    UpdateDisplayContent("n/a");
   }
+
+  window_->Refresh();
 }
 
 void TextWidget::CancelForm() {
@@ -150,7 +127,44 @@ void TextWidget::CancelForm() {
 
   assert(form_ != nullptr);
   form_ = nullptr;
-  Update(content_);
+  // UpdateUnderlyingContent(underlying_content_);
+}
+
+void TextWidget::FormatAndFlushToWindow(absl::string_view s) {
+  Debug(absl::StrFormat("TextWidget::FormatAndFlushToWindow(%s)", s));
+  const auto style = window_->GetStyle();
+  const auto dims = window_->GetDimensions();
+
+  std::string to_print = std::string(s);
+
+  int y_offset = 0;
+  int x_offset = 0;
+  if (style.border_style != BorderStyle::kBorderStyleNone) {
+    y_offset += 1;
+    x_offset += 1;
+  }
+  y_offset += style.ypad;
+  x_offset += style.xpad;
+
+  int width = dims.ncols;
+  if (style.border_style != BorderStyle::kBorderStyleNone) {
+    width -= 2;
+  }
+  width -= style.xpad;
+  if (width < int(to_print.size())) {
+    to_print.resize(width - 3);
+    to_print.append("...");
+  }
+
+  if (style.halign == HorizontalAlignment::kCenter) {
+    x_offset += (width / 2) - (int(to_print.size()) / 2) + 1;
+  } else if (style.halign == HorizontalAlignment::kRight) {
+    x_offset += width - int(to_print.size()) - 1;
+  }
+  // TODO(ambuc): impl valign
+
+  window_->Print(y_offset, x_offset, to_print);
+  window_->Refresh();
 }
 
 } // namespace ui

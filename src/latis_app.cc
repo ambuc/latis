@@ -53,7 +53,7 @@ LatisApp::LatisApp(LatisMsg msg)
         ssheet_->SetTitle(s);
         return absl::nullopt;
       })
-      ->Update(ssheet_->Title().value_or("n/a"));
+      ->UpdateUnderlyingContent(ssheet_->Title().value_or("n/a"));
 
   app_->Add<ui::TextWidget>("author", dims_author)
       ->WithTemplate(
@@ -62,19 +62,20 @@ LatisApp::LatisApp(LatisMsg msg)
         ssheet_->SetAuthor(s);
         return absl::nullopt;
       })
-      ->Update(ssheet_->Author().value_or("no author"));
+      ->UpdateUnderlyingContent(ssheet_->Author().value_or("no author"));
 
   app_->Add<ui::TextWidget>("date_created", dims_created)
-      ->Update(absl::StrFormat("Date Created: %s",
-                               absl::FormatTime(ssheet_->CreatedTime())));
+      ->UpdateUnderlyingContent(absl::StrFormat(
+          "Date Created: %s", absl::FormatTime(ssheet_->CreatedTime())));
 
   app_->Add<ui::TextWidget>("date_edited", dims_edited)
-      ->Update(absl::StrFormat("Date Edited: %s",
-                               absl::FormatTime(ssheet_->EditedTime())));
+      ->UpdateUnderlyingContent(absl::StrFormat(
+          "Date Edited: %s", absl::FormatTime(ssheet_->EditedTime())));
 
   ssheet_->RegisterEditedTimeCallback([this](absl::Time t) {
     app_->Get<ui::TextWidget>("date_edited")
-        ->Update(absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
+        ->UpdateUnderlyingContent(
+            absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
   auto dims_gridbox = layout_engine.FillRest().value();
@@ -85,22 +86,39 @@ LatisApp::LatisApp(LatisMsg msg)
   for (int y = 0; y <= ssheet_->Height(); ++y) {
     for (int x = 0; x <= ssheet_->Width(); ++x) {
       auto xy = XY(x, y);
-      if (const auto amt = ssheet_->Get(xy); amt.ok()) {
-        auto w = gridbox_ptr->Add<ui::TextWidget>(y, x);
-        if (w != nullptr) {
-          w->WithCb([this,
-                     xy](absl::string_view s) -> absl::optional<std::string> {
-            if (const auto maybe_amt = ssheet_->Set(xy, s); maybe_amt.ok()) {
-              return PrintAmount(maybe_amt.ValueOrDie());
-            } else {
-              return absl::nullopt;
-            }
-          });
-          w->Update(PrintAmount(amt.ValueOrDie()));
-        }
+      const auto amt = ssheet_->Get(xy);
+      if (!amt.ok()) {
+        continue;
       }
+      auto w = gridbox_ptr->Add<ui::TextWidget>(y, x);
+      if (w == nullptr) {
+        continue;
+      }
+      w->WithCb([this, xy](absl::string_view s) -> absl::optional<std::string> {
+        const auto maybe_amt = ssheet_->Set(xy, s);
+        if (!maybe_amt.ok()) {
+          return absl::nullopt;
+        }
+        return PrintAmount(maybe_amt.ValueOrDie());
+      });
+      w->UpdateUnderlyingContent(PrintAmount(amt.ValueOrDie()));
     }
   }
+
+  //// promulgate updates
+  // ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {
+  //  ui::Debug(">>> Calling registered callback");
+  //  int x = cell.point_location().col();
+  //  int y = cell.point_location().row();
+  //  if (cell.formula().has_cached_amount()) {
+  //    ui::Debug(">>>  Has cached amount");
+  //    auto w = gridbox_ptr->Get<ui::TextWidget>(y, x);
+  //    if (w != nullptr) {
+  //      ui::Debug(absl::StrFormat(">>>   printing amt to %d,%d", y, x));
+  //      w->Update(PrintAmount(cell.formula().cached_amount()));
+  //    }
+  //  }
+  //});
 }
 
 void LatisApp::Run() { app_->Run(); }
