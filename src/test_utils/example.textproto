@@ -1,6 +1,6 @@
 metadata {
-  title: "Example"
-  author: "ambuc"
+  title: "foo"
+  author: "bar"
 }
 cells { 
   point_location: { row: 0 col: 0 } 

@@ -51,9 +51,9 @@ GridWidget::GridWidget(Dimensions dimensions)
                            Style{
                                .border_style = BorderStyle::kBorderStyleNone,
                                .corner_style = CornerStyle::kCornerStyleNone,
-                               .xpad = 1,
+                               .xpad = 4,
                                .ypad = 0,
-                               .halign = HorizontalAlignment::kCenter,
+                               .halign = HorizontalAlignment::kLeft,
                                .color = Color::RED,
                            }));
     w->UpdateUnderlyingContent(IntegerToColumnLetter(i));

@@ -92,6 +92,7 @@ cc_binary(
     name = "latis",
     srcs = ["main.cc"],
     linkopts = ["-lncursesw"],
+    visibility = ["//src/integration_tests:__subpackages__"],
     deps = [
         ":latis_app",
         ":ssheet_impl",
