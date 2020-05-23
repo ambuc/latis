@@ -38,7 +38,8 @@ GridWidget::GridWidget(Dimensions dimensions)
       height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
       cell_width_(15), cell_height_(3),                                       //
       coordinate_markers_(), widgets_array_() {
-  Debug(absl::StrFormat("GridWidget::GridWidget(%s)", dimensions.ToString()));
+  // Debug(absl::StrFormat("GridWidget::GridWidget(%s)",
+  // dimensions.ToString()));
 
   // Column headers
   for (int i = 0; i < width_ / (cell_width_ - 1); i++) {
@@ -85,21 +86,32 @@ GridWidget::GridWidget(Dimensions dimensions)
   }
 }
 
-bool GridWidget::Process(int ch) {
-  Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
-
-  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
-    for (std::unique_ptr<Widget> &cell : v) {
-      if (cell != nullptr) {
-        if (cell->Process(ch)) {
-          focused_ = cell.get();
-          return true;
-        }
-      }
+int GridWidget::Process(int ch) {
+  assert(active_ != nullptr);
+  if (int retch = active_->Process(ch); retch == 0) {
+    return 0;
+  } else {
+    assert(retch == KEY_LEFT || retch == KEY_RIGHT || retch == KEY_UP ||
+           retch == KEY_DOWN || retch == int('q'));
+    if (retch == int('q')) {
+      return 0;
     }
   }
 
-  return false;
+  // Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
+
+  // for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
+  //   for (std::unique_ptr<Widget> &cell : v) {
+  //     if (cell != nullptr) {
+  //       if (cell->Process(ch)) {
+  //         active_ = cell.get();
+  //         return true;
+  //       }
+  //     }
+  //   }
+  // }
+
+  return 0;
 }
 
 } // namespace ui

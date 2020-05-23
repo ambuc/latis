@@ -32,7 +32,7 @@ public:
   ~FormWidget() override;
 
   // Returns true if this widget consumed the event.
-  bool Process(int ch) override;
+  int Process(int ch) override;
 
   std::string Extract();
 

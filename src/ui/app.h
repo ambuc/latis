@@ -35,7 +35,7 @@ public:
 
   template <typename T, typename... Args> //
   T *Add(absl::string_view title, Args... args) {
-    widgets_[title] = std::make_unique<T>(args...);
+    widgets_[std::string(title)] = std::make_unique<T>(args...);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
     return Get<T>(title);
   }
@@ -43,7 +43,7 @@ public:
   // Get (or create) widget of a particular name and type.
   template <typename T> //
   T *Get(absl::string_view title) {
-    return dynamic_cast<T *>(widgets_[title].get());
+    return dynamic_cast<T *>(widgets_[std::string(title)].get());
   }
 
   // Remove widget of any kind by a given name.

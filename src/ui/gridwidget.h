@@ -31,7 +31,7 @@ public:
   // returns nullptr if there is no room.
   template <typename T, typename... Args> //
   T *Add(int y, int x, Args... args) {
-    Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
+    // Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
     if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
       return nullptr;
     }
@@ -48,17 +48,24 @@ public:
                          .border_style = BorderStyle::kThin,
                          .corner_style = CornerStyle::kPlus,
                      }));
+
+    if (active_ != nullptr) {
+      active_->UnFocus();
+    }
+    active_ = widgets_array_[y][x].get();
+    active_->Focus();
+
     return Get<T>(y, x);
   }
 
   template <typename T> //
   T *Get(int y, int x) {
-    Debug(absl::StrFormat("GridWidget::Get(%d, %d)", y, x));
+    // Debug(absl::StrFormat("GridWidget::Get(%d, %d)", y, x));
     return static_cast<T *>(widgets_array_[y][x].get());
   }
 
-  // Returns true if this widget consumed the event.
-  bool Process(int ch) override;
+  // Returns 0 if this widget consumed the event.
+  int Process(int ch) override;
 
 private:
   const int height_; // Height of the grid.
@@ -71,7 +78,7 @@ private:
   const int row_header_width_{3};
 
   // if nullptr, none is selected.
-  Widget *focused_;
+  Widget *active_;
 
   std::vector<std::unique_ptr<TextWidget>> coordinate_markers_;
   std::vector<std::vector<std::unique_ptr<Widget>>> widgets_array_;
