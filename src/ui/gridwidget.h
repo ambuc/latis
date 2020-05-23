@@ -35,7 +35,7 @@ public:
     if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
       return nullptr;
     }
-    widgets_array_[y][x] = std::make_shared<T>(
+    widgets_array_[y][x] = std::make_unique<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
                      Dimensions{
@@ -71,10 +71,10 @@ private:
   const int row_header_width_{3};
 
   // if nullptr, none is selected.
-  std::shared_ptr<Widget> focused_;
+  Widget *focused_;
 
   std::vector<std::unique_ptr<TextWidget>> coordinate_markers_;
-  std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
+  std::vector<std::vector<std::unique_ptr<Widget>>> widgets_array_;
 };
 
 } // namespace ui

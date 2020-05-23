@@ -34,17 +34,16 @@ public:
   ~App();
 
   template <typename T, typename... Args> //
-  std::shared_ptr<T> Add(absl::string_view title, Args... args) {
-    auto widget = std::make_shared<T>(args...);
-    widgets_[title] = widget;
+  T *Add(absl::string_view title, Args... args) {
+    widgets_[title] = std::make_unique<T>(args...);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
-    return widget;
+    return Get<T>(title);
   }
 
   // Get (or create) widget of a particular name and type.
   template <typename T> //
-  std::shared_ptr<T> Get(absl::string_view title) {
-    return std::dynamic_pointer_cast<T>(widgets_[title]);
+  T *Get(absl::string_view title) {
+    return dynamic_cast<T *>(widgets_[title].get());
   }
 
   // Remove widget of any kind by a given name.
@@ -55,16 +54,16 @@ public:
   // Run the app.
   void Run();
 
-  void SetActive(std::shared_ptr<Widget> w) { active_ = w; }
+  void SetActive(Widget *w) { active_ = w; }
 
   // Registers a callback to be invoked when the window resized.
   void RegisterResizeCallback(ResizeCb cb);
 
 private:
-  // if nullptr, no active widget
-  std::shared_ptr<Widget> active_;
+  // Will never be nullptr.
+  Widget *active_;
 
-  absl::flat_hash_map<std::string, std::shared_ptr<Widget>> widgets_;
+  absl::flat_hash_map<std::string, std::unique_ptr<Widget>> widgets_;
 
   absl::optional<ResizeCb> resize_cb_;
 };

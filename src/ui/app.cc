@@ -52,7 +52,7 @@ App::~App() { endwin(); }
 void App::Remove(absl::string_view title) { widgets_.erase(title); }
 
 void App::RemoveAllWidgets() {
-  active_.reset();
+  active_ = nullptr;
   widgets_.clear();
 }
 
@@ -74,7 +74,7 @@ void App::Run() {
       if (active_->Process(ch)) {
         break;
       } else {
-        active_.reset();
+        active_ = nullptr;
       }
     }
 
