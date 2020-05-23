@@ -66,7 +66,7 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
   set_current_field(form_, fields_[0]);
 }
 
-int FormWidget::Process(int ch) {
+bool FormWidget::Process(int ch) {
   Debug(absl::StrFormat("FormWidget::Process(%c)", ch));
 
   switch (ch) {
@@ -89,7 +89,7 @@ int FormWidget::Process(int ch) {
     break;
   }
   window_->Refresh();
-  return 0;
+  return true;
 }
 
 FormWidget::~FormWidget() {

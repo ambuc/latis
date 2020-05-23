@@ -60,12 +60,10 @@ public:
   void Focus() {
     style_.border_style = BorderStyle::kDouble;
     PrintPermanentComponents();
-    Refresh();
   }
   void UnFocus() {
     style_.border_style = BorderStyle::kThin;
     PrintPermanentComponents();
-    Refresh();
   }
 
   // Gets the underlying Dimensions struct. Useful for querying .Contains(),

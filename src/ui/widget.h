@@ -29,7 +29,7 @@ public:
   void Clear();
 
   // Returns true if this widget consumed the event.
-  virtual int Process(int ch) = 0;
+  virtual bool Process(int ch) = 0;
 
   void Focus() { window_->Focus(); }
   void UnFocus() { window_->UnFocus(); }

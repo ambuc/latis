@@ -59,12 +59,6 @@ void App::RemoveAllWidgets() {
 void App::Run() {
   bool should_run = true;
   int ch;
-
-  if (active_ == nullptr) {
-    active_ = widgets_.begin()->second.get(); // just some key at random
-    active_->Focus();
-  }
-
   do {
     assert(active_ != nullptr);
 
@@ -76,22 +70,23 @@ void App::Run() {
       continue;
     }
 
-    if (int retch = active_->Process(ch); retch == 0) {
-      break;
-    } else {
-      assert(retch == KEY_LEFT || retch == KEY_RIGHT || retch == KEY_UP ||
-             retch == KEY_DOWN || retch == int('q'));
-
-      for (auto &[_, w] : widgets_) {
-        if (w->Process(ch)) {
-          break;
-        }
+    if (active_ != nullptr) {
+      if (active_->Process(ch)) {
+        break;
+      } else {
+        active_ = nullptr;
       }
+    }
 
-      // Fallback -- if no one else processed it, I will.
-      if (retch == int('q')) {
-        should_run = false;
+    for (auto &[_, w] : widgets_) {
+      if (w->Process(ch)) {
+        break;
       }
+    }
+
+    // Fallback -- if no one else processed it, I will.
+    if (ch == int('q')) {
+      should_run = false;
     }
   } while (should_run);
 }

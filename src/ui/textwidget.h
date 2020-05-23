@@ -40,7 +40,7 @@ public:
   void UpdateDisplayContent(std::string s);
 
   // Returns true if this widget consumed the event.
-  int Process(int ch) override;
+  bool Process(int ch) override;
 
 private:
   bool CanHaveForm();
