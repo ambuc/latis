@@ -35,9 +35,7 @@ App::App() {
   InitColors(); // see color.h
 
   halfdelay(1000 / 60);    // 60 FPS
-  keypad(stdscr, true);    // enable mouse.
   notimeout(stdscr, true); // no timeout, esc persists immediately
-  mousemask(ALL_MOUSE_EVENTS, NULL);
 
   // Disable cursor
   assert(curs_set(0) != ERR);
@@ -62,18 +60,18 @@ void App::Run() {
   bool should_run = true;
   int ch;
   do {
+    assert(active_ != nullptr);
+
     ch = getch();
     ui::Debug(absl::StrFormat("Handling %c", ch));
 
-    MEVENT event;
-    bool is_mouse = getmouse(&event) == OK;
     if (ch == KEY_RESIZE && resize_cb_.has_value()) {
       resize_cb_.value()();
       continue;
     }
 
     if (active_ != nullptr) {
-      if (active_->Process(ch, event, is_mouse)) {
+      if (active_->Process(ch)) {
         break;
       } else {
         active_.reset();
@@ -81,7 +79,7 @@ void App::Run() {
     }
 
     for (auto &[_, w] : widgets_) {
-      if (w->Process(ch, event, is_mouse)) {
+      if (w->Process(ch)) {
         break;
       }
     }

@@ -55,6 +55,8 @@ public:
   // Run the app.
   void Run();
 
+  void SetActive(std::shared_ptr<Widget> w) { active_ = w; }
+
   // Registers a callback to be invoked when the window resized.
   void RegisterResizeCallback(ResizeCb cb);
 

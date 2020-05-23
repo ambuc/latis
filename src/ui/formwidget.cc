@@ -66,7 +66,7 @@ FormWidget::FormWidget(std::unique_ptr<Window> window,
   set_current_field(form_, fields_[0]);
 }
 
-bool FormWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
+bool FormWidget::Process(int ch) {
   Debug(absl::StrFormat("FormWidget::Process(%c)", ch));
 
   switch (ch) {

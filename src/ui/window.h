@@ -57,6 +57,15 @@ public:
   // Clears the contents of the window.
   void Clear();
 
+  void Focus() {
+    style_.border_style = BorderStyle::kDouble;
+    PrintPermanentComponents();
+  }
+  void UnFocus() {
+    style_.border_style = BorderStyle::kThin;
+    PrintPermanentComponents();
+  }
+
   // Gets the underlying Dimensions struct. Useful for querying .Contains(),
   // .Width(), .Height(), etc.
   Dimensions GetDimensions() const;
@@ -69,7 +78,7 @@ public:
 private:
   void PrintPermanentComponents();
   const Dimensions dimensions_;
-  const Style style_;
+  Style style_;
   WINDOW *ptr_;
 };
 

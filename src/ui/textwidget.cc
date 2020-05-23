@@ -20,7 +20,7 @@ namespace ui {
 
 TextWidget::TextWidget(std::unique_ptr<Window> window)
     : Widget(std::move(window)) {
-  // Debug(absl::StrFormat("TextWidget::TextWidget(%p)", window.get()));
+  Debug(absl::StrFormat("TextWidget::TextWidget(%p)", window.get()));
 }
 
 TextWidget::TextWidget(Dimensions dimensions)
@@ -39,24 +39,24 @@ TextWidget *TextWidget::WithTemplate(TmplCb tmpl) {
 void TextWidget::UpdateUnderlyingContent(std::string s) {
   static auto id = [](std::string s) { return s; };
 
-  // Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
+  Debug(absl::StrFormat("TextWidget::UpdateUnderlyingContent(%s)", s));
   underlying_content_ = s;
   display_content_ = tmpl_.value_or(id)(underlying_content_);
   FormatAndFlushToWindow(display_content_);
 }
 
 void TextWidget::UpdateDisplayContent(std::string s) {
-  // Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
+  Debug(absl::StrFormat("TextWidget::UpdateDisplayContent(%s)", s));
   display_content_ = s;
   FormatAndFlushToWindow(display_content_);
 }
 
-bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
-  // Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
+bool TextWidget::Process(int ch) {
+  Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
 
   bool did_process = false;
   if (form_ != nullptr) {
-    did_process |= form_->Process(ch, event, is_mouse);
+    did_process |= form_->Process(ch);
   }
 
   if (form_ != nullptr) {
@@ -78,22 +78,18 @@ bool TextWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
     }
   }
 
-  if (CanHaveForm() && is_mouse && ch == KEY_MOUSE &&
-      wenclose(**window_, event.y, event.x)) {
-    if (event.bstate &
-        (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED)) {
-      auto dims = window_->GetDimensions();
-      form_ = absl::make_unique<FormWidget>( //
-          window_->GetDerwin(Dimensions{
-              .nlines = dims.nlines,
-              .ncols = dims.ncols,
-              .begin_y = 0,
-              .begin_x = 0,
-          }),
-          underlying_content_);
-      window_->Refresh();
-      return true;
-    }
+  if (CanHaveForm() && ch == KEY_ENTER) {
+    auto dims = window_->GetDimensions();
+    form_ = absl::make_unique<FormWidget>( //
+        window_->GetDerwin(Dimensions{
+            .nlines = dims.nlines,
+            .ncols = dims.ncols,
+            .begin_y = 0,
+            .begin_x = 0,
+        }),
+        underlying_content_);
+    window_->Refresh();
+    return true;
   }
 
   return did_process;
@@ -104,7 +100,7 @@ bool TextWidget::CanHaveForm() {
 }
 
 void TextWidget::PersistForm() {
-  // Debug("TextWidget::PersistForm");
+  Debug("TextWidget::PersistForm");
 
   assert(form_ != nullptr);
   UpdateUnderlyingContent(form_->Extract());
@@ -118,14 +114,14 @@ void TextWidget::PersistForm() {
 }
 
 void TextWidget::CancelForm() {
-  // Debug("TextWidget::CancelForm");
+  Debug("TextWidget::CancelForm");
 
   assert(form_ != nullptr);
   form_ = nullptr;
 }
 
 void TextWidget::FormatAndFlushToWindow(absl::string_view s) {
-  // Debug(absl::StrFormat("TextWidget::FormatAndFlushToWindow(%s)", s));
+  Debug(absl::StrFormat("TextWidget::FormatAndFlushToWindow(%s)", s));
   const auto style = window_->GetStyle();
   const auto dims = window_->GetDimensions();
 

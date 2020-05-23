@@ -29,7 +29,10 @@ public:
   void Clear();
 
   // Returns true if this widget consumed the event.
-  virtual bool Process(int ch, const MEVENT &event, bool is_mouse) = 0;
+  virtual bool Process(int ch) = 0;
+
+  void Focus() { window_->Focus(); }
+  void UnFocus() { window_->UnFocus(); }
 
 protected:
   std::unique_ptr<Window> window_;

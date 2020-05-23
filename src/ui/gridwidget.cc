@@ -38,8 +38,7 @@ GridWidget::GridWidget(Dimensions dimensions)
       height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
       cell_width_(15), cell_height_(3),                                       //
       coordinate_markers_(), widgets_array_() {
-  // Debug(absl::StrFormat("GridWidget::GridWidget(%s)",
-  // dimensions.ToString()));
+  Debug(absl::StrFormat("GridWidget::GridWidget(%s)", dimensions.ToString()));
 
   // Column headers
   for (int i = 0; i < width_ / (cell_width_ - 1); i++) {
@@ -84,26 +83,16 @@ GridWidget::GridWidget(Dimensions dimensions)
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     v.resize(height_ / cell_height_);
   }
-} // namespace ui
+}
 
-bool GridWidget::Process(int ch, const MEVENT &event, bool is_mouse) {
-  // Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
-
-  // optimization for sending characters to the existing TextWidget, if there is
-  // one.
-  if (active_ != nullptr) {
-    if (active_->Process(ch, event, is_mouse)) {
-      return true;
-    } else {
-      active_.reset();
-    }
-  }
+bool GridWidget::Process(int ch) {
+  Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
 
   for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
-        if (cell->Process(ch, event, is_mouse)) {
-          active_ = cell;
+        if (cell->Process(ch)) {
+          focused_ = cell;
           return true;
         }
       }
