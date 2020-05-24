@@ -63,6 +63,8 @@ public:
   Dimensions GetDimensions() const;
   Style GetStyle() const;
 
+  Style *GetMutableStyle();
+
   // Useful for accessing the underlying WINDOW ptr for use in registering
   // forms, etc.
   WINDOW *operator*() const { return ptr_; }

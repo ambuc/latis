@@ -44,11 +44,16 @@ public:
 
   void Focus() override {
     Debug("FOCUSING on me, a textwidget.");
-    //
+    window_->GetMutableStyle()->border_style = BorderStyle::kDouble;
+    window_->GetMutableStyle()->border_color = COLOR_RED;
+    window_->Refresh();
   }
+
   void UnFocus() override {
     Debug("UNFOCUSING on me, a textwidget.");
-    //
+    window_->GetMutableStyle()->border_style = BorderStyle::kThin;
+    window_->GetMutableStyle()->border_color = COLOR_WHITE;
+    window_->Refresh();
   }
 
 private:

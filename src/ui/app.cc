@@ -50,7 +50,7 @@ App::App() {
 App::~App() { endwin(); }
 
 void App::RemoveAllWidgets() {
-  active_ = ActiveWidget();
+  active_ = std::make_unique<ActiveWidget>();
   widgets_.clear();
 }
 
@@ -67,13 +67,7 @@ void App::Run() {
       continue;
     }
 
-    active_->Process(ch);
-
-    // for (auto &w : widgets_) {
-    //  if (w->Process(ch)) {
-    //    break;
-    //  }
-    //}
+    (*active_)->Process(ch);
 
     // Fallback -- if no one else processed it, I will.
     if (ch == int('q')) {

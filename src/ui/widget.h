@@ -48,6 +48,7 @@ public:
     }
   }
   std::shared_ptr<Widget> operator->() { return w_; }
+  std::shared_ptr<Widget> operator*() { return w_; }
 
 private:
   std::shared_ptr<Widget> w_;

@@ -38,7 +38,7 @@ public:
     auto p = std::make_shared<T>(args...);
     widgets_.insert(p);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
-    active_ = ActiveWidget(p);
+    active_ = std::make_unique<ActiveWidget>(p);
     return p;
   }
 
@@ -52,7 +52,7 @@ public:
 
 private:
   // Will never be nullptr.
-  ActiveWidget active_;
+  std::unique_ptr<ActiveWidget> active_;
 
   absl::flat_hash_set<std::shared_ptr<Widget>> widgets_;
 

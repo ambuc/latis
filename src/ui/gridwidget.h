@@ -50,7 +50,8 @@ public:
                      }));
     widgets_array_[y][x] = p;
     // if created recently, set active.
-    active_ = ActiveWidget(p);
+    Debug(absl::StrFormat("Setting %d, %d to active.", y, x));
+    active_ = std::make_unique<ActiveWidget>(p);
     return p;
   }
 
@@ -76,8 +77,7 @@ private:
   const int col_header_height_{1};
   const int row_header_width_{3};
 
-  // if nullptr, none is selected.
-  ActiveWidget active_;
+  std::unique_ptr<ActiveWidget> active_;
 
   std::vector<std::shared_ptr<TextWidget>> coordinate_markers_;
   std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;

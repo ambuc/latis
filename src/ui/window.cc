@@ -54,7 +54,7 @@ void Window::Print(int y, int x, absl::string_view s) {
 }
 
 void Window::Refresh() {
-  // Debug("Window::Refresh()");
+  Debug("Window::Refresh()");
   PrintPermanentComponents();
   assert(OK == wrefresh(ptr_));
 }
@@ -67,6 +67,7 @@ void Window::Clear() {
 
 Dimensions Window::GetDimensions() const { return dimensions_; }
 Style Window::GetStyle() const { return style_; }
+Style *Window::GetMutableStyle() { return &style_; }
 
 Window::~Window() {
   // Debug("Window::~Window()");

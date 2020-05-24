@@ -86,20 +86,24 @@ GridWidget::GridWidget(Dimensions dimensions)
 }
 
 bool GridWidget::Process(int ch) {
+  assert(active_ != nullptr);
+
   Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
 
-  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
-    for (std::shared_ptr<Widget> &cell : v) {
-      if (cell != nullptr) {
-        if (cell->Process(ch)) {
-          // active_ = cell.get();
-          return true;
-        }
-      }
-    }
-  }
+  return (*active_)->Process(ch);
 
-  return false;
+  // for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
+  //  for (std::shared_ptr<Widget> &cell : v) {
+  //    if (cell != nullptr) {
+  //      if (cell->Process(ch)) {
+  //        // active_ = cell.get();
+  //        return true;
+  //      }
+  //    }
+  //  }
+  //}
+
+  // return false;
 }
 
 } // namespace ui
