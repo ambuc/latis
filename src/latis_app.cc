@@ -120,6 +120,9 @@ void LatisApp::Layout() {
     }
   }
 
+  // set active
+  gridbox_ptr->SetActive(gridbox_ptr->Get<ui::TextWidget>(0, 0));
+
   // promulgate updates
   ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {
     if (cell.formula().has_cached_amount()) {

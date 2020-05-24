@@ -92,7 +92,7 @@ bool GridWidget::Process(int ch) {
     for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
         if (cell->Process(ch)) {
-          focused_ = cell.get();
+          // active_ = cell.get();
           return true;
         }
       }
