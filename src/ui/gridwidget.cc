@@ -37,7 +37,7 @@ GridWidget::GridWidget(Dimensions dimensions)
           dimensions, Style{.border_style = BorderStyle::kBorderStyleNone})), //
       height_(dimensions.nlines - 2), width_(dimensions.ncols - 3),           //
       cell_width_(15), cell_height_(3),                                       //
-      coordinate_markers_(), widgets_array_() {
+      coordinate_markers_() {
   Debug(absl::StrFormat("GridWidget::GridWidget(%s)", dimensions.ToString()));
 
   // Column headers
@@ -78,11 +78,6 @@ GridWidget::GridWidget(Dimensions dimensions)
     w->UpdateUnderlyingContent(std::to_string(i + 1));
     coordinate_markers_.push_back(std::move(w));
   }
-
-  widgets_array_.resize(width_ / cell_width_);
-  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
-    v.resize(height_ / cell_height_);
-  }
 }
 
 bool GridWidget::Process(int ch) {
@@ -94,19 +89,34 @@ bool GridWidget::Process(int ch) {
     return true;
   }
 
-  int y = active_->y();
-  int x = active_->x();
+  // if our active cell didn't swallow the ch, maybe it's an arrow key
+  if (ch == KEY_LEFT || ch == KEY_RIGHT || ch == KEY_DOWN || ch == KEY_UP) {
 
-  if (ch == KEY_LEFT && x > 0) {
-    int new_y = y;
-    int new_x = x - 1;
-    active_ = std::make_unique<ActiveWidget>(Get<TextWidget>(new_y, new_x),
-                                             new_y, new_x);
+    int new_y = active_->y();
+    int new_x = active_->x();
+
+    if (ch == KEY_LEFT) {
+      new_x -= 1;
+    } else if (ch == KEY_RIGHT) {
+      new_x += 1;
+    } else if (ch == KEY_DOWN) {
+      new_y += 1;
+    } else if (ch == KEY_UP) {
+      new_y -= 1;
+    } else {
+      return false;
+    }
+
+    const auto w = Get<TextWidget>(new_y, new_x);
+    if (w == nullptr) {
+      // TODO(ambuc): Spawn new cell here if applicable
+      return false;
+    }
+
+    active_.reset();
+    active_ = std::make_unique<ActiveWidget>(w, new_y, new_x);
     return true;
   }
-
-  // if ch == KEY_LEFT etc, change active_ and return true;
-  // if unable to change active_, return false;
 
   return false;
 }

@@ -45,7 +45,7 @@ public:
   void Focus() override {
     Debug("FOCUSING on me, a textwidget.");
     window_->GetMutableStyle()->border_style = BorderStyle::kDouble;
-    window_->GetMutableStyle()->border_color = COLOR_RED;
+    window_->GetMutableStyle()->border_color = COLOR_YELLOW;
     window_->Refresh();
   }
 

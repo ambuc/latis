@@ -18,6 +18,7 @@
 
 #include "src/ui/widget.h"
 
+#include "absl/container/flat_hash_map.h"
 #include "src/ui/textwidget.h"
 
 namespace latis {
@@ -32,9 +33,6 @@ public:
   template <typename T, typename... Args> //
   std::shared_ptr<T> Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
-    if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
-      return nullptr;
-    }
     auto p = std::make_shared<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
@@ -48,7 +46,7 @@ public:
                          .border_style = BorderStyle::kThin,
                          .corner_style = CornerStyle::kPlus,
                      }));
-    widgets_array_[y][x] = p;
+    widgets_[std::make_pair(y, x)] = p;
     // if created recently, set active.
     Debug(absl::StrFormat("Setting %d, %d to active.", y, x));
     active_ = std::make_unique<ActiveWidget>(p, y, x);
@@ -58,7 +56,12 @@ public:
   template <typename T> //
   std::shared_ptr<T> Get(int y, int x) {
     Debug(absl::StrFormat("GridWidget::Get(%d, %d)", y, x));
-    return std::dynamic_pointer_cast<T>(widgets_array_[y][x]);
+    const auto pair = std::make_pair(y, x);
+    const auto it = widgets_.find(pair);
+    if (it == widgets_.end()) {
+      return nullptr;
+    }
+    return std::dynamic_pointer_cast<T>(it->second);
   }
 
   // Returns true if this widget consumed the event.
@@ -80,7 +83,7 @@ private:
   std::unique_ptr<ActiveWidget> active_;
 
   std::vector<std::shared_ptr<TextWidget>> coordinate_markers_;
-  std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
+  absl::flat_hash_map<std::pair<int, int>, std::shared_ptr<Widget>> widgets_;
 };
 
 } // namespace ui

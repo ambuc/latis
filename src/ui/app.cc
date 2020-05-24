@@ -37,6 +37,8 @@ App::App() {
   halfdelay(1000 / 60);    // 60 FPS
   notimeout(stdscr, true); // no timeout, esc persists immediately
 
+  keypad(stdscr, TRUE); // arrow key
+
   // Disable cursor
   assert(curs_set(0) != ERR);
 
