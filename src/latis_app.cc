@@ -87,7 +87,7 @@ void LatisApp::Layout() {
   date_edited->UpdateUnderlyingContent(absl::StrFormat(
       "Date Edited: %s", absl::FormatTime(ssheet_->EditedTime())));
 
-  ssheet_->RegisterEditedTimeCallback([&date_edited](absl::Time t) {
+  ssheet_->RegisterEditedTimeCallback([date_edited](absl::Time t) {
     date_edited->UpdateUnderlyingContent(
         absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
