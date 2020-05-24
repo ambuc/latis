@@ -83,7 +83,7 @@ GridWidget::GridWidget(Dimensions dimensions)
 bool GridWidget::Process(int ch) {
   assert(active_ != nullptr);
 
-  Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
+  Debug(absl::StrFormat("GridWidget::Process(%d)", ch));
 
   if ((*active_)->Process(ch)) {
     return true;

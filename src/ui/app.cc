@@ -62,7 +62,7 @@ void App::Run() {
   do {
 
     ch = getch();
-    ui::Debug(absl::StrFormat("Handling %c", ch));
+    ui::Debug(absl::StrFormat("Handling '%c'", ch));
 
     if (ch == KEY_RESIZE && resize_cb_.has_value()) {
       resize_cb_.value()();

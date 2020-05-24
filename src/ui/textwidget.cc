@@ -52,9 +52,7 @@ void TextWidget::UpdateDisplayContent(std::string s) {
 }
 
 bool TextWidget::Process(int ch) {
-  Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
-  Debug(absl::StrFormat("%p", &form_));
-  // TODO(ambuc): Why is |form_| already instantiated !?!?!?!?
+  Debug(absl::StrFormat("TextWidget::Process(%d)", ch));
 
   bool did_process = false;
   if (form_ != nullptr) {
@@ -80,17 +78,16 @@ bool TextWidget::Process(int ch) {
     }
   }
 
-  if (CanHaveForm() && ch == KEY_ENTER) {
+  if (CanHaveForm() && ch == 10) {
     Debug("Instantiating form.");
     auto dims = window_->GetDimensions();
-    form_ = absl::make_unique<FormWidget>( //
-        window_->GetDerwin(Dimensions{
-            .nlines = dims.nlines,
-            .ncols = dims.ncols,
-            .begin_y = 0,
-            .begin_x = 0,
-        }),
-        underlying_content_);
+    form_ = absl::make_unique<FormWidget>(window_->GetDerwin(Dimensions{
+                                              .nlines = dims.nlines,
+                                              .ncols = dims.ncols,
+                                              .begin_y = 0,
+                                              .begin_x = 0,
+                                          }),
+                                          underlying_content_);
     window_->Refresh();
     return true;
   }
@@ -99,7 +96,7 @@ bool TextWidget::Process(int ch) {
 }
 
 bool TextWidget::CanHaveForm() {
-  return form_ == nullptr && recv_cb_.has_value();
+  return form_.get() == nullptr && recv_cb_.has_value();
 }
 
 void TextWidget::PersistForm() {

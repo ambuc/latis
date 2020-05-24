@@ -71,7 +71,7 @@ private:
   // the thing to print instead when not in form mode.
   std::string display_content_;
 
-  std::unique_ptr<FormWidget> form_{nullptr};
+  std::unique_ptr<FormWidget> form_ = nullptr;
 };
 
 } // namespace ui
