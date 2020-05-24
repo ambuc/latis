@@ -53,6 +53,8 @@ void TextWidget::UpdateDisplayContent(std::string s) {
 
 bool TextWidget::Process(int ch) {
   Debug(absl::StrFormat("TextWidget::Process(%c)", ch));
+  Debug(absl::StrFormat("%p", &form_));
+  // TODO(ambuc): Why is |form_| already instantiated !?!?!?!?
 
   bool did_process = false;
   if (form_ != nullptr) {
@@ -79,6 +81,7 @@ bool TextWidget::Process(int ch) {
   }
 
   if (CanHaveForm() && ch == KEY_ENTER) {
+    Debug("Instantiating form.");
     auto dims = window_->GetDimensions();
     form_ = absl::make_unique<FormWidget>( //
         window_->GetDerwin(Dimensions{
