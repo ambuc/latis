@@ -20,7 +20,7 @@
 #include "src/ui/widget.h"
 #include "src/ui/window.h"
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include <memory>
 
 namespace latis {
@@ -34,20 +34,12 @@ public:
   ~App();
 
   template <typename T, typename... Args> //
-  T *Add(absl::string_view title, Args... args) {
-    widgets_[title] = std::make_unique<T>(args...);
+  std::shared_ptr<T> Add(absl::string_view title, Args... args) {
+    auto p = std::make_shared<T>(args...);
+    widgets_.insert(p);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
-    return Get<T>(title);
+    return p;
   }
-
-  // Get (or create) widget of a particular name and type.
-  template <typename T> //
-  T *Get(absl::string_view title) {
-    return dynamic_cast<T *>(widgets_[title].get());
-  }
-
-  // Remove widget of any kind by a given name.
-  void Remove(absl::string_view title);
 
   void RemoveAllWidgets();
 
@@ -63,7 +55,7 @@ private:
   // Will never be nullptr.
   Widget *active_;
 
-  absl::flat_hash_map<std::string, std::unique_ptr<Widget>> widgets_;
+  absl::flat_hash_set<std::shared_ptr<Widget>> widgets_;
 
   absl::optional<ResizeCb> resize_cb_;
 };

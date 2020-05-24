@@ -49,8 +49,6 @@ App::App() {
 
 App::~App() { endwin(); }
 
-void App::Remove(absl::string_view title) { widgets_.erase(title); }
-
 void App::RemoveAllWidgets() {
   active_ = nullptr;
   widgets_.clear();
@@ -78,7 +76,7 @@ void App::Run() {
       }
     }
 
-    for (auto &[_, w] : widgets_) {
+    for (auto &w : widgets_) {
       if (w->Process(ch)) {
         break;
       }

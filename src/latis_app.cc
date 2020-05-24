@@ -82,20 +82,20 @@ void LatisApp::Layout() {
       ->UpdateUnderlyingContent(absl::StrFormat(
           "Date Created: %s", absl::FormatTime(ssheet_->CreatedTime())));
 
-  app_->Add<ui::TextWidget>("date_edited", dims_edited)
-      ->UpdateUnderlyingContent(absl::StrFormat(
-          "Date Edited: %s", absl::FormatTime(ssheet_->EditedTime())));
+  auto date_edited = app_->Add<ui::TextWidget>("date_edited", dims_edited);
 
-  ssheet_->RegisterEditedTimeCallback([this](absl::Time t) {
-    app_->Get<ui::TextWidget>("date_edited")
-        ->UpdateUnderlyingContent(
-            absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
+  date_edited->UpdateUnderlyingContent(absl::StrFormat(
+      "Date Edited: %s", absl::FormatTime(ssheet_->EditedTime())));
+
+  ssheet_->RegisterEditedTimeCallback([&date_edited](absl::Time t) {
+    date_edited->UpdateUnderlyingContent(
+        absl::StrFormat("Date Edited: %s", absl::FormatTime(t)));
   });
 
   auto dims_gridbox = layout_engine.FillRest().value();
 
   auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox);
-  app_->SetActive(gridbox_ptr);
+  app_->SetActive(gridbox_ptr.get());
   assert(gridbox_ptr != nullptr);
 
   for (int y = 0; y <= ssheet_->Height(); ++y) {
