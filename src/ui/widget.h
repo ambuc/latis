@@ -40,18 +40,26 @@ protected:
 
 class ActiveWidget {
 public:
-  ActiveWidget() : w_(nullptr) {} // default ctor
-  ActiveWidget(std::shared_ptr<Widget> w) : w_(w) { w_->Focus(); }
+  ActiveWidget(std::shared_ptr<Widget> w = nullptr, int y = -1, int x = -1)
+      : w_(w), y_(y), x_(x) {
+    if (w != nullptr) {
+      w_->Focus();
+    }
+  }
   ~ActiveWidget() {
     if (w_ != nullptr) {
       w_->UnFocus();
     }
   }
+  int y() { return y_; }
+  int x() { return x_; }
   std::shared_ptr<Widget> operator->() { return w_; }
   std::shared_ptr<Widget> operator*() { return w_; }
 
 private:
   std::shared_ptr<Widget> w_;
+  int y_;
+  int x_;
 };
 
 } // namespace ui

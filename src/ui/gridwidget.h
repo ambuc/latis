@@ -51,7 +51,7 @@ public:
     widgets_array_[y][x] = p;
     // if created recently, set active.
     Debug(absl::StrFormat("Setting %d, %d to active.", y, x));
-    active_ = std::make_unique<ActiveWidget>(p);
+    active_ = std::make_unique<ActiveWidget>(p, y, x);
     return p;
   }
 

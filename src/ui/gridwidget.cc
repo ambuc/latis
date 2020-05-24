@@ -90,20 +90,25 @@ bool GridWidget::Process(int ch) {
 
   Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
 
-  return (*active_)->Process(ch);
+  if ((*active_)->Process(ch)) {
+    return true;
+  }
 
-  // for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
-  //  for (std::shared_ptr<Widget> &cell : v) {
-  //    if (cell != nullptr) {
-  //      if (cell->Process(ch)) {
-  //        // active_ = cell.get();
-  //        return true;
-  //      }
-  //    }
-  //  }
-  //}
+  int y = active_->y();
+  int x = active_->x();
 
-  // return false;
+  if (ch == KEY_LEFT && x > 0) {
+    int new_y = y;
+    int new_x = x - 1;
+    active_ = std::make_unique<ActiveWidget>(Get<TextWidget>(new_y, new_x),
+                                             new_y, new_x);
+    return true;
+  }
+
+  // if ch == KEY_LEFT etc, change active_ and return true;
+  // if unable to change active_, return false;
+
+  return false;
 }
 
 } // namespace ui
