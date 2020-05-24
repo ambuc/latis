@@ -50,7 +50,7 @@ App::App() {
 App::~App() { endwin(); }
 
 void App::RemoveAllWidgets() {
-  active_ = nullptr;
+  active_ = ActiveWidget();
   widgets_.clear();
 }
 
@@ -58,7 +58,6 @@ void App::Run() {
   bool should_run = true;
   int ch;
   do {
-    assert(active_ != nullptr);
 
     ch = getch();
     ui::Debug(absl::StrFormat("Handling %c", ch));
@@ -68,19 +67,13 @@ void App::Run() {
       continue;
     }
 
-    if (active_ != nullptr) {
-      if (active_->Process(ch)) {
-        break;
-      } else {
-        active_ = nullptr;
-      }
-    }
+    active_->Process(ch);
 
-    for (auto &w : widgets_) {
-      if (w->Process(ch)) {
-        break;
-      }
-    }
+    // for (auto &w : widgets_) {
+    //  if (w->Process(ch)) {
+    //    break;
+    //  }
+    //}
 
     // Fallback -- if no one else processed it, I will.
     if (ch == int('q')) {

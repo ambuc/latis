@@ -95,7 +95,6 @@ void LatisApp::Layout() {
   auto dims_gridbox = layout_engine.FillRest().value();
 
   auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox);
-  app_->SetActive(gridbox_ptr.get());
   assert(gridbox_ptr != nullptr);
 
   for (int y = 0; y <= ssheet_->Height(); ++y) {
@@ -119,9 +118,6 @@ void LatisApp::Layout() {
       w->UpdateUnderlyingContent(PrintAmount(amt.ValueOrDie()));
     }
   }
-
-  // set active
-  gridbox_ptr->SetActive(gridbox_ptr->Get<ui::TextWidget>(0, 0));
 
   // promulgate updates
   ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {

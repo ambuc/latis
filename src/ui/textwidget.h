@@ -42,6 +42,15 @@ public:
   // Returns true if this widget consumed the event.
   bool Process(int ch) override;
 
+  void Focus() override {
+    Debug("FOCUSING on me, a textwidget.");
+    //
+  }
+  void UnFocus() override {
+    Debug("UNFOCUSING on me, a textwidget.");
+    //
+  }
+
 private:
   bool CanHaveForm();
   void PersistForm();

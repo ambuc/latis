@@ -31,11 +31,26 @@ public:
   // Returns true if this widget consumed the event.
   virtual bool Process(int ch) = 0;
 
-  void Focus() { window_->Focus(); }
-  void UnFocus() { window_->UnFocus(); }
+  virtual void Focus() = 0;
+  virtual void UnFocus() = 0;
 
 protected:
   std::unique_ptr<Window> window_;
+};
+
+class ActiveWidget {
+public:
+  ActiveWidget() : w_(nullptr) {} // default ctor
+  ActiveWidget(std::shared_ptr<Widget> w) : w_(w) { w_->Focus(); }
+  ~ActiveWidget() {
+    if (w_ != nullptr) {
+      w_->UnFocus();
+    }
+  }
+  std::shared_ptr<Widget> operator->() { return w_; }
+
+private:
+  std::shared_ptr<Widget> w_;
 };
 
 } // namespace ui

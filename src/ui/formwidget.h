@@ -34,6 +34,9 @@ public:
   // Returns true if this widget consumed the event.
   bool Process(int ch) override;
 
+  void Focus() override {}
+  void UnFocus() override {}
+
   std::string Extract();
 
 private:

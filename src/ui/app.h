@@ -38,6 +38,7 @@ public:
     auto p = std::make_shared<T>(args...);
     widgets_.insert(p);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));
+    active_ = ActiveWidget(p);
     return p;
   }
 
@@ -46,14 +47,12 @@ public:
   // Run the app.
   void Run();
 
-  void SetActive(Widget *w) { active_ = w; }
-
   // Registers a callback to be invoked when the window resized.
   void RegisterResizeCallback(ResizeCb cb);
 
 private:
   // Will never be nullptr.
-  Widget *active_;
+  ActiveWidget active_;
 
   absl::flat_hash_set<std::shared_ptr<Widget>> widgets_;
 

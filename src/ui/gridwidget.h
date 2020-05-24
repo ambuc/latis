@@ -50,7 +50,7 @@ public:
                      }));
     widgets_array_[y][x] = p;
     // if created recently, set active.
-    active_ = p;
+    active_ = ActiveWidget(p);
     return p;
   }
 
@@ -60,10 +60,11 @@ public:
     return std::dynamic_pointer_cast<T>(widgets_array_[y][x]);
   }
 
-  void SetActive(std::shared_ptr<Widget> w) { active_ = w; }
-
   // Returns true if this widget consumed the event.
   bool Process(int ch) override;
+
+  void Focus() override {}
+  void UnFocus() override {}
 
 private:
   const int height_; // Height of the grid.
@@ -76,7 +77,7 @@ private:
   const int row_header_width_{3};
 
   // if nullptr, none is selected.
-  std::shared_ptr<Widget> active_;
+  ActiveWidget active_;
 
   std::vector<std::shared_ptr<TextWidget>> coordinate_markers_;
   std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
