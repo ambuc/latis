@@ -30,12 +30,12 @@ public:
 
   // returns nullptr if there is no room.
   template <typename T, typename... Args> //
-  T *Add(int y, int x, Args... args) {
+  std::shared_ptr<T> Add(int y, int x, Args... args) {
     Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
     if (int(widgets_array_.size()) <= y || int(widgets_array_[y].size()) <= x) {
       return nullptr;
     }
-    widgets_array_[y][x] = std::make_unique<T>(
+    auto p = std::make_shared<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
                      Dimensions{
@@ -48,7 +48,8 @@ public:
                          .border_style = BorderStyle::kThin,
                          .corner_style = CornerStyle::kPlus,
                      }));
-    return Get<T>(y, x);
+    widgets_array_[y][x] = p;
+    return p;
   }
 
   template <typename T> //
@@ -73,8 +74,8 @@ private:
   // if nullptr, none is selected.
   Widget *focused_;
 
-  std::vector<std::unique_ptr<TextWidget>> coordinate_markers_;
-  std::vector<std::vector<std::unique_ptr<Widget>>> widgets_array_;
+  std::vector<std::shared_ptr<TextWidget>> coordinate_markers_;
+  std::vector<std::vector<std::shared_ptr<Widget>>> widgets_array_;
 };
 
 } // namespace ui

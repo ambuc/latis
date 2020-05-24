@@ -80,7 +80,7 @@ GridWidget::GridWidget(Dimensions dimensions)
   }
 
   widgets_array_.resize(width_ / cell_width_);
-  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
+  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
     v.resize(height_ / cell_height_);
   }
 }
@@ -88,8 +88,8 @@ GridWidget::GridWidget(Dimensions dimensions)
 bool GridWidget::Process(int ch) {
   Debug(absl::StrFormat("GridWidget::Process(%c)", ch));
 
-  for (std::vector<std::unique_ptr<Widget>> &v : widgets_array_) {
-    for (std::unique_ptr<Widget> &cell : v) {
+  for (std::vector<std::shared_ptr<Widget>> &v : widgets_array_) {
+    for (std::shared_ptr<Widget> &cell : v) {
       if (cell != nullptr) {
         if (cell->Process(ch)) {
           focused_ = cell.get();
