@@ -34,7 +34,7 @@ public:
   ~App();
 
   template <typename T, typename... Args> //
-  std::shared_ptr<T> Add(absl::string_view title, Args... args) {
+  std::shared_ptr<T> Add(Args... args) {
     auto p = std::make_shared<T>(args...);
     widgets_.insert(p);
     ui::Debug(absl::StrFormat("%d widgets now.", widgets_.size()));

@@ -60,7 +60,6 @@ void App::Run() {
   bool should_run = true;
   int ch;
   do {
-
     ch = getch();
     ui::Debug(absl::StrFormat("Handling '%c'", ch));
 
@@ -69,11 +68,13 @@ void App::Run() {
       continue;
     }
 
-    (*active_)->Process(ch);
+    if (!(*active_)->Process(ch)) {
+      ui::Debug("Didn't process.");
 
-    // Fallback -- if no one else processed it, I will.
-    if (ch == int('q')) {
-      should_run = false;
+      // Fallback -- if no one else processed it, I will.
+      if (ch == int('q')) {
+        should_run = false;
+      }
     }
   } while (should_run);
 }

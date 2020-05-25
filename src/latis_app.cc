@@ -60,7 +60,7 @@ void LatisApp::Layout() {
   auto dims_edited =
       layout_engine.Place(/*h=*/3, /*w=*/x / 4).value_or(default_dims);
 
-  app_->Add<ui::TextWidget>("title", dims_title)
+  app_->Add<ui::TextWidget>(dims_title)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Title: %s", s); })
       ->WithCb([this](absl::string_view s) {
@@ -69,7 +69,7 @@ void LatisApp::Layout() {
       })
       ->UpdateUnderlyingContent(ssheet_->Title().value_or("n/a"));
 
-  app_->Add<ui::TextWidget>("author", dims_author)
+  app_->Add<ui::TextWidget>(dims_author)
       ->WithTemplate(
           [](std::string s) { return absl::StrFormat("Author: %s", s); })
       ->WithCb([this](absl::string_view s) {
@@ -78,11 +78,11 @@ void LatisApp::Layout() {
       })
       ->UpdateUnderlyingContent(ssheet_->Author().value_or("no author"));
 
-  app_->Add<ui::TextWidget>("date_created", dims_created)
+  app_->Add<ui::TextWidget>(dims_created)
       ->UpdateUnderlyingContent(absl::StrFormat(
           "Date Created: %s", absl::FormatTime(ssheet_->CreatedTime())));
 
-  auto date_edited = app_->Add<ui::TextWidget>("date_edited", dims_edited);
+  auto date_edited = app_->Add<ui::TextWidget>(dims_edited);
 
   date_edited->UpdateUnderlyingContent(absl::StrFormat(
       "Date Edited: %s", absl::FormatTime(ssheet_->EditedTime())));
@@ -94,7 +94,7 @@ void LatisApp::Layout() {
 
   auto dims_gridbox = layout_engine.FillRest().value();
 
-  auto gridbox_ptr = app_->Add<ui::GridWidget>("GridWidget", dims_gridbox);
+  auto gridbox_ptr = app_->Add<ui::GridWidget>(dims_gridbox);
   assert(gridbox_ptr != nullptr);
 
   for (int y = 0; y <= ssheet_->Height(); ++y) {
