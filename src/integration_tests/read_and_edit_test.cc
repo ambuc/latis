@@ -14,35 +14,61 @@
 
 #include "src/integration_tests/integration_test_base.h"
 
-#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "proto/latis_msg.pb.h"
+#include "src/xy.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <google/protobuf/text_format.h>
 
 namespace latis {
 namespace test {
 namespace {
 
+using ::testing::AllOf;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::MatchesRegex;
 
-TEST_F(IntegrationTestBase, ReadAndEditTest) {
-  LatisMsg input;
-  input.mutable_metadata()->set_title("foo");
-  input.mutable_metadata()->set_author("bar");
+MATCHER_P2(HasCell, cell, value, "") {
+  //       C
+  //     ┼─────────────┼
+  //   R │ V           │
+  //     ┼─────────────┼
+  std::string col = cell.ToColumnLetter();
+  int row = cell.Y() + 1;
+  return Matches(MatchesRegex(absl::StrFormat(".*\n"
+                                              ".*%s[^\n]*\n"
+                                              ".*"
+                                              ".*┼[─]*┼.*\n"
+                                              ".*%d │ %s.*│.*\n"
+                                              ".*┼[─]*┼.*\n"
+                                              ".*",
+                                              col, row, value)))(arg);
+}
 
-  std::string output_string;
-  google::protobuf::TextFormat::PrintToString(input, &output_string);
+TEST_F(IntegrationTestBase, ReadMetadata) {
+  LatisMsg msg;
+  msg.mutable_metadata()->set_title("foo");
+  msg.mutable_metadata()->set_author("bar");
 
-  Send(absl::StrFormat("src/latis --input='%s'", absl::CEscape(output_string)));
+  SendLatisMsg(msg);
 
-  auto d = Dump();
+  EXPECT_THAT(Dump(), AllOf(HasSubstr("Title: foo"), HasSubstr("Author: bar")));
+}
 
-  EXPECT_THAT(d, HasSubstr("Title: foo"));
+TEST_F(IntegrationTestBase, A1Has4) {
+  const auto loc = XY::From("A1").ValueOrDie();
 
-  EXPECT_THAT(d, HasSubstr("Author: bar"));
+  LatisMsg msg;
+  auto *cell = msg.add_cells();
+  *(cell->mutable_point_location()) = loc.ToPointLocation();
+  auto *formula = cell->mutable_formula();
+  formula->mutable_expression()->mutable_value()->set_int_amount(4);
+  formula->mutable_cached_amount()->set_int_amount(4);
+
+  SendLatisMsg(msg);
+
+  EXPECT_THAT(Dump(), HasCell(loc, "4"));
 }
 
 } // namespace

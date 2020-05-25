@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include "src/integration_tests/integration_test_base.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/clock.h"
 #include "proto/latis_msg.pb.h"
+#include <google/protobuf/text_format.h>
 
 namespace latis {
 namespace test {
@@ -49,10 +51,18 @@ void IntegrationTestBase::SetUp() {
       absl::StrFormat("tmux resize-pane -x 256 -t %s:1", tmux_session_name_)
           .c_str());
 }
+
 // Tear down TMUX session
 void IntegrationTestBase::TearDown() {
   std::system(
       absl::StrFormat("tmux kill-session -t %s", tmux_session_name_).c_str());
+}
+
+void IntegrationTestBase::SendLatisMsg(const LatisMsg &msg) {
+  std::string output_string;
+  google::protobuf::TextFormat::PrintToString(msg, &output_string);
+
+  Send(absl::StrFormat("src/latis --input='%s'", absl::CEscape(output_string)));
 }
 
 // Send a command and wait a beat for the inputs to be processed

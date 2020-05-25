@@ -16,6 +16,7 @@
 #ifndef SRC_INTEGRATION_TESTS_INTEGRATION_TEST_BASE_H_
 #define SRC_INTEGRATION_TESTS_INTEGRATION_TEST_BASE_H_
 
+#include "proto/latis_msg.pb.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -32,6 +33,9 @@ public:
 
   // Send a command and wait a beat for the inputs to be processed
   void Send(const std::string &cmd);
+
+  // Given a LatisMsg proto, sends it via `latis --input="%s"`.
+  void SendLatisMsg(const LatisMsg &msg);
 
   // Capture and return the output as a string
   std::string Dump();

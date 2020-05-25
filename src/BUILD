@@ -108,7 +108,10 @@ cc_library(
     name = "xy_lib",
     srcs = ["xy.cc"],
     hdrs = ["xy.h"],
-    visibility = ["//src/formula:__subpackages__"],
+    visibility = [
+        "//src/formula:__subpackages__",
+        "//src/integration_tests:__subpackages__",
+    ],
     deps = [
         "//proto:latis_msg_cc_proto",
         "@com_google_absl//absl/hash",

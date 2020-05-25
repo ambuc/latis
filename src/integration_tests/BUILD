@@ -16,6 +16,7 @@ cc_test(
     data = ["//src/test_utils:textprotos"],
     deps = [
         ":integration_test_base",
+        "//src:xy_lib",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
