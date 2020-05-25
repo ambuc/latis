@@ -21,15 +21,19 @@
 #include "absl/flags/parse.h"
 
 ABSL_FLAG(std::string, textproto_input, "", "Path to input textproto");
+ABSL_FLAG(std::string, input, "", "Input textproto");
 
 int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   std::unique_ptr<latis::LatisApp> latis_app;
 
-  // If --textproto_input is set, read a file and load it in.
   if (const auto path = absl::GetFlag(FLAGS_textproto_input); !path.empty()) {
+    // If --textproto_input is set, read a file and load it in.
     auto msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
+    latis_app = absl::make_unique<latis::LatisApp>(msg);
+  } else if (const auto input = absl::GetFlag(FLAGS_input); !input.empty()) {
+    auto msg = latis::FromText<LatisMsg>(input).ValueOrDie();
     latis_app = absl::make_unique<latis::LatisApp>(msg);
   } else {
     latis_app = absl::make_unique<latis::LatisApp>();

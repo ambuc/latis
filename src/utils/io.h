@@ -52,6 +52,19 @@ template <typename T>
   return parsed;
 }
 
+template <typename T> //
+::google::protobuf::util::StatusOr<T> FromText(const std::string &text) {
+  T parsed;
+
+  if (!google::protobuf::TextFormat::ParseFromString(text, &parsed)) {
+    return ::google::protobuf::util::Status(
+        ::google::protobuf::util::error::INVALID_ARGUMENT,
+        absl::StrFormat("Couldn't parse from %s", text));
+  }
+
+  return parsed;
+}
+
 } // namespace latis
 
 #endif // SRC_UTILS_IO_H_
