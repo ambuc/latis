@@ -31,8 +31,8 @@ public:
 
   // returns nullptr if there is no room.
   template <typename T, typename... Args> //
-  std::shared_ptr<T> Add(int y, int x, Args... args) {
-    Debug(absl::StrFormat("GridWidget::Add(%d, %d)", y, x));
+  std::shared_ptr<T> AddCell(int y, int x, Args... args) {
+    Debug(absl::StrFormat("GridWidget::AddCell(%d, %d)", y, x));
     auto p = std::make_shared<T>(
         args..., window_->GetDerwin(
                      /*dimensions=*/
@@ -62,6 +62,16 @@ public:
       return nullptr;
     }
     return std::dynamic_pointer_cast<T>(it->second);
+  }
+
+  // Returns true if successful.
+  bool SetActive(int y, int x) {
+    const auto it = widgets_.find(std::make_pair(y, x));
+    if (it == widgets_.end()) {
+      return false;
+    }
+    active_ = std::make_unique<ActiveWidget>(it->second, y, x);
+    return true;
   }
 
   // Returns true if this widget consumed the event.

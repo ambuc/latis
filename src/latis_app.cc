@@ -104,7 +104,7 @@ void LatisApp::Layout() {
       if (!amt.ok()) {
         continue;
       }
-      auto w = gridbox_ptr->Add<ui::TextWidget>(y, x);
+      auto w = gridbox_ptr->AddCell<ui::TextWidget>(y, x);
       if (w == nullptr) {
         continue;
       }
@@ -118,6 +118,7 @@ void LatisApp::Layout() {
       w->UpdateUnderlyingContent(PrintAmount(amt.ValueOrDie()));
     }
   }
+  gridbox_ptr->SetActive(0, 0);
 
   // promulgate updates
   ssheet_->RegisterCallback([gridbox_ptr](const Cell &cell) -> void {
