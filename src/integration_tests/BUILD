@@ -10,6 +10,17 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "read_and_edit_test",
+    srcs = ["read_and_edit_test.cc"],
+    data = ["//src/test_utils:textprotos"],
+    deps = [
+        ":integration_test_base",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "integration_test_base",
     testonly = 1,

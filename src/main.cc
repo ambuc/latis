@@ -19,6 +19,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/strings/escaping.h"
 
 ABSL_FLAG(std::string, textproto_input, "", "Path to input textproto");
 ABSL_FLAG(std::string, input, "", "Input textproto");
@@ -33,7 +34,9 @@ int main(int argc, char *argv[]) {
     auto msg = latis::FromTextproto<LatisMsg>(path).ValueOrDie();
     latis_app = absl::make_unique<latis::LatisApp>(msg);
   } else if (const auto input = absl::GetFlag(FLAGS_input); !input.empty()) {
-    auto msg = latis::FromText<LatisMsg>(input).ValueOrDie();
+    std::string dest;
+    absl::CUnescape(input, &dest);
+    auto msg = latis::FromText<LatisMsg>(dest).ValueOrDie();
     latis_app = absl::make_unique<latis::LatisApp>(msg);
   } else {
     latis_app = absl::make_unique<latis::LatisApp>();
